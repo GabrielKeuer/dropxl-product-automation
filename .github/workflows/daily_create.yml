@@ -1,0 +1,63 @@
+name: Daglig Produkt Oprettelse
+
+on:
+  schedule:
+    - cron: '20 4 * * *'  # Kl. 04:20 UTC (efter sletning kl. 04:10)
+  workflow_dispatch:  # Manuel trigger
+
+permissions:
+  contents: write
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    outputs:
+      product_count: ${{ steps.run_script.outputs.product_count }}
+      variant_count: ${{ steps.run_script.outputs.variant_count }}
+      row_count: ${{ steps.run_script.outputs.row_count }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Installer dependencies
+        run: pip install pandas requests openpyxl beautifulsoup4
+
+      - name: Kør produkt oprettelse
+        id: run_script
+        env:
+          FEED_URL: ${{ vars.FEED_URL }}
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+          MAX_PRODUCTS_PER_RUN: ${{ vars.MAX_PRODUCTS_PER_RUN || '50' }}
+        run: python scripts/create_products.py
+
+      - name: Commit og push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add output/matrixify_create.csv
+          git diff --staged --quiet && echo "Ingen ændringer" && exit 0
+          git commit -m "✨ Oprettelse: ${{ steps.run_script.outputs.product_count }} produkter, ${{ steps.run_script.outputs.variant_count }} varianter ($(date +%Y-%m-%d))"
+          git push
+
+  notify:
+    needs: create
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Status summary
+        run: |
+          echo "## ✨ Daglig Oprettelse Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Værdi |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Produktgrupper | ${{ needs.create.outputs.product_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Varianter | ${{ needs.create.outputs.variant_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Rækker total | ${{ needs.create.outputs.row_count }} |" >> $GITHUB_STEP_SUMMARY
