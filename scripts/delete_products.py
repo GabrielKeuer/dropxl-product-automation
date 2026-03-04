@@ -5,6 +5,7 @@ import io
 import json
 import os
 import sys
+import time
 from datetime import datetime
 
 print("VidaXL Delete Processor - Automatisk (GitHub Actions)")
@@ -59,52 +60,103 @@ def fetch_feed_data(url):
     return df
 
 
-def fetch_shopify_skus(store, token):
-    """Hent alle variant SKUs fra Shopify via REST Admin API"""
-    print(f"\n📥 Henter Shopify produkter via API...")
+def fetch_shopify_skus_graphql(store, token):
+    """Hent alle variant SKUs fra Shopify via GraphQL Admin API (meget hurtigere end REST)"""
+    print(f"\n📥 Henter Shopify produkter via GraphQL API...")
 
     skus = set()
-    base_url = f"https://{store}/admin/api/2024-10/products.json"
+    url = f"https://{store}/admin/api/2024-10/graphql.json"
     headers = {
         'X-Shopify-Access-Token': token,
         'Content-Type': 'application/json'
     }
 
-    params = {
-        'limit': 250,
-        'fields': 'variants'
-    }
+    has_next_page = True
+    cursor = None
+    total_fetched = 0
 
-    page = 1
-    url = base_url
+    while has_next_page:
+        # Byg query med eller uden cursor
+        if cursor:
+            query = '''
+            {
+                productVariants(first: 250, after: "%s") {
+                    edges {
+                        node {
+                            sku
+                        }
+                        cursor
+                    }
+                    pageInfo {
+                        hasNextPage
+                    }
+                }
+            }
+            ''' % cursor
+        else:
+            query = '''
+            {
+                productVariants(first: 250) {
+                    edges {
+                        node {
+                            sku
+                        }
+                        cursor
+                    }
+                    pageInfo {
+                        hasNextPage
+                    }
+                }
+            }
+            '''
 
-    while url:
-        response = requests.get(url, headers=headers, params=params if page == 1 else None, timeout=60)
+        response = requests.post(url, headers=headers, json={'query': query}, timeout=60)
         response.raise_for_status()
 
         data = response.json()
-        products = data.get('products', [])
 
-        for product in products:
-            for variant in product.get('variants', []):
-                sku = variant.get('sku')
-                if sku:
-                    skus.add(normalize_sku(sku))
+        # Check for errors
+        if 'errors' in data:
+            print(f"   ⚠️ GraphQL fejl: {data['errors']}")
+            # Check for throttling
+            if any('Throttled' in str(e) for e in data['errors']):
+                print("   ⏳ Rate limited - venter 2 sekunder...")
+                time.sleep(2)
+                continue
+            raise Exception(f"GraphQL fejl: {data['errors']}")
 
-        # Shopify pagination via Link header
-        link_header = response.headers.get('Link', '')
-        url = None
-        if 'rel="next"' in link_header:
-            for part in link_header.split(','):
-                if 'rel="next"' in part:
-                    url = part.split('<')[1].split('>')[0]
-                    break
+        # Check for throttling via extensions
+        extensions = data.get('extensions', {})
+        cost = extensions.get('cost', {})
+        throttle_status = cost.get('throttleStatus', {})
+        currently_available = throttle_status.get('currentlyAvailable', 1000)
 
-        page += 1
-        if page % 10 == 0:
-            print(f"   Hentet {len(skus):,} SKUs ({page} sider)...")
+        # Hvis vi nærmer os rate limit, vent lidt
+        if currently_available < 100:
+            time.sleep(1)
 
-    print(f"✅ {len(skus):,} SKUs hentet fra Shopify")
+        # Udtræk SKUs
+        variants = data.get('data', {}).get('productVariants', {})
+        edges = variants.get('edges', [])
+
+        for edge in edges:
+            sku = edge.get('node', {}).get('sku')
+            if sku:
+                skus.add(normalize_sku(sku))
+
+        total_fetched += len(edges)
+
+        # Pagination
+        page_info = variants.get('pageInfo', {})
+        has_next_page = page_info.get('hasNextPage', False)
+
+        if has_next_page and edges:
+            cursor = edges[-1].get('cursor')
+
+        if total_fetched % 5000 == 0:
+            print(f"   Hentet {total_fetched:,} varianter ({len(skus):,} unikke SKUs)...")
+
+    print(f"✅ {len(skus):,} unikke SKUs hentet fra Shopify ({total_fetched:,} varianter total)")
     return skus
 
 
@@ -118,7 +170,7 @@ try:
     products['SKU'] = products['SKU'].apply(normalize_sku)
     print(f"✅ {len(products):,} produkter i feed")
 
-    shopify_skus = fetch_shopify_skus(SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN)
+    shopify_skus = fetch_shopify_skus_graphql(SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN)
 
     # 2. Find SKUs der skal slettes
     print("\n🔍 Finder udgåede produkter...")
