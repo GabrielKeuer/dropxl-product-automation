@@ -2,7 +2,7 @@ name: Daglig Produkt Sletning
 
 on:
   schedule:
-    - cron: '0 4 * * *'  # Kl. 04:00 UTC (05:00/06:00 dansk tid)
+    - cron: '10 4 * * *'  # Kl. 04:10 UTC (05:10/06:10 dansk tid)
   workflow_dispatch:  # Manuel trigger fra GitHub UI
 
 permissions:
