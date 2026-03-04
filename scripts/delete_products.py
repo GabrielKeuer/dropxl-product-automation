@@ -311,9 +311,9 @@ try:
         else:
             print(f"\n✅ Under threshold ({delete_count:,} ≤ {DELETE_THRESHOLD:,}) - kører automatisk")
 
-        # Gem filen
+        # Gem filen (komma-separeret for Matrixify)
         output_path = os.path.join('output', 'matrixify_delete.csv')
-        delete_df.to_csv(output_path, index=False, encoding='utf-8-sig', sep=';')
+        delete_df.to_csv(output_path, index=False, encoding='utf-8-sig', sep=',')
         print(f"💾 Slettefil gemt: {output_path} ({len(delete_df)} rækker)")
 
     else:
@@ -326,7 +326,7 @@ try:
             'Variant Command': []
         })
         output_path = os.path.join('output', 'matrixify_delete.csv')
-        empty_df.to_csv(output_path, index=False, encoding='utf-8-sig', sep=';')
+        empty_df.to_csv(output_path, index=False, encoding='utf-8-sig', sep=',')
         print(f"💾 Tom fil gemt: {output_path}")
 
     print(f"\n✅ Færdig!")
