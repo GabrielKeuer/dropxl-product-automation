@@ -2,8 +2,12 @@ name: Daglig Produkt Sletning
 
 on:
   schedule:
-    - cron: '0 4 * * *'  # Kl. 04:00 UTC (05:00 dansk sommertid, 06:00 vintertid)
+    - cron: '0 4 * * *'  # Kl. 04:00 UTC (05:00/06:00 dansk tid)
   workflow_dispatch:  # Manuel trigger fra GitHub UI
+
+permissions:
+  contents: write
+  issues: write
 
 jobs:
   # ============================================================
@@ -46,39 +50,47 @@ jobs:
           retention-days: 30
 
   # ============================================================
-  # JOB 2: Auto-deploy (under threshold)
+  # JOB 2: Godkendelse (kun hvis over threshold)
   # ============================================================
-  auto-deploy:
-    needs: analyze
-    if: needs.analyze.outputs.needs_approval == 'false' && needs.analyze.outputs.delete_count != '0'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Download slettefil
-        uses: actions/download-artifact@v4
-        with:
-          name: delete-file
-          path: output/
-
-      - name: Commit og push slettefil
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/matrixify_delete.csv
-          git commit -m "🗑️ Auto-sletning: ${{ needs.analyze.outputs.delete_count }} produkter ($(date +%Y-%m-%d))"
-          git push
-
-  # ============================================================
-  # JOB 3: Manuel godkendelse (over threshold)
-  # ============================================================
-  manual-deploy:
+  approval:
     needs: analyze
     if: needs.analyze.outputs.needs_approval == 'true'
     runs-on: ubuntu-latest
-    environment: sletning-godkendelse  # Kræver approval i GitHub
+
+    steps:
+      - name: Vent på manuel godkendelse
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: ${{ github.repository_owner }}
+          minimum-approvals: 1
+          issue-title: "⚠️ Sletning af ${{ needs.analyze.outputs.delete_count }} produkter kræver godkendelse"
+          issue-body: |
+            ## Daglig sletning - Threshold overskredet
+
+            | Metric | Værdi |
+            |--------|-------|
+            | Feed produkter | ${{ needs.analyze.outputs.feed_count }} |
+            | Shopify produkter | ${{ needs.analyze.outputs.shopify_count }} |
+            | **Skal slettes** | **${{ needs.analyze.outputs.delete_count }}** |
+            | Threshold | ${{ vars.DELETE_THRESHOLD || '1000' }} |
+
+            ---
+
+            **Kommenter `approved` for at godkende sletningen.**
+            **Kommenter `denied` for at afvise.**
+
+  # ============================================================
+  # JOB 3: Deploy (auto hvis under threshold, efter approval hvis over)
+  # ============================================================
+  deploy:
+    needs: [analyze, approval]
+    if: |
+      always() &&
+      needs.analyze.result == 'success' &&
+      needs.analyze.outputs.delete_count != '0' &&
+      (needs.approval.result == 'success' || needs.approval.result == 'skipped')
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
@@ -95,19 +107,20 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add output/matrixify_delete.csv
-          git commit -m "🗑️ Godkendt sletning: ${{ needs.analyze.outputs.delete_count }} produkter ($(date +%Y-%m-%d))"
+          git diff --staged --quiet && echo "Ingen ændringer" && exit 0
+          git commit -m "🗑️ Sletning: ${{ needs.analyze.outputs.delete_count }} produkter ($(date +%Y-%m-%d))"
           git push
 
   # ============================================================
-  # JOB 4: Status notifikation
+  # JOB 4: Status summary
   # ============================================================
   notify:
-    needs: [analyze]
+    needs: [analyze, deploy]
     if: always()
     runs-on: ubuntu-latest
 
     steps:
-      - name: Send status summary
+      - name: Status summary
         run: |
           echo "## 📊 Daglig Sletning Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -116,10 +129,9 @@ jobs:
           echo "| Feed produkter | ${{ needs.analyze.outputs.feed_count }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Shopify produkter | ${{ needs.analyze.outputs.shopify_count }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Slettes** | **${{ needs.analyze.outputs.delete_count }}** |" >> $GITHUB_STEP_SUMMARY
-          echo "| Kræver godkendelse | ${{ needs.analyze.outputs.needs_approval }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ needs.analyze.outputs.needs_approval }}" == "true" ]; then
-            echo "⚠️ **OVER THRESHOLD** - Godkend venligst i Environments" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **OVER THRESHOLD** - Godkendelse påkrævet via issue" >> $GITHUB_STEP_SUMMARY
           else
             echo "✅ Under threshold - kørte automatisk" >> $GITHUB_STEP_SUMMARY
           fi
