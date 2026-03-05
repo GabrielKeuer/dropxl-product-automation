@@ -1,17 +1,19 @@
+"""
+VidaXL Product Creator v3.0 — HURTIG daglig kørsel
+Opretter produkter med < 100 kombinationer.
+Gemmer 100+ combo produkter til skipped_large_products.json.
+Gemmer variant-count til daily_variant_count.txt.
+"""
 import pandas as pd
-import requests
-import zipfile
-import io
 import json
 import os
 import sys
-import re
 import time
-from datetime import datetime
-from collections import defaultdict
-from bs4 import BeautifulSoup
 
-print("VidaXL Product Creator v2.0 - Automatisk (GitHub Actions)")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from product_utils import *
+
+print("VidaXL Product Creator v3.0 - HURTIG daglig kørsel")
 print("=" * 60)
 
 # ============================================================
@@ -23,16 +25,13 @@ SHOPIFY_ACCESS_TOKEN = os.environ.get('SHOPIFY_ACCESS_TOKEN', '')
 MAX_GROUPS = int(os.environ.get('MAX_PRODUCTS_PER_RUN', '999'))
 MAX_VARIANTS_SOFT = int(os.environ.get('MAX_VARIANTS_PER_RUN', '999'))
 MAX_VARIANTS_HARD = 999
+MAX_COMBOS = 100  # Produkter med flere kombinationer end dette skippes
 MIN_STOCK_PRIMARY = 20
 MIN_STOCK_VARIANT = 4
 PRODUCT_ORDER = os.environ.get('PRODUCT_ORDER', 'newest')
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'Kategori_Config.xlsx')
-
-BROWSER_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'da-DK,da;q=0.9,en;q=0.8',
-}
+SKIPPED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'output', 'skipped_large_products.json')
+COUNT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'output', 'daily_variant_count.txt')
 
 missing = []
 if not FEED_URL: missing.append('FEED_URL')
@@ -42,910 +41,8 @@ if missing:
     print(f"❌ Manglende: {', '.join(missing)}")
     sys.exit(1)
 
-print(f"⚙️ Max grupper: {MAX_GROUPS}, Blød variant-grænse: {MAX_VARIANTS_SOFT}, Hård grænse: {MAX_VARIANTS_HARD}, Rækkefølge: {PRODUCT_ORDER}")
-
-# ============================================================
-# HJÆLPEFUNKTIONER
-# ============================================================
-
-def normalize_sku(sku):
-    if pd.isna(sku): return ''
-    return str(sku).strip().replace('.0', '')
-
-def clean_vidaxl(text):
-    if pd.isna(text): return ''
-    text = str(text)
-    for v in ['vidaXL ', 'vidaxl ', 'VidaXL ', 'VIDAXL ', 'fra vidaXL', 'vidaXL', 'vidaxl']:
-        text = text.replace(v, '')
-    return text.strip()
-
-def convert_danish_chars(text):
-    if pd.isna(text): return ''
-    text = str(text)
-    for d, e in {'æ':'ae','Æ':'ae','ø':'oe','Ø':'oe','å':'aa','Å':'aa','ä':'ae','ö':'oe','ü':'ue'}.items():
-        text = text.replace(d, e)
-    return text
-
-def fix_pcs_to_dele(text):
-    """Erstat Pcs/pcs med dele (case insensitive)"""
-    if pd.isna(text) or not text: return text
-    return re.sub(r'\bpcs\b', 'dele', str(text), flags=re.IGNORECASE)
-
-def title_case_danish(text):
-    if pd.isna(text) or not text: return ''
-    return ' '.join(w[0].upper() + w[1:].lower() if w else w for w in text.split())
-
-def generate_handle(title, existing_handles):
-    if pd.isna(title): return ''
-    handle = convert_danish_chars(title.lower())
-    handle = re.sub(r'[^a-z0-9\s-]', '', handle)
-    handle = re.sub(r'\s+', '-', handle)
-    handle = re.sub(r'-+', '-', handle).strip('-')
-    if len(handle) > 255: handle = handle[:255].rsplit('-', 1)[0]
-    base = handle
-    counter = 2
-    while handle in existing_handles:
-        suffix = f"-{counter}"
-        handle = base[:255-len(suffix)] + suffix if len(base)+len(suffix) > 255 else f"{base}{suffix}"
-        counter += 1
-    existing_handles.add(handle)
-    return handle
-
-def calculate_price(base_price, slutciffer=9):
-    rounded = round(base_price)
-    last = rounded % 10
-    if last == 0: return rounded - 1
-    elif last == 9: return rounded
-    else: return (int(rounded / 10) + 1) * 10 - 1
-
-def validate_url(url):
-    if pd.isna(url) or not url: return False
-    return str(url).strip().startswith(('http://', 'https://'))
-
-def generate_seo_description(html_text, max_length=160):
-    if pd.isna(html_text): return ''
-    text = re.sub('<.*?>', '', str(html_text))
-    text = ' '.join(text.split())
-    if len(text) <= max_length: return text
-    t = text[:max_length]
-    lp = t.rfind('.')
-    if lp > 0: return text[:lp + 1]
-    ls = t.rfind(' ')
-    return text[:ls] + '...' if ls > 0 else t + '...'
-
-def extract_tags(category):
-    if pd.isna(category): return []
-    parts = [p.strip() for p in str(category).split(' > ')]
-    tags = list(parts)
-    if len(parts) > 1: tags.append(' > '.join(parts))
-    return tags
-
-def get_all_images(row):
-    images = []
-    for i in range(1, 22):
-        if i <= 12: col = f'Image {i}'
-        elif i == 13: col = 'image 13'
-        elif i == 14: col = 'Image 14'
-        else: col = f'image {i}'
-        if col in row.index and pd.notna(row[col]):
-            img = str(row[col]).strip()
-            if validate_url(img): images.append(img)
-    return images
-
-# ============================================================
-# TITEL RENSNING
-# ============================================================
-
-STICKY_AFTER_NUMBER = {'stk.', 'stk', 'sæt', 'dele', 'pak', 'pakke', 'par'}
-
-def clean_title_from_options(title, option_values):
-    """Fjern option-værdier fra titel (case insensitive). Fix x mellem mål."""
-    if pd.isna(title) or not title: return ''
-    title = clean_vidaxl(title)
-    title = fix_pcs_to_dele(title)
-
-    for opt_val in option_values:
-        if not opt_val: continue
-        opt_str = str(opt_val).strip()
-
-        # 1. Eksakt case-insensitive match
-        pattern = re.compile(re.escape(opt_str), re.IGNORECASE)
-        if pattern.search(title):
-            title = pattern.sub(' ', title)
-        else:
-            # 2. Fallback: hvis option er "X og Y", søg efter "X og [noget]" i titlen
-            og_match = re.match(r'^(.+?)\s+og\s+(.+)$', opt_str, re.IGNORECASE)
-            if og_match:
-                prefix = og_match.group(1).strip()
-                # Søg efter "prefix og [ét ord]" i titlen
-                fuzzy_pattern = re.compile(
-                    re.escape(prefix) + r'\s+og\s+\S+',
-                    re.IGNORECASE
-                )
-                title = fuzzy_pattern.sub(' ', title)
-
-        # 3. Hvis fjernet var et tal → fjern klæbeord
-        if opt_str.isdigit():
-            words = title.split()
-            cleaned = []
-            for w in words:
-                if w.lower().rstrip('.,') in STICKY_AFTER_NUMBER:
-                    continue
-                cleaned.append(w)
-            title = ' '.join(cleaned)
-
-    # Fjern kun standalone x der IKKE står mellem tal
-    # Bevar "80 x 200" men fjern orphan "x"
-    title = re.sub(r'(?<!\d\s)[xX](?!\s*\d)', '', title)
-
-    # Fjern forældreløse cm/mm der ikke har tal foran
-    title = re.sub(r'(?<!\d)\s+[Cc][Mm]\.?\b', '', title)
-    title = re.sub(r'(?<!\d)\s+[Mm][Mm]\.?\b', '', title)
-
-    title = re.sub(r'\s+', ' ', title)
-    title = title.strip(' ,-–')
-    return title
-
-# ============================================================
-# BODY HTML FORMATERING
-# ============================================================
-
-def format_body_html(html_description):
-    """
-    Split HTML_description i Beskrivelse og ProduktInfo med h4 headers.
-    Håndterer både plain text med * bullets og pre-formateret HTML.
-    Splitpunkt: første bullet der er en kort spec (key: kort_værdi).
-    """
-    if pd.isna(html_description) or not html_description:
-        return ''
-
-    text = clean_vidaxl(str(html_description))
-
-    # Detect om det allerede er HTML eller plain text
-    has_html_tags = bool(re.search(r'<[a-z]', text, re.IGNORECASE))
-
-    if has_html_tags:
-        # Pre-formateret HTML — parse med BeautifulSoup
-        return _format_html_content(text)
-    else:
-        # Plain text med * bullets
-        return _format_plain_content(text)
-
-
-def _is_spec_bullet(bullet_text):
-    """Check om en bullet er en spec (kort key: value) vs beskrivelse (lang tekst)"""
-    if ':' not in bullet_text:
-        return False
-    parts = bullet_text.split(':', 1)
-    key = parts[0].strip()
-    value = parts[1].strip() if len(parts) > 1 else ''
-
-    # Spec: key er kort, value er kort, ingen punktum i value
-    # Beskrivelse: lang value med fuld sætning
-    if len(key) > 40:
-        return False
-    if len(value) > 80:
-        return False
-    if '.' in value and len(value) > 30:
-        return False
-    return True
-
-
-def _is_warning_text(text):
-    """Check om tekst er en advarsel/GPSR der skal fjernes"""
-    lower = text.lower().strip()
-    return any(w in lower for w in [
-        'advarsel', 'gpsr', 'beskyttelsesudstyr skal',
-        'må ikke bruges i trafikken', 'legal document',
-        'ikke egnet til børn under'
-    ])
-
-
-def _format_plain_content(text):
-    """Formater plain text med * bullets til HTML med h4 headers"""
-    lines = text.split('\n')
-
-    beskrivelse_parts = []
-    produktinfo_items = []
-    found_split = False
-    current_paragraph = []
-
-    for line in lines:
-        stripped = line.strip()
-        if not stripped:
-            # Tom linje — afslut paragraf
-            if current_paragraph and not found_split:
-                beskrivelse_parts.append(' '.join(current_paragraph))
-                current_paragraph = []
-            continue
-
-        is_bullet = stripped.startswith('* ') or stripped.startswith('- ')
-
-        if is_bullet:
-            bullet_text = stripped[2:].strip()
-
-            if not found_split and _is_spec_bullet(bullet_text):
-                # Første spec-bullet fundet — flush paragraf
-                if current_paragraph:
-                    beskrivelse_parts.append(' '.join(current_paragraph))
-                    current_paragraph = []
-                found_split = True
-
-            if found_split:
-                # Skip advarsler og tomme bullets
-                if bullet_text and not _is_warning_text(bullet_text):
-                    produktinfo_items.append(bullet_text)
-            else:
-                # Beskrivende bullet — tilføj som del af beskrivelse
-                if current_paragraph:
-                    beskrivelse_parts.append(' '.join(current_paragraph))
-                    current_paragraph = []
-                beskrivelse_parts.append(bullet_text)
-        else:
-            if found_split:
-                # Tekst efter specs — skip advarsler
-                if not _is_warning_text(stripped):
-                    produktinfo_items.append(stripped)
-            else:
-                current_paragraph.append(stripped)
-
-    # Flush remaining paragraph
-    if current_paragraph and not found_split:
-        beskrivelse_parts.append(' '.join(current_paragraph))
-
-    # Byg HTML
-    html_parts = []
-
-    if beskrivelse_parts:
-        html_parts.append('<h4>Beskrivelse</h4>')
-        for part in beskrivelse_parts:
-            if part.strip():
-                html_parts.append(f'<p>{part.strip()}</p>')
-
-    if produktinfo_items:
-        html_parts.append('<h4>ProduktInfo</h4>')
-        html_parts.append('<ul>')
-        for item in produktinfo_items:
-            if item.strip():
-                html_parts.append(f'<li>{item.strip()}</li>')
-        html_parts.append('</ul>')
-
-    result = '\n'.join(html_parts)
-    return result if result.strip() else f'<p>{text}</p>'
-
-
-def _format_html_content(text):
-    """Formater pre-formateret HTML til at have h4 headers"""
-    soup = BeautifulSoup(text, 'html.parser')
-
-    beskrivelse_elems = []
-    produktinfo_items = []
-    found_split = False
-
-    # Gennemgå alle top-level elementer
-    for elem in soup.children:
-        if isinstance(elem, str):
-            stripped = elem.strip()
-            if stripped and not _is_warning_text(stripped):
-                if not found_split:
-                    beskrivelse_elems.append(f'<p>{stripped}</p>')
-            continue
-
-        tag_name = elem.name if elem.name else ''
-
-        if tag_name == 'ul':
-            # Check om det er spec-bullets eller beskrivelse-bullets
-            li_items = elem.find_all('li')
-            is_spec_list = False
-
-            for li in li_items:
-                li_text = li.get_text(strip=True)
-                if _is_spec_bullet(li_text):
-                    is_spec_list = True
-                    break
-
-            if is_spec_list and not found_split:
-                found_split = True
-
-            if found_split:
-                for li in li_items:
-                    li_text = li.get_text(strip=True)
-                    if li_text and not _is_warning_text(li_text):
-                        # Bevar bold formatting
-                        li_html = str(li)
-                        # Udtræk indhold af <li> tags
-                        inner = re.sub(r'^<li[^>]*>', '', li_html)
-                        inner = re.sub(r'</li>$', '', inner).strip()
-                        if inner:
-                            produktinfo_items.append(inner)
-            else:
-                beskrivelse_elems.append(str(elem))
-        elif tag_name == 'p':
-            p_text = elem.get_text(strip=True)
-            if not p_text:
-                continue
-            if _is_warning_text(p_text):
-                continue
-            if not found_split:
-                beskrivelse_elems.append(str(elem))
-        elif tag_name in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
-            if not found_split:
-                beskrivelse_elems.append(str(elem))
-        else:
-            if not found_split:
-                elem_text = elem.get_text(strip=True) if hasattr(elem, 'get_text') else str(elem).strip()
-                if elem_text and not _is_warning_text(elem_text):
-                    beskrivelse_elems.append(str(elem))
-
-    # Byg resultat
-    html_parts = []
-
-    if beskrivelse_elems:
-        html_parts.append('<h4>Beskrivelse</h4>')
-        html_parts.extend(beskrivelse_elems)
-
-    if produktinfo_items:
-        html_parts.append('<h4>ProduktInfo</h4>')
-        html_parts.append('<ul>')
-        for item in produktinfo_items:
-            html_parts.append(f'<li>{item}</li>')
-        html_parts.append('</ul>')
-
-    result = '\n'.join(html_parts)
-    return result if result.strip() else text
-
-# ============================================================
-# DATA HENTNING
-# ============================================================
-
-def fetch_feed(url):
-    print(f"\n📥 Henter feed...")
-    resp = requests.get(url, timeout=300)
-    resp.raise_for_status()
-    print(f"   {len(resp.content)/1024/1024:.1f} MB")
-    with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
-        csvs = [f for f in zf.namelist() if f.endswith('.csv')]
-        if not csvs: raise Exception("Ingen CSV i ZIP")
-        with zf.open(csvs[0]) as f:
-            df = pd.read_csv(f, encoding='utf-8', on_bad_lines='skip')
-    return df
-
-def fetch_shopify_data(store, token):
-    """Hent SKU→handle og alle handles fra Shopify (HURTIG - ingen options)"""
-    print(f"\n📥 Henter Shopify SKU→handle map via GraphQL...")
-    sku_to_handle = {}
-    all_handles = set()
-
-    url = f"https://{store}/admin/api/2024-10/graphql.json"
-    headers = {'X-Shopify-Access-Token': token, 'Content-Type': 'application/json'}
-    has_next, cursor, total = True, None, 0
-
-    while has_next:
-        after = f', after: "{cursor}"' if cursor else ''
-        q = '''
-        {
-            productVariants(first: 250%s) {
-                edges {
-                    node {
-                        sku
-                        product {
-                            handle
-                        }
-                    }
-                    cursor
-                }
-                pageInfo { hasNextPage }
-            }
-        }
-        ''' % after
-
-        resp = requests.post(url, headers=headers, json={'query': q}, timeout=60)
-        resp.raise_for_status()
-        data = resp.json()
-
-        if 'errors' in data:
-            if any('Throttled' in str(e) for e in data['errors']):
-                time.sleep(2); continue
-            raise Exception(f"GraphQL: {data['errors']}")
-
-        ext = data.get('extensions', {}).get('cost', {}).get('throttleStatus', {})
-        if ext.get('currentlyAvailable', 1000) < 100: time.sleep(1)
-
-        edges = data.get('data', {}).get('productVariants', {}).get('edges', [])
-        for e in edges:
-            node = e.get('node', {})
-            sku = node.get('sku')
-            handle = node.get('product', {}).get('handle', '')
-            if sku: sku_to_handle[normalize_sku(sku)] = handle
-            if handle: all_handles.add(handle)
-
-        total += len(edges)
-        pi = data.get('data', {}).get('productVariants', {}).get('pageInfo', {})
-        has_next = pi.get('hasNextPage', False)
-        if has_next and edges: cursor = edges[-1].get('cursor')
-        if total % 5000 == 0: print(f"   {total:,} varianter...")
-
-    print(f"✅ {len(sku_to_handle):,} SKU→handle, {len(all_handles):,} handles")
-    return sku_to_handle, all_handles
-
-
-def fetch_product_options(store, token, handle):
-    """Hent option-navne for ét specifikt produkt via handle (kun kaldet ved merge)"""
-    url = f"https://{store}/admin/api/2024-10/graphql.json"
-    headers = {'X-Shopify-Access-Token': token, 'Content-Type': 'application/json'}
-
-    q = '''
-    {
-        productByHandle(handle: "%s") {
-            options {
-                name
-                position
-            }
-        }
-    }
-    ''' % handle
-
-    try:
-        resp = requests.post(url, headers=headers, json={'query': q}, timeout=15)
-        resp.raise_for_status()
-        data = resp.json()
-
-        if 'errors' in data:
-            return []
-
-        product = data.get('data', {}).get('productByHandle')
-        if not product:
-            return []
-
-        options = product.get('options', [])
-        sorted_opts = sorted(options, key=lambda x: x.get('position', 0))
-        return [o.get('name', '') for o in sorted_opts]
-    except:
-        return []
-
-# ============================================================
-# VIDAXL SCRAPER
-# ============================================================
-
-def scrape_vidaxl(url):
-    result = {'master_pid': None, 'options': {}, 'success': False}
-    try:
-        resp = requests.get(url, headers=BROWSER_HEADERS, timeout=30)
-        if resp.status_code != 200: return result
-        html = resp.text
-        soup = BeautifulSoup(html, 'html.parser')
-
-        pid_match = re.search(r'pid=([A-Z]\d+)', html)
-        if pid_match: result['master_pid'] = pid_match.group(1)
-        if not result['master_pid']:
-            m = re.search(r'dwvar_([A-Z]\d+)_', html)
-            if m: result['master_pid'] = m.group(1)
-
-        if not result['master_pid']:
-            result['success'] = True
-            return result
-
-        # FARVE fra <select>
-        color_select = soup.find('select', {'name': 'color-attribute__value'})
-        if color_select:
-            colors = []
-            for opt in color_select.find_all('option'):
-                val = opt.get('value', '')
-                if not val: continue
-                display = opt.get_text(strip=True)
-                colors.append({'value': val, 'display': display})
-            if colors:
-                result['options']['color'] = {'display_name': 'Farve', 'values': colors}
-
-        # ANDRE options fra alle elementer med data-action-url
-        all_action_elems = soup.find_all(attrs={'data-action-url': re.compile('Product-Variation')})
-        other_options = {}
-
-        for elem in all_action_elems:
-            action_url = elem.get('data-action-url', '')
-            attr_value = elem.get('data-attr-value', '')
-
-            if not attr_value:
-                continue
-
-            display_value = (
-                elem.get('data-display-value', '') or
-                elem.get('aria-label', '') or
-                elem.get_text(strip=True) or
-                attr_value.replace('_', ' ')
-            )
-
-            # Find hvilken attribut dette element kontrollerer
-            # ved at matche data-attr-value mod URL-værdier
-            dwvar_matches = re.findall(r'dwvar_[^_]+_(\w+)=([^&]*)', action_url)
-            controlled_attr = None
-
-            for attr_name, url_value in dwvar_matches:
-                if attr_name == 'color':
-                    continue
-                # Elementet kontrollerer den attribut hvor URL-værdien matcher data-attr-value
-                if url_value == attr_value:
-                    controlled_attr = attr_name
-                    break
-
-            if not controlled_attr:
-                continue
-
-            if controlled_attr not in other_options:
-                other_options[controlled_attr] = []
-            if not any(e['value'] == attr_value for e in other_options[controlled_attr]):
-                other_options[controlled_attr].append({'value': attr_value, 'display': display_value.strip()})
-
-        for attr_name, values in other_options.items():
-            display_name = attr_name
-            label_div = soup.find('div', class_=re.compile(f'{attr_name}.*font-weight-bold'))
-            if not label_div:
-                label_div = soup.find('div', attrs={'for': re.compile(f'{attr_name}')}, class_=re.compile('font-weight-bold'))
-            if label_div:
-                lt = re.sub(r'\(\d+\s*tilgængelige\s*muligheder\)', '', label_div.get_text(strip=True)).strip()
-                if lt: display_name = lt
-            result['options'][attr_name] = {'display_name': display_name, 'values': values}
-
-        result['success'] = True
-    except Exception as e:
-        print(f"   ⚠️ Scrape fejl: {e}")
-    return result
-
-
-def fetch_variant_skus(master_pid, options):
-    base_url = "https://www.vidaxl.dk/on/demandware.store/Sites-vidaxl-dk-Site/da_DK/Product-Variation"
-    option_names = list(options.keys())
-    option_values_list = [options[name]['values'] for name in option_names]
-
-    if not option_values_list: return {}
-
-    combos = [{}]
-    for name, values in zip(option_names, option_values_list):
-        new = []
-        for combo in combos:
-            for val in values:
-                c = dict(combo)
-                c[name] = val
-                new.append(c)
-        combos = new
-
-    print(f"   Henter SKUs for {len(combos)} kombinationer...")
-    variant_map = {}
-
-    for i, combo in enumerate(combos):
-        params = {f'dwvar_{master_pid}_{name}': val['value'] for name, val in combo.items()}
-        params['pid'] = master_pid
-        params['quantity'] = '1'
-
-        try:
-            resp = requests.get(base_url, params=params, headers={
-                **BROWSER_HEADERS,
-                'Accept': 'application/json, text/javascript, */*; q=0.01',
-                'X-Requested-With': 'XMLHttpRequest'
-            }, timeout=15)
-
-            if resp.status_code == 200:
-                try:
-                    data = resp.json()
-                    sku = data.get('product', {}).get('SKU', '')
-                    if sku:
-                        opt_displays = {}
-                        for name, val in combo.items():
-                            opt_displays[options[name]['display_name']] = val['display']
-                        variant_map[normalize_sku(sku)] = opt_displays
-                except json.JSONDecodeError:
-                    pass
-
-            if (i + 1) % 10 == 0: time.sleep(1)
-            else: time.sleep(0.3)
-        except Exception as e:
-            print(f"   ⚠️ API fejl kombination {i+1}: {e}")
-            time.sleep(1)
-
-    print(f"   ✅ {len(variant_map)} varianter med SKU")
-    return variant_map
-
-# ============================================================
-# MATRIXIFY OUTPUT — NYE PRODUKTER
-# ============================================================
-
-def build_new_products(product_groups, config, underkat_config, rum_dict, existing_handles):
-    rows = []
-    handles_used = existing_handles.copy()
-
-    for group in product_groups:
-        if group.get('is_merge', False): continue  # Skip merge
-
-        feed_rows = group['feed_rows']
-        variant_map = group['variant_map']
-        option_struct = group['options']
-
-        if len(feed_rows) == 0: continue
-
-        first = feed_rows.iloc[0]
-        hovedkat = str(first['Category']).split(' > ')[0] if pd.notna(first['Category']) else ''
-
-        # Config
-        cat_cfg = config[config['Kategori_Config'] == hovedkat]
-        markup = float(cat_cfg['Markup %'].iloc[0]) if len(cat_cfg) > 0 and pd.notna(cat_cfg['Markup %'].iloc[0]) else 70.0
-        slutciffer = int(cat_cfg['Slutciffer'].iloc[0]) if len(cat_cfg) > 0 and pd.notna(cat_cfg['Slutciffer'].iloc[0]) else 9
-        compare_pct = float(cat_cfg['Sammenligningspris %'].iloc[0]) if len(cat_cfg) > 0 and pd.notna(cat_cfg['Sammenligningspris %'].iloc[0]) else 0
-
-        if not underkat_config.empty:
-            cs = str(first['Category']).strip() if pd.notna(first['Category']) else ''
-            ukat = underkat_config[underkat_config['Underkategori_Config'].astype(str).str.strip() == cs]
-            if len(ukat) > 0:
-                if pd.notna(ukat['Markup %'].iloc[0]): markup = float(ukat['Markup %'].iloc[0])
-                if 'Sammenligningspris %' in ukat.columns and pd.notna(ukat['Sammenligningspris %'].iloc[0]):
-                    compare_pct = float(ukat['Sammenligningspris %'].iloc[0])
-
-        # Titel
-        all_opt_displays = set()
-        for od in option_struct.values():
-            for v in od.get('values', []): all_opt_displays.add(v['display'])
-        # Tilføj også farver fra feedet (fanger sammensatte farver som "Sort og Cream")
-        for _, fr in feed_rows.iterrows():
-            if pd.notna(fr.get('Color')):
-                all_opt_displays.add(str(fr['Color']).strip())
-
-        raw_title = str(first['Title']) if pd.notna(first['Title']) else ''
-        # Sortér længste først, så "Sort og Cream" fjernes før "Sort"
-        sorted_displays = sorted(list(all_opt_displays), key=len, reverse=True)
-        print(f"   🏷️ Titel rensning: '{raw_title}'")
-        print(f"   🏷️ Fjerner options: {sorted_displays[:10]}{'...' if len(sorted_displays) > 10 else ''}")
-        clean_t = clean_title_from_options(raw_title, sorted_displays)
-        print(f"   🏷️ Resultat: '{clean_t}'")
-        final_title = title_case_danish(clean_t)
-        if not final_title or len(final_title) < 5:
-            final_title = title_case_danish(fix_pcs_to_dele(clean_vidaxl(raw_title)))
-
-        handle = generate_handle(final_title, handles_used)
-
-        # Irrelevante options
-        if len(variant_map) > 1:
-            all_ov = defaultdict(set)
-            for opts in variant_map.values():
-                for k, v in opts.items(): all_ov[k].add(v)
-            irrelevant = {k for k, v in all_ov.items() if len(v) <= 1}
-        else:
-            irrelevant = set()
-
-        is_first = True
-        variant_pos = 0
-
-        for _, row in feed_rows.iterrows():
-            try:
-                sku = normalize_sku(row['SKU'])
-                cost_kr = float(row['B2B price'])
-                price = calculate_price(cost_kr * (1 + markup / 100), slutciffer)
-                c_price = ''
-                if compare_pct > 0:
-                    c_price = calculate_price(price / (1 - compare_pct / 100), slutciffer)
-
-                # Tags
-                tags_list = []
-                if pd.notna(row['Category']): tags_list.extend(extract_tags(row['Category']))
-                if pd.notna(row.get('Brand')): tags_list.append(str(row['Brand']))
-                if pd.notna(row.get('Color')): tags_list.append(str(row['Color']))
-                if 'Parcel_or_pallet' in row.index and pd.notna(row['Parcel_or_pallet']):
-                    pv = str(row['Parcel_or_pallet']).strip().lower()
-                    if pv == 'parcel': tags_list.append('Parcel')
-                    elif pv == 'pallet': tags_list.append('Pallet')
-                if rum_dict and pd.notna(row['Category']):
-                    cs = str(row['Category']).strip()
-                    if cs in rum_dict and pd.notna(rum_dict[cs]):
-                        tags_list.append(str(rum_dict[cs]))
-                seen = set()
-                tags = ','.join(t for t in tags_list if not (t in seen or seen.add(t)))
-
-                # Body HTML med h4 headers
-                body_html = format_body_html(row.get('HTML_description', ''))
-
-                product_type = row['Category'].split(' > ')[-1].strip() if pd.notna(row['Category']) else ''
-                seo_title = final_title[:70] if len(final_title) <= 70 else final_title[:67] + '...'
-                seo_desc = generate_seo_description(body_html)
-                all_images = get_all_images(row)
-
-                weight = 0
-                if pd.notna(row.get('Weight')):
-                    try: weight = int(float(str(row['Weight']).replace(',', '.')) * 1000)
-                    except: pass
-
-                variant_pos += 1
-                opts = variant_map.get(sku, {})
-                relevant = {k: v for k, v in opts.items() if k not in irrelevant}
-                opt_list = list(relevant.items())
-
-                product_row = {
-                    'Command': 'MERGE',
-                    'Handle': handle,
-                    'Title': final_title if is_first else '',
-                    'Body HTML': body_html if is_first else '',
-                    'Vendor': row.get('Brand', '') if is_first else '',
-                    'Type': product_type if is_first else '',
-                    'Tags': tags if is_first else '',
-                    'Published': 'TRUE' if is_first else '',
-                    'Status': 'active' if is_first else '',
-                    'Published Scope': 'global' if is_first else '',
-                    'Variant SKU': sku,
-                    'Variant Barcode': str(row.get('EAN', '')),
-                    'Variant Position': variant_pos,
-                    'Variant Price': int(price),
-                    'Variant Compare At Price': int(c_price) if c_price else '',
-                    'Variant Cost': int(cost_kr),
-                    'Variant Weight': weight,
-                    'Variant Weight Unit': 'g',
-                    'Variant Inventory Tracker': 'shopify',
-                    'Variant Inventory Policy': 'deny',
-                    'Variant Inventory Qty': int(row.get('Stock', 0) or 0),
-                    'Variant Fulfillment Service': 'manual',
-                    'Variant Requires Shipping': 'TRUE',
-                    'Variant Taxable': 'TRUE',
-                    'SEO Title': seo_title if is_first else '',
-                    'SEO Description': seo_desc if is_first else '',
-                    'Google Shopping / MPN': sku,
-                    'Google Shopping / Condition': 'new',
-                    'Variant Image': all_images[0] if all_images else '',
-                    'Image Src': '',
-                    'Image Position': '',
-                    'Image Alt Text': '',
-                    'Variant Metafield: custom.sku [single_line_text_field]': sku,
-                }
-
-                for i in range(1, 4):
-                    if i <= len(opt_list):
-                        product_row[f'Option{i} Name'] = opt_list[i-1][0]
-                        product_row[f'Option{i} Value'] = opt_list[i-1][1]
-                    else:
-                        product_row[f'Option{i} Name'] = ''
-                        product_row[f'Option{i} Value'] = ''
-
-                if not is_first:
-                    raw_html = clean_vidaxl(row.get('HTML_description', ''))
-                    product_row['Variant Metafield: custom.produktinfo [multi_line_text_field]'] = raw_html
-                    if all_images:
-                        product_row['Variant Metafield: custom.variantbilleder [list.single_line_text_field]'] = ', '.join(all_images)
-
-                if is_first and all_images:
-                    product_row['Image Src'] = all_images[0]
-                    product_row['Image Position'] = '1'
-                    product_row['Image Alt Text'] = f"{final_title} - Hovedbillede"
-                    rows.append(product_row)
-                    for img_i, img_url in enumerate(all_images[1:], 2):
-                        img_row = {col: '' for col in product_row.keys()}
-                        img_row['Handle'] = handle
-                        img_row['Command'] = 'MERGE'
-                        img_row['Image Src'] = img_url
-                        img_row['Image Position'] = str(img_i)
-                        img_row['Image Alt Text'] = f"{final_title} - Billede {img_i}"
-                        rows.append(img_row)
-                else:
-                    rows.append(product_row)
-
-                is_first = False
-            except Exception as e:
-                print(f"   ⚠️ Fejl SKU {row.get('SKU','?')}: {str(e)[:100]}")
-                continue
-
-    return pd.DataFrame(rows) if rows else pd.DataFrame()
-
-# ============================================================
-# MATRIXIFY OUTPUT — MERGE VARIANTER
-# ============================================================
-
-def build_merge_variants(product_groups, config, underkat_config, store, token):
-    """Byg merge-fil med KUN variant-kolonner (ingen produkt-level felter)"""
-    rows = []
-
-    for group in product_groups:
-        if not group.get('is_merge', False): continue  # Kun merge
-
-        feed_rows = group['feed_rows']
-        variant_map = group['variant_map']
-        option_struct = group['options']
-        existing_handle = group['existing_handle']
-
-        if len(feed_rows) == 0 or not existing_handle: continue
-
-        first = feed_rows.iloc[0]
-        hovedkat = str(first['Category']).split(' > ')[0] if pd.notna(first['Category']) else ''
-
-        # Config
-        cat_cfg = config[config['Kategori_Config'] == hovedkat]
-        markup = float(cat_cfg['Markup %'].iloc[0]) if len(cat_cfg) > 0 and pd.notna(cat_cfg['Markup %'].iloc[0]) else 70.0
-        slutciffer = int(cat_cfg['Slutciffer'].iloc[0]) if len(cat_cfg) > 0 and pd.notna(cat_cfg['Slutciffer'].iloc[0]) else 9
-        compare_pct = float(cat_cfg['Sammenligningspris %'].iloc[0]) if len(cat_cfg) > 0 and pd.notna(cat_cfg['Sammenligningspris %'].iloc[0]) else 0
-
-        if not underkat_config.empty:
-            cs = str(first['Category']).strip() if pd.notna(first['Category']) else ''
-            ukat = underkat_config[underkat_config['Underkategori_Config'].astype(str).str.strip() == cs]
-            if len(ukat) > 0:
-                if pd.notna(ukat['Markup %'].iloc[0]): markup = float(ukat['Markup %'].iloc[0])
-                if 'Sammenligningspris %' in ukat.columns and pd.notna(ukat['Sammenligningspris %'].iloc[0]):
-                    compare_pct = float(ukat['Sammenligningspris %'].iloc[0])
-
-        # Hent eksisterende option-rækkefølge fra Shopify (on-demand)
-        existing_option_names = fetch_product_options(store, token, existing_handle)
-        if existing_option_names:
-            print(f"   📋 Options for {existing_handle}: {existing_option_names}")
-
-        for _, row in feed_rows.iterrows():
-            try:
-                sku = normalize_sku(row['SKU'])
-                cost_kr = float(row['B2B price'])
-                price = calculate_price(cost_kr * (1 + markup / 100), slutciffer)
-                c_price = ''
-                if compare_pct > 0:
-                    c_price = calculate_price(price / (1 - compare_pct / 100), slutciffer)
-
-                body_html_raw = clean_vidaxl(row.get('HTML_description', ''))
-                all_images = get_all_images(row)
-
-                weight = 0
-                if pd.notna(row.get('Weight')):
-                    try: weight = int(float(str(row['Weight']).replace(',', '.')) * 1000)
-                    except: pass
-
-                # Options — match Shopify rækkefølge
-                opts = variant_map.get(sku, {})
-
-                # Omdan til eksisterende rækkefølge
-                ordered_opts = []
-                if existing_option_names:
-                    for opt_name in existing_option_names:
-                        if opt_name in opts:
-                            ordered_opts.append((opt_name, opts[opt_name]))
-                    # Tilføj evt. nye options der ikke fandtes før
-                    for k, v in opts.items():
-                        if k not in existing_option_names:
-                            ordered_opts.append((k, v))
-                else:
-                    ordered_opts = list(opts.items())
-
-                merge_row = {
-                    'Handle': existing_handle,
-                    'Variant Command': 'MERGE',
-                    'Variant SKU': sku,
-                    'Variant Barcode': str(row.get('EAN', '')),
-                    'Variant Price': int(price),
-                    'Variant Compare At Price': int(c_price) if c_price else '',
-                    'Variant Cost': int(cost_kr),
-                    'Variant Weight': weight,
-                    'Variant Weight Unit': 'g',
-                    'Variant Inventory Tracker': 'shopify',
-                    'Variant Inventory Policy': 'deny',
-                    'Variant Inventory Qty': int(row.get('Stock', 0) or 0),
-                    'Variant Fulfillment Service': 'manual',
-                    'Variant Requires Shipping': 'TRUE',
-                    'Variant Taxable': 'TRUE',
-                    'Variant Image': all_images[0] if all_images else '',
-                    'Google Shopping / MPN': sku,
-                    'Google Shopping / Condition': 'new',
-                    'Variant Metafield: custom.sku [single_line_text_field]': sku,
-                    'Variant Metafield: custom.produktinfo [multi_line_text_field]': body_html_raw,
-                }
-
-                if all_images:
-                    merge_row['Variant Metafield: custom.variantbilleder [list.single_line_text_field]'] = ', '.join(all_images)
-
-                for i in range(1, 4):
-                    if i <= len(ordered_opts):
-                        merge_row[f'Option{i} Name'] = ordered_opts[i-1][0]
-                        merge_row[f'Option{i} Value'] = ordered_opts[i-1][1]
-                    else:
-                        merge_row[f'Option{i} Name'] = ''
-                        merge_row[f'Option{i} Value'] = ''
-
-                rows.append(merge_row)
-            except Exception as e:
-                print(f"   ⚠️ Merge fejl SKU {row.get('SKU','?')}: {str(e)[:100]}")
-                continue
-
-    return pd.DataFrame(rows) if rows else pd.DataFrame()
-
-# ============================================================
-# HOVEDPROCESSERING
-# ============================================================
+print(f"⚙️ Max grupper: {MAX_GROUPS}, Blød grænse: {MAX_VARIANTS_SOFT}, Hård: {MAX_VARIANTS_HARD}, Rækkefølge: {PRODUCT_ORDER}")
+print(f"⚙️ Max kombinationer per produkt: {MAX_COMBOS}")
 
 try:
     # 1. Hent data
@@ -965,22 +62,7 @@ try:
 
     # 2. Config
     print(f"\n📋 Læser config...")
-    config = pd.read_excel(CONFIG_PATH, sheet_name='Kategori_Config')
-    config['Markup %'] = pd.to_numeric(config['Markup %'], errors='coerce')
-    config['Slutciffer'] = pd.to_numeric(config['Slutciffer'], errors='coerce')
-    config['Sammenligningspris %'] = pd.to_numeric(config['Sammenligningspris %'], errors='coerce')
-
-    try:
-        underkat = pd.read_excel(CONFIG_PATH, sheet_name='Underkategori_Config')
-        if 'Markup %' in underkat.columns: underkat['Markup %'] = pd.to_numeric(underkat['Markup %'], errors='coerce')
-        if 'Sammenligningspris %' in underkat.columns: underkat['Sammenligningspris %'] = pd.to_numeric(underkat['Sammenligningspris %'], errors='coerce')
-    except: underkat = pd.DataFrame()
-
-    try:
-        rum_map = pd.read_excel(CONFIG_PATH, sheet_name='Rum_Mapping')
-        rum_dict = dict(zip(rum_map.iloc[:, 0], rum_map.iloc[:, 1]))
-    except: rum_dict = {}
-
+    config, underkat, rum_dict = load_config(CONFIG_PATH)
     aktive = config[config['Import?'] == 'JA']['Kategori_Config'].tolist()
     print(f"✅ Aktive kategorier: {', '.join(aktive)}")
 
@@ -1004,18 +86,31 @@ try:
 
     print(f"✅ {len(candidates):,} kandidater")
 
+    # Load eksisterende skipped liste (behold partial produkter)
+    skipped = {}
+    if os.path.exists(SKIPPED_PATH):
+        try:
+            with open(SKIPPED_PATH, 'r', encoding='utf-8') as f:
+                skipped = json.load(f)
+            # Fjern done produkter
+            skipped = {k: v for k, v in skipped.items() if v.get('status') != 'done'}
+            print(f"📋 {len(skipped)} eksisterende store produkter i skipped-listen")
+        except: skipped = {}
+
     if len(candidates) == 0:
         print("\n⚠️ INGEN NYE PRODUKTER!")
-        pd.DataFrame().to_excel('output/matrixify_create_new.xlsx', index=False, engine='openpyxl', sheet_name='Products')
-        pd.DataFrame().to_excel('output/matrixify_create_merge.xlsx', index=False, engine='openpyxl', sheet_name='Products')
+        save_xlsx(pd.DataFrame(), 'output/matrixify_create_new.xlsx')
+        save_xlsx(pd.DataFrame(), 'output/matrixify_create_merge.xlsx')
+        with open(COUNT_PATH, 'w') as f: f.write('0')
         sys.exit(0)
 
     # 4. Scrape og grupper
-    print(f"\n🔍 Scraper VidaXL...")
+    print(f"\n🔍 Scraper VidaXL (max {MAX_COMBOS} kombinationer)...")
     product_groups = []
     processed_skus = set()
     total_variants = 0
     scrape_count = 0
+    skipped_count = 0
 
     for _, row in candidates.iterrows():
         sku = normalize_sku(row['SKU'])
@@ -1024,17 +119,15 @@ try:
         if len(product_groups) >= MAX_GROUPS:
             print(f"   Max {MAX_GROUPS} grupper nået"); break
         if total_variants >= MAX_VARIANTS_SOFT:
-            print(f"   Blød variant-grænse nået ({total_variants} ≥ {MAX_VARIANTS_SOFT}) - tager ikke flere"); break
+            print(f"   Blød grænse nået ({total_variants} ≥ {MAX_VARIANTS_SOFT})"); break
 
         url = row.get('Link', '')
         if not validate_url(url):
             processed_skus.add(sku)
             product_groups.append({
                 'feed_rows': feed[feed['SKU'] == sku],
-                'variant_map': {sku: {}},
-                'options': {},
-                'existing_handle': None,
-                'is_merge': False
+                'variant_map': {sku: {}}, 'options': {},
+                'existing_handle': None, 'is_merge': False
             })
             total_variants += 1
             continue
@@ -1048,10 +141,8 @@ try:
             processed_skus.add(sku)
             product_groups.append({
                 'feed_rows': feed[feed['SKU'] == sku],
-                'variant_map': {sku: {}},
-                'options': {},
-                'existing_handle': None,
-                'is_merge': False
+                'variant_map': {sku: {}}, 'options': {},
+                'existing_handle': None, 'is_merge': False
             })
             total_variants += 1
             print(f"   → Single produkt")
@@ -1061,20 +152,46 @@ try:
         for on, od in scrape['options'].items():
             print(f"   {od['display_name']}: {len(od['values'])} værdier")
 
+        # Check antal kombinationer
+        num_combos = count_combinations(scrape['options'])
+        if num_combos >= MAX_COMBOS:
+            print(f"   ⏭️ SKIPPED: {num_combos} kombinationer → gemmes til stor kørsel")
+            skipped_count += 1
+
+            # Gem til skipped-listen (kun hvis ikke allerede der)
+            pid = scrape['master_pid']
+            if pid not in skipped:
+                skipped[pid] = {
+                    'status': 'pending',
+                    'handle': None,
+                    'url': url,
+                    'title': str(row.get('Title', '')),
+                    'master_pid': pid,
+                    'sku': sku,
+                    'num_combos': num_combos,
+                    'options': scrape['options'],
+                    'variant_map': None,
+                    'created_skus': [],
+                    'remaining_skus': None,
+                }
+
+            processed_skus.add(sku)
+            continue
+
+        # Normal scraping for små produkter
         variant_map = fetch_variant_skus(scrape['master_pid'], scrape['options'])
 
         if not variant_map:
             processed_skus.add(sku)
             product_groups.append({
                 'feed_rows': feed[feed['SKU'] == sku],
-                'variant_map': {sku: {}},
-                'options': {},
-                'existing_handle': None,
-                'is_merge': False
+                'variant_map': {sku: {}}, 'options': {},
+                'existing_handle': None, 'is_merge': False
             })
             total_variants += 1
             continue
 
+        # Kategoriser varianter
         new_skus = []
         existing_skus_in_group = []
         existing_handle_for_group = None
@@ -1084,10 +201,8 @@ try:
                 existing_skus_in_group.append(v_sku)
                 if not existing_handle_for_group:
                     existing_handle_for_group = sku_to_handle.get(v_sku)
-            elif v_sku in processed_skus:
-                continue
-            elif v_sku not in feed_by_sku:
-                continue
+            elif v_sku in processed_skus: continue
+            elif v_sku not in feed_by_sku: continue
             else:
                 fr = feed_by_sku[v_sku]
                 stock = float(fr.get('Stock', 0) or 0)
@@ -1096,17 +211,16 @@ try:
                     new_skus.append(v_sku)
 
         if not new_skus:
-            print(f"   → Ingen nye gyldige varianter")
+            print(f"   → Ingen nye varianter")
             processed_skus.add(sku)
             continue
 
         if total_variants + len(new_skus) > MAX_VARIANTS_HARD:
-            print(f"   → Overskriver hård grænse ({total_variants}+{len(new_skus)}>{MAX_VARIANTS_HARD}), springer over")
+            print(f"   → Over hård grænse ({total_variants}+{len(new_skus)}>{MAX_VARIANTS_HARD}), springer over")
             processed_skus.add(sku)
             continue
 
         is_merge = existing_handle_for_group is not None
-
         if is_merge:
             print(f"   → MERGE til: {existing_handle_for_group} ({len(existing_skus_in_group)} eksist., {len(new_skus)} nye)")
         else:
@@ -1114,51 +228,45 @@ try:
 
         group_feed = feed[feed['SKU'].isin(new_skus)].copy()
         new_variant_map = {s: variant_map[s] for s in new_skus if s in variant_map}
-
         for s in new_skus: processed_skus.add(s)
 
         product_groups.append({
-            'feed_rows': group_feed,
-            'variant_map': new_variant_map,
+            'feed_rows': group_feed, 'variant_map': new_variant_map,
             'options': scrape['options'],
-            'existing_handle': existing_handle_for_group,
-            'is_merge': is_merge
+            'existing_handle': existing_handle_for_group, 'is_merge': is_merge
         })
-
         total_variants += len(new_skus)
         print(f"   → {len(new_skus)} varianter (total: {total_variants})")
 
     merges = sum(1 for g in product_groups if g['is_merge'])
     news = len(product_groups) - merges
     print(f"\n✅ {scrape_count} sider, {len(product_groups)} grupper ({news} nye, {merges} merge), {total_variants} varianter")
+    print(f"   ⏭️ {skipped_count} produkter skipped (100+ kombos)")
 
-    # 5. Byg output-filer
+    # 5. Byg output
     print(f"\n📝 Genererer XLSX filer...")
+    df_new = build_new_products(product_groups, config, underkat, rum_dict, all_handles, feed)
+    save_xlsx(df_new, 'output/matrixify_create_new.xlsx')
+    print(f"   ✅ Nye: {len(df_new)} rækker")
 
-    # Nye produkter
-    df_new = build_new_products(product_groups, config, underkat, rum_dict, all_handles)
-    if len(df_new) > 0:
-        with pd.ExcelWriter('output/matrixify_create_new.xlsx', engine='openpyxl') as writer:
-            df_new.to_excel(writer, index=False, sheet_name='Products')
-        print(f"   ✅ Nye produkter: {len(df_new)} rækker")
-    else:
-        pd.DataFrame().to_excel('output/matrixify_create_new.xlsx', index=False, engine='openpyxl', sheet_name='Products')
-        print(f"   ⚠️ Ingen nye produkter")
+    df_merge = build_merge_variants(product_groups, config, underkat, SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, feed)
+    save_xlsx(df_merge, 'output/matrixify_create_merge.xlsx')
+    print(f"   ✅ Merge: {len(df_merge)} rækker")
 
-    # Merge varianter
-    df_merge = build_merge_variants(product_groups, config, underkat, SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN)
-    if len(df_merge) > 0:
-        with pd.ExcelWriter('output/matrixify_create_merge.xlsx', engine='openpyxl') as writer:
-            df_merge.to_excel(writer, index=False, sheet_name='Products')
-        print(f"   ✅ Merge varianter: {len(df_merge)} rækker")
-    else:
-        pd.DataFrame().to_excel('output/matrixify_create_merge.xlsx', index=False, engine='openpyxl', sheet_name='Products')
-        print(f"   ⚠️ Ingen merge varianter")
+    # 6. Gem variant count og skipped liste
+    with open(COUNT_PATH, 'w') as f:
+        f.write(str(total_variants))
+    print(f"   💾 Variant count: {total_variants} → {COUNT_PATH}")
+
+    with open(SKIPPED_PATH, 'w', encoding='utf-8') as f:
+        json.dump(skipped, f, ensure_ascii=False, indent=2)
+    print(f"   💾 Skipped liste: {len(skipped)} produkter → {SKIPPED_PATH}")
 
     print(f"\n✅ SUCCESS!")
-    print(f"📊 Nye produkter: {news} grupper, {len(df_new)} rækker")
+    print(f"📊 Nye: {news} grupper, {len(df_new)} rækker")
     print(f"📊 Merge: {merges} grupper, {len(df_merge)} rækker")
-    print(f"📊 Total varianter: {total_variants}")
+    print(f"📊 Varianter: {total_variants}")
+    print(f"📊 Skipped (store): {len(skipped)}")
 
     gh = os.environ.get('GITHUB_OUTPUT', '')
     if gh:
@@ -1169,6 +277,7 @@ try:
             f.write(f"merge_rows={len(df_merge)}\n")
             f.write(f"merge_count={merges}\n")
             f.write(f"new_count={news}\n")
+            f.write(f"skipped_count={len(skipped)}\n")
 
 except Exception as e:
     print(f"\n❌ FATAL: {e}")
