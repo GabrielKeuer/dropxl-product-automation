@@ -176,111 +176,207 @@ def clean_title_from_options(title, option_values):
 
 def format_body_html(html_description):
     """
-    Split HTML_description i Beskrivelse og Produktinfo med h4 headers.
+    Split HTML_description i Beskrivelse og ProduktInfo med h4 headers.
+    Håndterer både plain text med * bullets og pre-formateret HTML.
     Splitpunkt: første bullet der er en kort spec (key: kort_værdi).
     """
     if pd.isna(html_description) or not html_description:
         return ''
 
     text = clean_vidaxl(str(html_description))
+
+    # Detect om det allerede er HTML eller plain text
+    has_html_tags = bool(re.search(r'<[a-z]', text, re.IGNORECASE))
+
+    if has_html_tags:
+        # Pre-formateret HTML — parse med BeautifulSoup
+        return _format_html_content(text)
+    else:
+        # Plain text med * bullets
+        return _format_plain_content(text)
+
+
+def _is_spec_bullet(bullet_text):
+    """Check om en bullet er en spec (kort key: value) vs beskrivelse (lang tekst)"""
+    if ':' not in bullet_text:
+        return False
+    parts = bullet_text.split(':', 1)
+    key = parts[0].strip()
+    value = parts[1].strip() if len(parts) > 1 else ''
+
+    # Spec: key er kort, value er kort, ingen punktum i value
+    # Beskrivelse: lang value med fuld sætning
+    if len(key) > 40:
+        return False
+    if len(value) > 80:
+        return False
+    if '.' in value and len(value) > 30:
+        return False
+    return True
+
+
+def _is_warning_text(text):
+    """Check om tekst er en advarsel/GPSR der skal fjernes"""
+    lower = text.lower().strip()
+    return any(w in lower for w in [
+        'advarsel', 'gpsr', 'beskyttelsesudstyr skal',
+        'må ikke bruges i trafikken', 'legal document',
+        'ikke egnet til børn under'
+    ])
+
+
+def _format_plain_content(text):
+    """Formater plain text med * bullets til HTML med h4 headers"""
     lines = text.split('\n')
 
-    beskrivelse_lines = []
-    produktinfo_lines = []
+    beskrivelse_parts = []
+    produktinfo_items = []
     found_split = False
+    current_paragraph = []
 
     for line in lines:
         stripped = line.strip()
         if not stripped:
-            if not found_split:
-                beskrivelse_lines.append('')
+            # Tom linje — afslut paragraf
+            if current_paragraph and not found_split:
+                beskrivelse_parts.append(' '.join(current_paragraph))
+                current_paragraph = []
             continue
 
-        # Check om det er en bullet
         is_bullet = stripped.startswith('* ') or stripped.startswith('- ')
 
-        if is_bullet and not found_split:
+        if is_bullet:
             bullet_text = stripped[2:].strip()
 
-            # Check om det er en spec-bullet (kort key: value)
-            if ':' in bullet_text:
-                parts = bullet_text.split(':', 1)
-                key = parts[0].strip()
-                value = parts[1].strip() if len(parts) > 1 else ''
+            if not found_split and _is_spec_bullet(bullet_text):
+                # Første spec-bullet fundet — flush paragraf
+                if current_paragraph:
+                    beskrivelse_parts.append(' '.join(current_paragraph))
+                    current_paragraph = []
+                found_split = True
 
-                # Spec-bullet: value er kort (< 80 tegn), ingen punktum i value
-                # og key er kort (< 40 tegn)
-                is_spec = (
-                    len(value) < 80 and
-                    '.' not in value and
-                    len(key) < 40
-                )
-
-                if is_spec:
-                    found_split = True
-                    produktinfo_lines.append(bullet_text)
-                    continue
-
-            # Lang beskrivende bullet — behold i beskrivelse
-            beskrivelse_lines.append(stripped)
-        elif found_split:
-            if is_bullet:
-                bullet_text = stripped[2:].strip()
-                if bullet_text:  # Skip tomme bullets
-                    produktinfo_lines.append(bullet_text)
+            if found_split:
+                # Skip advarsler og tomme bullets
+                if bullet_text and not _is_warning_text(bullet_text):
+                    produktinfo_items.append(bullet_text)
             else:
-                # Tekst efter specs (advarsler, GPSR) — fjern
-                # Check om det ligner en advarsel
-                lower = stripped.lower()
-                if any(w in lower for w in ['advarsel', 'gpsr', 'beskyttelsesudstyr', 'ikke egnet']):
-                    continue  # Skip advarsler
-                # Ellers tilføj til produktinfo
-                produktinfo_lines.append(stripped)
+                # Beskrivende bullet — tilføj som del af beskrivelse
+                if current_paragraph:
+                    beskrivelse_parts.append(' '.join(current_paragraph))
+                    current_paragraph = []
+                beskrivelse_parts.append(bullet_text)
         else:
-            beskrivelse_lines.append(stripped)
+            if found_split:
+                # Tekst efter specs — skip advarsler
+                if not _is_warning_text(stripped):
+                    produktinfo_items.append(stripped)
+            else:
+                current_paragraph.append(stripped)
+
+    # Flush remaining paragraph
+    if current_paragraph and not found_split:
+        beskrivelse_parts.append(' '.join(current_paragraph))
 
     # Byg HTML
     html_parts = []
 
-    # Beskrivelse
-    besk_text = '\n'.join(beskrivelse_lines).strip()
-    if besk_text:
+    if beskrivelse_parts:
         html_parts.append('<h4>Beskrivelse</h4>')
-        # Split i paragraffer ved dobbelt linjeskift
-        paragraphs = re.split(r'\n\s*\n', besk_text)
-        for p in paragraphs:
-            p = p.strip()
-            if not p: continue
-            # Check om det er bullets
-            if p.startswith('* ') or p.startswith('- '):
-                bullet_lines = [l.strip()[2:].strip() for l in p.split('\n') if l.strip().startswith(('* ', '- '))]
-                html_parts.append('<ul>')
-                for bl in bullet_lines:
-                    if bl:
-                        html_parts.append(f'<li>{bl}</li>')
-                html_parts.append('</ul>')
-            else:
-                # Normal paragraf
-                clean_p = p.replace('\n', ' ').strip()
-                if clean_p:
-                    html_parts.append(f'<p>{clean_p}</p>')
+        for part in beskrivelse_parts:
+            if part.strip():
+                html_parts.append(f'<p>{part.strip()}</p>')
 
-    # Produktinfo
-    if produktinfo_lines:
-        html_parts.append('<h4>Produktinfo</h4>')
+    if produktinfo_items:
+        html_parts.append('<h4>ProduktInfo</h4>')
         html_parts.append('<ul>')
-        for item in produktinfo_lines:
+        for item in produktinfo_items:
             if item.strip():
                 html_parts.append(f'<li>{item.strip()}</li>')
         html_parts.append('</ul>')
 
     result = '\n'.join(html_parts)
+    return result if result.strip() else f'<p>{text}</p>'
 
-    # Fallback: hvis vi ikke fandt noget, returner original (cleansed)
-    if not result.strip():
-        return f'<p>{text}</p>'
 
-    return result
+def _format_html_content(text):
+    """Formater pre-formateret HTML til at have h4 headers"""
+    soup = BeautifulSoup(text, 'html.parser')
+
+    beskrivelse_elems = []
+    produktinfo_items = []
+    found_split = False
+
+    # Gennemgå alle top-level elementer
+    for elem in soup.children:
+        if isinstance(elem, str):
+            stripped = elem.strip()
+            if stripped and not _is_warning_text(stripped):
+                if not found_split:
+                    beskrivelse_elems.append(f'<p>{stripped}</p>')
+            continue
+
+        tag_name = elem.name if elem.name else ''
+
+        if tag_name == 'ul':
+            # Check om det er spec-bullets eller beskrivelse-bullets
+            li_items = elem.find_all('li')
+            is_spec_list = False
+
+            for li in li_items:
+                li_text = li.get_text(strip=True)
+                if _is_spec_bullet(li_text):
+                    is_spec_list = True
+                    break
+
+            if is_spec_list and not found_split:
+                found_split = True
+
+            if found_split:
+                for li in li_items:
+                    li_text = li.get_text(strip=True)
+                    if li_text and not _is_warning_text(li_text):
+                        # Bevar bold formatting
+                        li_html = str(li)
+                        # Udtræk indhold af <li> tags
+                        inner = re.sub(r'^<li[^>]*>', '', li_html)
+                        inner = re.sub(r'</li>$', '', inner).strip()
+                        if inner:
+                            produktinfo_items.append(inner)
+            else:
+                beskrivelse_elems.append(str(elem))
+        elif tag_name == 'p':
+            p_text = elem.get_text(strip=True)
+            if not p_text:
+                continue
+            if _is_warning_text(p_text):
+                continue
+            if not found_split:
+                beskrivelse_elems.append(str(elem))
+        elif tag_name in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
+            if not found_split:
+                beskrivelse_elems.append(str(elem))
+        else:
+            if not found_split:
+                elem_text = elem.get_text(strip=True) if hasattr(elem, 'get_text') else str(elem).strip()
+                if elem_text and not _is_warning_text(elem_text):
+                    beskrivelse_elems.append(str(elem))
+
+    # Byg resultat
+    html_parts = []
+
+    if beskrivelse_elems:
+        html_parts.append('<h4>Beskrivelse</h4>')
+        html_parts.extend(beskrivelse_elems)
+
+    if produktinfo_items:
+        html_parts.append('<h4>ProduktInfo</h4>')
+        html_parts.append('<ul>')
+        for item in produktinfo_items:
+            html_parts.append(f'<li>{item}</li>')
+        html_parts.append('</ul>')
+
+    result = '\n'.join(html_parts)
+    return result if result.strip() else text
 
 # ============================================================
 # DATA HENTNING
@@ -643,7 +739,8 @@ def build_new_products(product_groups, config, underkat_config, rum_dict, existi
                         product_row[f'Option{i} Value'] = ''
 
                 if not is_first:
-                    product_row['Variant Metafield: custom.produktinfo [multi_line_text_field]'] = body_html
+                    raw_html = clean_vidaxl(row.get('HTML_description', ''))
+                    product_row['Variant Metafield: custom.produktinfo [multi_line_text_field]'] = raw_html
                     if all_images:
                         product_row['Variant Metafield: custom.variantbilleder [list.single_line_text_field]'] = ', '.join(all_images)
 
@@ -717,7 +814,7 @@ def build_merge_variants(product_groups, config, underkat_config, handle_to_opti
                 if compare_pct > 0:
                     c_price = calculate_price(price / (1 - compare_pct / 100), slutciffer)
 
-                body_html = format_body_html(row.get('HTML_description', ''))
+                body_html_raw = clean_vidaxl(row.get('HTML_description', ''))
                 all_images = get_all_images(row)
 
                 weight = 0
@@ -761,7 +858,7 @@ def build_merge_variants(product_groups, config, underkat_config, handle_to_opti
                     'Google Shopping / MPN': sku,
                     'Google Shopping / Condition': 'new',
                     'Variant Metafield: custom.sku [single_line_text_field]': sku,
-                    'Variant Metafield: custom.produktinfo [multi_line_text_field]': body_html,
+                    'Variant Metafield: custom.produktinfo [multi_line_text_field]': body_html_raw,
                 }
 
                 if all_images:
