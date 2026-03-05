@@ -2,63 +2,63 @@ name: Daglig Produkt Sletning
 
 on:
   schedule:
-    - cron: '10 4 * * *'  # Kl. 04:10 UTC (05:10/06:10 dansk tid)
-  workflow_dispatch:  # Manuel trigger fra GitHub UI
+    - cron: '10 4 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: write
   issues: write
 
 jobs:
-  # ============================================================
-  # JOB 1: Analyser og generer slettefil
-  # ============================================================
-  analyze:
+  check-toggle:
     runs-on: ubuntu-latest
     outputs:
-      delete_count: ${{ steps.run_script.outputs.delete_count }}
-      needs_approval: ${{ steps.run_script.outputs.needs_approval }}
-      feed_count: ${{ steps.run_script.outputs.feed_count }}
-      shopify_count: ${{ steps.run_script.outputs.shopify_count }}
-
+      enabled: ${{ steps.check.outputs.enabled }}
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - name: Check automation toggle
+        id: check
+        run: |
+          ENABLED="${{ vars.AUTOMATION_ENABLED || 'true' }}"
+          echo "enabled=$ENABLED" >> $GITHUB_OUTPUT
+          if [ "$ENABLED" != "true" ]; then
+            echo "⚠️ Automation er slået fra (AUTOMATION_ENABLED=$ENABLED)"
+          fi
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+  analyze:
+    needs: check-toggle
+    if: needs.check-toggle.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      delete_count: ${{ steps.run.outputs.delete_count }}
+      needs_approval: ${{ steps.run.outputs.needs_approval }}
+      feed_count: ${{ steps.run.outputs.feed_count }}
+      shopify_count: ${{ steps.run.outputs.shopify_count }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Installer dependencies
-        run: pip install pandas requests openpyxl
-
+      - run: pip install pandas requests openpyxl
       - name: Kør slette-analyse
-        id: run_script
+        id: run
         env:
           FEED_URL: ${{ vars.FEED_URL }}
           SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
           SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
           DELETE_THRESHOLD: ${{ vars.DELETE_THRESHOLD || '1000' }}
         run: python scripts/delete_products.py
-
-      - name: Upload slettefil som artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: delete-file
           path: output/matrixify_delete.csv
           retention-days: 30
 
-  # ============================================================
-  # JOB 2: Godkendelse (kun hvis over threshold)
-  # ============================================================
   approval:
     needs: analyze
     if: needs.analyze.outputs.needs_approval == 'true'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Vent på manuel godkendelse
+      - name: Vent på godkendelse
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ github.TOKEN }}
@@ -66,23 +66,16 @@ jobs:
           minimum-approvals: 1
           issue-title: "⚠️ Sletning af ${{ needs.analyze.outputs.delete_count }} produkter kræver godkendelse"
           issue-body: |
-            ## Daglig sletning - Threshold overskredet
+            ## Threshold overskredet
 
             | Metric | Værdi |
             |--------|-------|
-            | Feed produkter | ${{ needs.analyze.outputs.feed_count }} |
-            | Shopify produkter | ${{ needs.analyze.outputs.shopify_count }} |
-            | **Skal slettes** | **${{ needs.analyze.outputs.delete_count }}** |
-            | Threshold | ${{ vars.DELETE_THRESHOLD || '1000' }} |
+            | Feed | ${{ needs.analyze.outputs.feed_count }} |
+            | Shopify | ${{ needs.analyze.outputs.shopify_count }} |
+            | **Slettes** | **${{ needs.analyze.outputs.delete_count }}** |
 
-            ---
+            Kommenter `approved` eller `denied`.
 
-            **Kommenter `approved` for at godkende sletningen.**
-            **Kommenter `denied` for at afvise.**
-
-  # ============================================================
-  # JOB 3: Deploy (auto hvis under threshold, efter approval hvis over)
-  # ============================================================
   deploy:
     needs: [analyze, approval]
     if: |
@@ -91,18 +84,13 @@ jobs:
       needs.analyze.outputs.delete_count != '0' &&
       (needs.approval.result == 'success' || needs.approval.result == 'skipped')
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Download slettefil
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
           name: delete-file
           path: output/
-
-      - name: Commit og push slettefil
+      - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -111,27 +99,20 @@ jobs:
           git commit -m "🗑️ Sletning: ${{ needs.analyze.outputs.delete_count }} produkter ($(date +%Y-%m-%d))"
           git push
 
-  # ============================================================
-  # JOB 4: Status summary
-  # ============================================================
   notify:
-    needs: [analyze, deploy]
+    needs: [check-toggle, analyze, deploy]
     if: always()
     runs-on: ubuntu-latest
-
     steps:
-      - name: Status summary
+      - name: Summary
         run: |
-          echo "## 📊 Daglig Sletning Status" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Værdi |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Feed produkter | ${{ needs.analyze.outputs.feed_count }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Shopify produkter | ${{ needs.analyze.outputs.shopify_count }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Slettes** | **${{ needs.analyze.outputs.delete_count }}** |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ needs.analyze.outputs.needs_approval }}" == "true" ]; then
-            echo "⚠️ **OVER THRESHOLD** - Godkendelse påkrævet via issue" >> $GITHUB_STEP_SUMMARY
+          echo "## 🗑️ Daglig Sletning" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.check-toggle.outputs.enabled }}" != "true" ]; then
+            echo "⏸️ **Automation slået fra**" >> $GITHUB_STEP_SUMMARY
           else
-            echo "✅ Under threshold - kørte automatisk" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Værdi |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Feed | ${{ needs.analyze.outputs.feed_count }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Shopify | ${{ needs.analyze.outputs.shopify_count }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Slettes** | **${{ needs.analyze.outputs.delete_count }}** |" >> $GITHUB_STEP_SUMMARY
           fi
