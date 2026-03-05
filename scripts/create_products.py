@@ -21,7 +21,8 @@ FEED_URL = os.environ.get('FEED_URL', '')
 SHOPIFY_STORE = os.environ.get('SHOPIFY_STORE', '')
 SHOPIFY_ACCESS_TOKEN = os.environ.get('SHOPIFY_ACCESS_TOKEN', '')
 MAX_GROUPS = int(os.environ.get('MAX_PRODUCTS_PER_RUN', '999'))
-MAX_VARIANTS = int(os.environ.get('MAX_VARIANTS_PER_RUN', '999'))
+MAX_VARIANTS_SOFT = int(os.environ.get('MAX_VARIANTS_PER_RUN', '999'))
+MAX_VARIANTS_HARD = 999
 MIN_STOCK_PRIMARY = 20
 MIN_STOCK_VARIANT = 4
 PRODUCT_ORDER = os.environ.get('PRODUCT_ORDER', 'newest')
@@ -41,7 +42,7 @@ if missing:
     print(f"❌ Manglende: {', '.join(missing)}")
     sys.exit(1)
 
-print(f"⚙️ Max grupper: {MAX_GROUPS}, Max varianter: {MAX_VARIANTS}, Rækkefølge: {PRODUCT_ORDER}")
+print(f"⚙️ Max grupper: {MAX_GROUPS}, Blød variant-grænse: {MAX_VARIANTS_SOFT}, Hård grænse: {MAX_VARIANTS_HARD}, Rækkefølge: {PRODUCT_ORDER}")
 
 # ============================================================
 # HJÆLPEFUNKTIONER
@@ -508,6 +509,10 @@ def scrape_vidaxl(url):
         for elem in all_action_elems:
             action_url = elem.get('data-action-url', '')
             attr_value = elem.get('data-attr-value', '')
+
+            if not attr_value:
+                continue
+
             display_value = (
                 elem.get('data-display-value', '') or
                 elem.get('aria-label', '') or
@@ -515,13 +520,26 @@ def scrape_vidaxl(url):
                 attr_value.replace('_', ' ')
             )
 
+            # Find hvilken attribut dette element kontrollerer
+            # ved at matche data-attr-value mod URL-værdier
             dwvar_matches = re.findall(r'dwvar_[^_]+_(\w+)=([^&]*)', action_url)
+            controlled_attr = None
+
             for attr_name, url_value in dwvar_matches:
-                if attr_name == 'color': continue
-                if attr_name not in other_options:
-                    other_options[attr_name] = []
-                if attr_value and not any(e['value'] == attr_value for e in other_options[attr_name]):
-                    other_options[attr_name].append({'value': attr_value, 'display': display_value.strip()})
+                if attr_name == 'color':
+                    continue
+                # Elementet kontrollerer den attribut hvor URL-værdien matcher data-attr-value
+                if url_value == attr_value:
+                    controlled_attr = attr_name
+                    break
+
+            if not controlled_attr:
+                continue
+
+            if controlled_attr not in other_options:
+                other_options[controlled_attr] = []
+            if not any(e['value'] == attr_value for e in other_options[controlled_attr]):
+                other_options[controlled_attr].append({'value': attr_value, 'display': display_value.strip()})
 
         for attr_name, values in other_options.items():
             display_name = attr_name
@@ -959,8 +977,8 @@ try:
 
         if len(product_groups) >= MAX_GROUPS:
             print(f"   Max {MAX_GROUPS} grupper nået"); break
-        if total_variants >= MAX_VARIANTS:
-            print(f"   Max {MAX_VARIANTS} varianter nået"); break
+        if total_variants >= MAX_VARIANTS_SOFT:
+            print(f"   Blød variant-grænse nået ({total_variants} ≥ {MAX_VARIANTS_SOFT}) - tager ikke flere"); break
 
         url = row.get('Link', '')
         if not validate_url(url):
@@ -1036,9 +1054,10 @@ try:
             processed_skus.add(sku)
             continue
 
-        if total_variants + len(new_skus) > MAX_VARIANTS:
-            print(f"   → Overskriver variant-cap ({total_variants}+{len(new_skus)}>{MAX_VARIANTS})")
-            break
+        if total_variants + len(new_skus) > MAX_VARIANTS_HARD:
+            print(f"   → Overskriver hård grænse ({total_variants}+{len(new_skus)}>{MAX_VARIANTS_HARD}), springer over")
+            processed_skus.add(sku)
+            continue
 
         is_merge = existing_handle_for_group is not None
 
