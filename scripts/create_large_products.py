@@ -156,10 +156,12 @@ try:
 
             # Check om der er eksisterende varianter (merge?)
             existing_handle = None
+            existing_skus_for_group = []
             for v_sku in variant_map.keys():
                 if v_sku in shopify_skus:
-                    existing_handle = sku_to_handle.get(v_sku)
-                    if existing_handle: break
+                    existing_skus_for_group.append(v_sku)
+                    if not existing_handle:
+                        existing_handle = sku_to_handle.get(v_sku)
 
             print(f"   {len(valid_skus)} gyldige varianter")
 
@@ -189,7 +191,9 @@ try:
                     'variant_map': take_variant_map,
                     'options': item.get('options', {}),
                     'existing_handle': existing_handle,
-                    'is_merge': True
+                    'is_merge': True,
+                    'existing_skus': existing_skus_for_group,
+                    'all_variant_map': variant_map
                 })
             else:
                 # Nyt produkt
@@ -198,7 +202,9 @@ try:
                     'variant_map': take_variant_map,
                     'options': item.get('options', {}),
                     'existing_handle': None,
-                    'is_merge': False
+                    'is_merge': False,
+                    'existing_skus': [],
+                    'all_variant_map': {}
                 })
 
             total_variants += len(take_skus)
@@ -250,12 +256,17 @@ try:
 
             take_variant_map = {s: variant_map[s] for s in take_skus if s in variant_map}
 
+            # Eksisterende SKUs = dem der allerede er i Shopify fra denne gruppe
+            existing_in_shopify = [s for s in item.get('created_skus', []) if s in shopify_skus]
+
             product_groups.append({
                 'feed_rows': feed[feed['SKU'].isin(take_skus)],
                 'variant_map': take_variant_map,
                 'options': item.get('options', {}),
                 'existing_handle': handle,
-                'is_merge': True
+                'is_merge': True,
+                'existing_skus': existing_in_shopify,
+                'all_variant_map': variant_map
             })
 
             total_variants += len(take_skus)
