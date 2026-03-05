@@ -122,25 +122,29 @@ def clean_title_from_options(title, option_values):
 
         # Whole-word matching med \b for at undgå substring-matches
         # "Sort" matcher ikke inde i "Sortiment", "1" matcher ikke inde i "105"
-        pattern = re.compile(r'\b' + re.escape(opt_str) + r'\b', re.IGNORECASE)
-        if pattern.search(title):
+        if opt_str.isdigit():
+            # For tal: fjern tallet + evt. klæbeord direkte efter (f.eks. "6 sæt", "4 stk.")
+            sticky_words = [s.rstrip('.') for s in STICKY_AFTER_NUMBER]
+            sticky_pattern = '|'.join(re.escape(s) for s in sticky_words)
+            pattern = re.compile(
+                r'\b' + re.escape(opt_str) + r'(?:\s+(?:' + sticky_pattern + r')\.?)?(?=\s|$)',
+                re.IGNORECASE
+            )
             title = pattern.sub(' ', title)
         else:
-            # Fuzzy fallback: "X og Y" → match "X og [noget]"
-            og_match = re.match(r'^(.+?)\s+og\s+(.+)$', opt_str, re.IGNORECASE)
-            if og_match:
-                prefix = og_match.group(1).strip()
-                fuzzy_pattern = re.compile(
-                    r'\b' + re.escape(prefix) + r'\s+og\s+\S+\b',
-                    re.IGNORECASE
-                )
-                title = fuzzy_pattern.sub(' ', title)
-
-        # Hvis fjernet var et tal → fjern klæbeord
-        if opt_str.isdigit():
-            words = title.split()
-            cleaned = [w for w in words if w.lower().rstrip('.,') not in STICKY_AFTER_NUMBER]
-            title = ' '.join(cleaned)
+            pattern = re.compile(r'\b' + re.escape(opt_str) + r'\b', re.IGNORECASE)
+            if pattern.search(title):
+                title = pattern.sub(' ', title)
+            else:
+                # Fuzzy fallback: "X og Y" → match "X og [noget]"
+                og_match = re.match(r'^(.+?)\s+og\s+(.+)$', opt_str, re.IGNORECASE)
+                if og_match:
+                    prefix = og_match.group(1).strip()
+                    fuzzy_pattern = re.compile(
+                        r'\b' + re.escape(prefix) + r'\s+og\s+\S+\b',
+                        re.IGNORECASE
+                    )
+                    title = fuzzy_pattern.sub(' ', title)
 
     # Fjern kun standalone x der IKKE står mellem tal (bevarer "56 x 54" og "Faux")
     title = re.sub(r'(?<!\d)\s+[xX]\s+(?!\d)', ' ', title)
