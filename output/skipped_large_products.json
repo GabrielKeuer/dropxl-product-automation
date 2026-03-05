@@ -1,0 +1,344 @@
+{
+  "M3017250": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLBoxspringsengmedmadrasGråbrun100x200cmStof/8721158225382.html",
+    "title": "vidaXL Box spring seng med madras Gråbrun 100 x 200 cm Stof",
+    "master_pid": "M3017250",
+    "sku": "3340491",
+    "num_combos": 560,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Plain_with_nails",
+            "display": "Ensfarvet med søm"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Horizontal_stripes",
+            "display": "vandrette striber"
+          },
+          {
+            "value": "Vertical_stripes",
+            "display": "Lodrette striber"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          },
+          {
+            "value": "Button_tufted",
+            "display": "Knap tuftet"
+          },
+          {
+            "value": "Diamond_blocks_design",
+            "display": "Diamant blokke design"
+          },
+          {
+            "value": "Diamond_block_design",
+            "display": "Diamant blok design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3049899": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLRygpudeMørkegrå60x50cmVelourstof/8721288950345.html",
+    "title": "vidaXL Rygpude Mørkegrå 60 x 50 cm Velourstof",
+    "master_pid": "M3049899",
+    "sku": "42014676",
+    "num_combos": 104,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Light_green",
+            "display": "Lysegrøn"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          },
+          {
+            "value": "Wine_red",
+            "display": "Vinrød"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Yellow",
+            "display": "Gul"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Sea_green",
+            "display": "havgrøn"
+          },
+          {
+            "value": "Police_blue",
+            "display": "Politi blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "50_x_45_cm",
+            "display": "50 x 45 cm"
+          },
+          {
+            "value": "80_x_50_cm",
+            "display": "80 x 50 cm"
+          },
+          {
+            "value": "100_x_50_cm",
+            "display": "100 x 50 cm"
+          },
+          {
+            "value": "120_x_50_cm",
+            "display": "120 x 50 cm"
+          },
+          {
+            "value": "140_x_50_cm",
+            "display": "140 x 50 cm"
+          },
+          {
+            "value": "160_x_50_cm",
+            "display": "160 x 50 cm"
+          },
+          {
+            "value": "180_x_50_cm",
+            "display": "180 x 50 cm"
+          },
+          {
+            "value": "200_x_50_cm",
+            "display": "200 x 50 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3038797": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-120x200-cm-flojl-lysegra/8721102771989.html",
+    "title": "vidaXL kontinentalseng 120x200 cm fløjl lysegrå",
+    "master_pid": "M3038797",
+    "sku": "3292316",
+    "num_combos": 180,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
