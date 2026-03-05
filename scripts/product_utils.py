@@ -706,8 +706,60 @@ def build_new_products(product_groups, config, underkat, rum_dict, existing_hand
 # MATRIXIFY OUTPUT — MERGE VARIANTER
 # ============================================================
 
+def _build_merge_row(handle, sku, row, ordered_opts, markup, slutciffer, compare_pct):
+    """Byg én merge-række fra feed-data"""
+    cost_kr = float(row['B2B price'])
+    price = calculate_price(cost_kr * (1 + markup / 100), slutciffer)
+    c_price = ''
+    if compare_pct > 0:
+        c_price = calculate_price(price / (1 - compare_pct / 100), slutciffer)
+
+    raw_html = clean_vidaxl(row.get('HTML_description', ''))
+    all_images = get_all_images(row)
+
+    weight = 0
+    if pd.notna(row.get('Weight')):
+        try: weight = int(float(str(row['Weight']).replace(',', '.')) * 1000)
+        except: pass
+
+    merge_row = {
+        'Handle': handle, 'Variant Command': 'MERGE',
+        'Variant SKU': sku, 'Variant Barcode': str(row.get('EAN', '')),
+        'Variant Price': int(price),
+        'Variant Compare At Price': int(c_price) if c_price else '',
+        'Variant Cost': int(cost_kr),
+        'Variant Weight': weight, 'Variant Weight Unit': 'g',
+        'Variant Inventory Tracker': 'shopify', 'Variant Inventory Policy': 'deny',
+        'Variant Inventory Qty': int(row.get('Stock', 0) or 0),
+        'Variant Fulfillment Service': 'manual',
+        'Variant Requires Shipping': 'TRUE', 'Variant Taxable': 'TRUE',
+        'Variant Image': all_images[0] if all_images else '',
+        'Google Shopping / MPN': sku, 'Google Shopping / Condition': 'new',
+        'Variant Metafield: custom.sku [single_line_text_field]': sku,
+        'Variant Metafield: custom.produktinfo [multi_line_text_field]': raw_html,
+    }
+    if all_images:
+        merge_row['Variant Metafield: custom.variantbilleder [list.single_line_text_field]'] = ', '.join(all_images)
+
+    for i in range(1, 4):
+        if i <= len(ordered_opts):
+            merge_row[f'Option{i} Name'] = ordered_opts[i-1][0]
+            merge_row[f'Option{i} Value'] = ordered_opts[i-1][1]
+        else:
+            merge_row[f'Option{i} Name'] = ''
+            merge_row[f'Option{i} Value'] = ''
+
+    return merge_row
+
+
 def build_merge_variants(product_groups, config, underkat, store, token, feed):
     rows = []
+
+    # Byg feed lookup
+    feed_by_sku = {}
+    for _, r in feed.iterrows():
+        s = normalize_sku(r['SKU'])
+        if s and s not in feed_by_sku: feed_by_sku[s] = r
 
     for group in product_groups:
         if not group.get('is_merge', False): continue
@@ -717,70 +769,68 @@ def build_merge_variants(product_groups, config, underkat, store, token, feed):
             feed_rows = feed[feed['SKU'].isin(feed_rows)]
         variant_map = group['variant_map']
         existing_handle = group['existing_handle']
+        existing_skus = group.get('existing_skus', [])
+        all_variant_map = group.get('all_variant_map', {})
 
         if len(feed_rows) == 0 or not existing_handle: continue
 
         first = feed_rows.iloc[0]
         markup, slutciffer, compare_pct = get_pricing(first, config, underkat)
 
+        # Hent eksisterende options fra Shopify
         existing_option_names = fetch_product_options(store, token, existing_handle)
         if existing_option_names:
             print(f"   📋 Options for {existing_handle}: {existing_option_names}")
 
+        # Check om nye varianter har options der ikke findes på produktet
+        new_option_names = set()
+        for opts in variant_map.values():
+            new_option_names.update(opts.keys())
+
+        needs_option_update = bool(new_option_names - set(existing_option_names)) if existing_option_names else False
+
+        if needs_option_update:
+            missing_opts = new_option_names - set(existing_option_names)
+            print(f"   🔄 Nye options nødvendige: {missing_opts} → inkluderer eksisterende varianter")
+
+        # Hjælper: byg ordered options fra variant_map entry
+        def order_opts(opts):
+            ordered = []
+            if existing_option_names:
+                for opt_name in existing_option_names:
+                    if opt_name in opts: ordered.append((opt_name, opts[opt_name]))
+                for k, v in opts.items():
+                    if k not in existing_option_names: ordered.append((k, v))
+            else:
+                ordered = list(opts.items())
+            return ordered
+
+        # 1. Hvis nye options → inkludér eksisterende varianter med feed-data
+        if needs_option_update and existing_skus:
+            for ex_sku in existing_skus:
+                try:
+                    # Hent feed-data
+                    if ex_sku not in feed_by_sku: continue
+                    ex_row = feed_by_sku[ex_sku]
+
+                    # Hent options fra all_variant_map (scraped data)
+                    ex_opts = all_variant_map.get(ex_sku, {})
+                    if not ex_opts: continue
+
+                    ordered = order_opts(ex_opts)
+                    merge_row = _build_merge_row(existing_handle, ex_sku, ex_row, ordered, markup, slutciffer, compare_pct)
+                    rows.append(merge_row)
+                    print(f"   📝 Eksisterende variant {ex_sku} opdateret med nye options")
+                except Exception as e:
+                    print(f"   ⚠️ Fejl eksist. SKU {ex_sku}: {str(e)[:100]}")
+
+        # 2. Nye varianter (som altid)
         for _, row in feed_rows.iterrows():
             try:
                 sku = normalize_sku(row['SKU'])
-                cost_kr = float(row['B2B price'])
-                price = calculate_price(cost_kr * (1 + markup / 100), slutciffer)
-                c_price = ''
-                if compare_pct > 0:
-                    c_price = calculate_price(price / (1 - compare_pct / 100), slutciffer)
-
-                raw_html = clean_vidaxl(row.get('HTML_description', ''))
-                all_images = get_all_images(row)
-
-                weight = 0
-                if pd.notna(row.get('Weight')):
-                    try: weight = int(float(str(row['Weight']).replace(',', '.')) * 1000)
-                    except: pass
-
                 opts = variant_map.get(sku, {})
-                ordered_opts = []
-                if existing_option_names:
-                    for opt_name in existing_option_names:
-                        if opt_name in opts: ordered_opts.append((opt_name, opts[opt_name]))
-                    for k, v in opts.items():
-                        if k not in existing_option_names: ordered_opts.append((k, v))
-                else:
-                    ordered_opts = list(opts.items())
-
-                merge_row = {
-                    'Handle': existing_handle, 'Variant Command': 'MERGE',
-                    'Variant SKU': sku, 'Variant Barcode': str(row.get('EAN', '')),
-                    'Variant Price': int(price),
-                    'Variant Compare At Price': int(c_price) if c_price else '',
-                    'Variant Cost': int(cost_kr),
-                    'Variant Weight': weight, 'Variant Weight Unit': 'g',
-                    'Variant Inventory Tracker': 'shopify', 'Variant Inventory Policy': 'deny',
-                    'Variant Inventory Qty': int(row.get('Stock', 0) or 0),
-                    'Variant Fulfillment Service': 'manual',
-                    'Variant Requires Shipping': 'TRUE', 'Variant Taxable': 'TRUE',
-                    'Variant Image': all_images[0] if all_images else '',
-                    'Google Shopping / MPN': sku, 'Google Shopping / Condition': 'new',
-                    'Variant Metafield: custom.sku [single_line_text_field]': sku,
-                    'Variant Metafield: custom.produktinfo [multi_line_text_field]': raw_html,
-                }
-                if all_images:
-                    merge_row['Variant Metafield: custom.variantbilleder [list.single_line_text_field]'] = ', '.join(all_images)
-
-                for i in range(1, 4):
-                    if i <= len(ordered_opts):
-                        merge_row[f'Option{i} Name'] = ordered_opts[i-1][0]
-                        merge_row[f'Option{i} Value'] = ordered_opts[i-1][1]
-                    else:
-                        merge_row[f'Option{i} Name'] = ''
-                        merge_row[f'Option{i} Value'] = ''
-
+                ordered = order_opts(opts)
+                merge_row = _build_merge_row(existing_handle, sku, row, ordered, markup, slutciffer, compare_pct)
                 rows.append(merge_row)
             except Exception as e:
                 print(f"   ⚠️ Merge fejl SKU {row.get('SKU','?')}: {str(e)[:100]}")
