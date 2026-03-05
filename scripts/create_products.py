@@ -473,6 +473,9 @@ def build_matrixify(product_groups, config, underkat_config, rum_dict, existing_
 
                 write_product_fields = is_first_new and not is_merge
 
+                # Variant Position: kun for nye produkter, tom for merge (Matrixify tilføjer i enden)
+                v_position = variant_pos if not is_merge else ''
+
                 product_row = {
                     'Command': 'MERGE',
                     'Handle': handle,
@@ -486,7 +489,7 @@ def build_matrixify(product_groups, config, underkat_config, rum_dict, existing_
                     'Published Scope': 'global' if write_product_fields else '',
                     'Variant SKU': sku,
                     'Variant Barcode': str(row.get('EAN', '')),
-                    'Variant Position': variant_pos,
+                    'Variant Position': v_position,
                     'Variant Price': int(price),
                     'Variant Compare At Price': int(c_price) if c_price else '',
                     'Variant Cost': int(cost_kr),
@@ -515,6 +518,9 @@ def build_matrixify(product_groups, config, underkat_config, rum_dict, existing_
                     else:
                         product_row[f'Option{i} Name'] = ''
                         product_row[f'Option{i} Value'] = ''
+
+                # SKU metafield - altid udfyldt for alle varianter
+                product_row['Variant Metafield: custom.sku [single_line_text_field]'] = sku
 
                 if not (is_first_new and not is_merge):
                     product_row['Variant Metafield: custom.produktinfo [multi_line_text_field]'] = clean_html
