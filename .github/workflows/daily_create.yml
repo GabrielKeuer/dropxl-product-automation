@@ -46,14 +46,16 @@ jobs:
           FEED_URL: ${{ vars.FEED_URL }}
           SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
           SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
-          MAX_PRODUCTS_PER_RUN: ${{ vars.MAX_PRODUCTS_PER_RUN || '50' }}
+          MAX_PRODUCTS_PER_RUN: ${{ vars.MAX_PRODUCTS_PER_RUN || '999' }}
+          MAX_VARIANTS_PER_RUN: ${{ vars.MAX_VARIANTS_PER_RUN || '999' }}
+          PRODUCT_ORDER: ${{ vars.PRODUCT_ORDER || 'newest' }}
         run: python scripts/create_products.py
 
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/matrixify_create.csv
+          git add output/matrixify_create.xlsx
           git diff --staged --quiet && echo "Ingen ændringer" && exit 0
           git commit -m "✨ Oprettelse: ${{ steps.run.outputs.new_count }} nye + ${{ steps.run.outputs.merge_count }} merge, ${{ steps.run.outputs.variant_count }} varianter ($(date +%Y-%m-%d))"
           git pull --rebase
