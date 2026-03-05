@@ -69,25 +69,27 @@ def get_all_publications():
     return pubs
 
 
-def get_unpublished_products(publications):
-    """Find vidaXL produkter der mangler en eller flere kanaler"""
-    print("\n🔍 Finder vidaXL produkter der mangler kanaler...")
+def get_vidaxl_products():
+    """Hent vidaXL produkter oprettet inden for de sidste 2 dage"""
+    from datetime import datetime, timedelta
+    two_days_ago = (datetime.utcnow() - timedelta(days=2)).strftime('%Y-%m-%d')
 
-    products_to_publish = []
+    print(f"\n🔍 Henter vidaXL produkter oprettet siden {two_days_ago}...")
+
+    products = []
     has_next = True
     cursor = None
-    total_checked = 0
+    total = 0
 
     while has_next:
         after = f', after: "{cursor}"' if cursor else ''
         data = graphql(f'''
         {{
-            products(first: 50, query: "vendor:vidaXL"{after}) {{
+            products(first: 50, query: "vendor:vidaXL created_at:>'{two_days_ago}'"{after}) {{
                 edges {{
                     node {{
                         id
                         title
-                        publishedOnPublicationCount
                     }}
                     cursor
                 }}
@@ -99,28 +101,22 @@ def get_unpublished_products(publications):
         edges = data.get('data', {}).get('products', {}).get('edges', [])
         for edge in edges:
             node = edge['node']
-            pub_count = node.get('publishedOnPublicationCount', 0)
+            products.append({
+                'id': node['id'],
+                'title': node['title']
+            })
 
-            # Hvis produktet ikke er på alle kanaler
-            if pub_count < len(publications):
-                products_to_publish.append({
-                    'id': node['id'],
-                    'title': node['title'],
-                    'current_channels': pub_count
-                })
-
-        total_checked += len(edges)
+        total += len(edges)
         pi = data.get('data', {}).get('products', {}).get('pageInfo', {})
         has_next = pi.get('hasNextPage', False)
         if has_next and edges:
             cursor = edges[-1].get('cursor')
 
-        if total_checked % 500 == 0:
-            print(f"   Tjekket {total_checked} produkter, {len(products_to_publish)} mangler kanaler...")
+        if total % 500 == 0 and total > 0:
+            print(f"   {total} produkter...")
 
-    print(f"✅ Tjekket {total_checked} vidaXL produkter")
-    print(f"   {len(products_to_publish)} mangler en eller flere kanaler")
-    return products_to_publish
+    print(f"✅ {len(products)} nylige vidaXL produkter fundet")
+    return products
 
 
 def publish_to_all_channels(products, publications):
@@ -193,7 +189,7 @@ try:
         print("❌ Ingen salgskanaler fundet!")
         sys.exit(1)
 
-    products = get_unpublished_products(publications)
+    products = get_vidaxl_products()
     published = publish_to_all_channels(products, publications)
 
     # GitHub Actions output
