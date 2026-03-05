@@ -2,7 +2,8 @@ name: Publicer til Salgskanaler
 
 on:
   schedule:
-    - cron: '0 8 * * *'  # Kl. 08:00 UTC - efter Matrixify import er færdig
+    - cron: '0 8 * * *'
+    - cron: '0 22 * * *'  # Kl. 08:00 UTC - efter Matrixify import er færdig
   workflow_dispatch:
 
 permissions:
