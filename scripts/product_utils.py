@@ -120,25 +120,31 @@ def clean_title_from_options(title, option_values):
         if not opt_val: continue
         opt_str = str(opt_val).strip()
 
-        pattern = re.compile(re.escape(opt_str), re.IGNORECASE)
+        # Whole-word matching med \b for at undgå substring-matches
+        # "Sort" matcher ikke inde i "Sortiment", "1" matcher ikke inde i "105"
+        pattern = re.compile(r'\b' + re.escape(opt_str) + r'\b', re.IGNORECASE)
         if pattern.search(title):
             title = pattern.sub(' ', title)
         else:
+            # Fuzzy fallback: "X og Y" → match "X og [noget]"
             og_match = re.match(r'^(.+?)\s+og\s+(.+)$', opt_str, re.IGNORECASE)
             if og_match:
                 prefix = og_match.group(1).strip()
                 fuzzy_pattern = re.compile(
-                    re.escape(prefix) + r'\s+og\s+\S+',
+                    r'\b' + re.escape(prefix) + r'\s+og\s+\S+\b',
                     re.IGNORECASE
                 )
                 title = fuzzy_pattern.sub(' ', title)
 
+        # Hvis fjernet var et tal → fjern klæbeord
         if opt_str.isdigit():
             words = title.split()
             cleaned = [w for w in words if w.lower().rstrip('.,') not in STICKY_AFTER_NUMBER]
             title = ' '.join(cleaned)
 
-    title = re.sub(r'(?<!\d\s)[xX](?!\s*\d)', '', title)
+    # Fjern kun standalone x der IKKE står mellem tal (bevarer "56 x 54" og "Faux")
+    title = re.sub(r'(?<!\d)\s+[xX]\s+(?!\d)', ' ', title)
+    # Fjern forældreløse cm/mm der ikke har tal foran
     title = re.sub(r'(?<!\d)\s+[Cc][Mm]\.?\b', '', title)
     title = re.sub(r'(?<!\d)\s+[Mm][Mm]\.?\b', '', title)
     title = re.sub(r'\s+', ' ', title)
