@@ -28,12 +28,10 @@ jobs:
     if: needs.check-toggle.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     outputs:
-      product_count: ${{ steps.run.outputs.product_count }}
-      variant_count: ${{ steps.run.outputs.variant_count }}
-      new_rows: ${{ steps.run.outputs.new_rows }}
-      merge_rows: ${{ steps.run.outputs.merge_rows }}
-      merge_count: ${{ steps.run.outputs.merge_count }}
       new_count: ${{ steps.run.outputs.new_count }}
+      merge_count: ${{ steps.run.outputs.merge_count }}
+      variant_count: ${{ steps.run.outputs.variant_count }}
+      skipped_count: ${{ steps.run.outputs.skipped_count }}
 
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +39,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install pandas requests openpyxl beautifulsoup4
-      - name: Kør produkt oprettelse
+      - name: Kør hurtig produkt oprettelse
         id: run
         env:
           FEED_URL: ${{ vars.FEED_URL }}
@@ -56,9 +54,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/matrixify_create_new.xlsx output/matrixify_create_merge.xlsx
+          git add output/matrixify_create_new.xlsx output/matrixify_create_merge.xlsx output/skipped_large_products.json output/daily_variant_count.txt
           git diff --staged --quiet && echo "Ingen ændringer" && exit 0
-          git commit -m "✨ Oprettelse: ${{ steps.run.outputs.new_count }} nye + ${{ steps.run.outputs.merge_count }} merge, ${{ steps.run.outputs.variant_count }} varianter ($(date +%Y-%m-%d))"
+          git commit -m "✨ Hurtig: ${{ steps.run.outputs.new_count }} nye + ${{ steps.run.outputs.merge_count }} merge, ${{ steps.run.outputs.variant_count }} var, ${{ steps.run.outputs.skipped_count }} skipped ($(date +%Y-%m-%d))"
           git pull --rebase
           git push
 
@@ -69,15 +67,14 @@ jobs:
     steps:
       - name: Summary
         run: |
-          echo "## ✨ Daglig Oprettelse" >> $GITHUB_STEP_SUMMARY
+          echo "## ✨ Daglig Oprettelse (hurtig)" >> $GITHUB_STEP_SUMMARY
           if [ "${{ needs.check-toggle.outputs.enabled }}" != "true" ]; then
             echo "⏸️ **Automation slået fra**" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Metric | Værdi |" >> $GITHUB_STEP_SUMMARY
             echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
             echo "| Nye produkter | ${{ needs.create.outputs.new_count }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Nye rækker | ${{ needs.create.outputs.new_rows }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Merge grupper | ${{ needs.create.outputs.merge_count }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Merge rækker | ${{ needs.create.outputs.merge_rows }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Total varianter | ${{ needs.create.outputs.variant_count }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Merge | ${{ needs.create.outputs.merge_count }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Varianter | ${{ needs.create.outputs.variant_count }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Skipped (store) | ${{ needs.create.outputs.skipped_count }} |" >> $GITHUB_STEP_SUMMARY
           fi
