@@ -97,6 +97,7 @@ jobs:
           git add output/matrixify_delete.csv
           git diff --staged --quiet && echo "Ingen ændringer" && exit 0
           git commit -m "🗑️ Sletning: ${{ needs.analyze.outputs.delete_count }} produkter ($(date +%Y-%m-%d))"
+          git pull --rebase
           git push
 
   notify:
