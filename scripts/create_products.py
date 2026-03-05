@@ -147,9 +147,24 @@ def clean_title_from_options(title, option_values):
     for opt_val in option_values:
         if not opt_val: continue
         opt_str = str(opt_val).strip()
-        pattern = re.compile(re.escape(opt_str), re.IGNORECASE)
-        title = pattern.sub(' ', title)
 
+        # 1. Eksakt case-insensitive match
+        pattern = re.compile(re.escape(opt_str), re.IGNORECASE)
+        if pattern.search(title):
+            title = pattern.sub(' ', title)
+        else:
+            # 2. Fallback: hvis option er "X og Y", søg efter "X og [noget]" i titlen
+            og_match = re.match(r'^(.+?)\s+og\s+(.+)$', opt_str, re.IGNORECASE)
+            if og_match:
+                prefix = og_match.group(1).strip()
+                # Søg efter "prefix og [ét ord]" i titlen
+                fuzzy_pattern = re.compile(
+                    re.escape(prefix) + r'\s+og\s+\S+',
+                    re.IGNORECASE
+                )
+                title = fuzzy_pattern.sub(' ', title)
+
+        # 3. Hvis fjernet var et tal → fjern klæbeord
         if opt_str.isdigit():
             words = title.split()
             cleaned = []
@@ -668,9 +683,18 @@ def build_new_products(product_groups, config, underkat_config, rum_dict, existi
         all_opt_displays = set()
         for od in option_struct.values():
             for v in od.get('values', []): all_opt_displays.add(v['display'])
+        # Tilføj også farver fra feedet (fanger sammensatte farver som "Sort og Cream")
+        for _, fr in feed_rows.iterrows():
+            if pd.notna(fr.get('Color')):
+                all_opt_displays.add(str(fr['Color']).strip())
 
         raw_title = str(first['Title']) if pd.notna(first['Title']) else ''
-        clean_t = clean_title_from_options(raw_title, list(all_opt_displays))
+        # Sortér længste først, så "Sort og Cream" fjernes før "Sort"
+        sorted_displays = sorted(list(all_opt_displays), key=len, reverse=True)
+        print(f"   🏷️ Titel rensning: '{raw_title}'")
+        print(f"   🏷️ Fjerner options: {sorted_displays[:10]}{'...' if len(sorted_displays) > 10 else ''}")
+        clean_t = clean_title_from_options(raw_title, sorted_displays)
+        print(f"   🏷️ Resultat: '{clean_t}'")
         final_title = title_case_danish(clean_t)
         if not final_title or len(final_title) < 5:
             final_title = title_case_danish(fix_pcs_to_dele(clean_vidaxl(raw_title)))
