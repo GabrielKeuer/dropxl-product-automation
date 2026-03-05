@@ -396,11 +396,10 @@ def fetch_feed(url):
     return df
 
 def fetch_shopify_data(store, token):
-    """Hent SKU→handle, handle→option_names, og alle handles fra Shopify"""
-    print(f"\n📥 Henter Shopify data via GraphQL...")
+    """Hent SKU→handle og alle handles fra Shopify (HURTIG - ingen options)"""
+    print(f"\n📥 Henter Shopify SKU→handle map via GraphQL...")
     sku_to_handle = {}
     all_handles = set()
-    handle_to_options = {}  # handle -> [option1_name, option2_name, ...]
 
     url = f"https://{store}/admin/api/2024-10/graphql.json"
     headers = {'X-Shopify-Access-Token': token, 'Content-Type': 'application/json'}
@@ -416,10 +415,6 @@ def fetch_shopify_data(store, token):
                         sku
                         product {
                             handle
-                            options {
-                                name
-                                position
-                            }
                         }
                     }
                     cursor
@@ -445,19 +440,9 @@ def fetch_shopify_data(store, token):
         for e in edges:
             node = e.get('node', {})
             sku = node.get('sku')
-            product = node.get('product', {})
-            handle = product.get('handle', '')
-
-            if sku:
-                sku_to_handle[normalize_sku(sku)] = handle
-            if handle:
-                all_handles.add(handle)
-
-                # Gem option-rækkefølge per handle (kun første gang)
-                if handle not in handle_to_options:
-                    options = product.get('options', [])
-                    sorted_opts = sorted(options, key=lambda x: x.get('position', 0))
-                    handle_to_options[handle] = [o.get('name', '') for o in sorted_opts]
+            handle = node.get('product', {}).get('handle', '')
+            if sku: sku_to_handle[normalize_sku(sku)] = handle
+            if handle: all_handles.add(handle)
 
         total += len(edges)
         pi = data.get('data', {}).get('productVariants', {}).get('pageInfo', {})
@@ -465,8 +450,43 @@ def fetch_shopify_data(store, token):
         if has_next and edges: cursor = edges[-1].get('cursor')
         if total % 5000 == 0: print(f"   {total:,} varianter...")
 
-    print(f"✅ {len(sku_to_handle):,} SKU→handle, {len(all_handles):,} handles, {len(handle_to_options):,} option-mappings")
-    return sku_to_handle, all_handles, handle_to_options
+    print(f"✅ {len(sku_to_handle):,} SKU→handle, {len(all_handles):,} handles")
+    return sku_to_handle, all_handles
+
+
+def fetch_product_options(store, token, handle):
+    """Hent option-navne for ét specifikt produkt via handle (kun kaldet ved merge)"""
+    url = f"https://{store}/admin/api/2024-10/graphql.json"
+    headers = {'X-Shopify-Access-Token': token, 'Content-Type': 'application/json'}
+
+    q = '''
+    {
+        productByHandle(handle: "%s") {
+            options {
+                name
+                position
+            }
+        }
+    }
+    ''' % handle
+
+    try:
+        resp = requests.post(url, headers=headers, json={'query': q}, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+
+        if 'errors' in data:
+            return []
+
+        product = data.get('data', {}).get('productByHandle')
+        if not product:
+            return []
+
+        options = product.get('options', [])
+        sorted_opts = sorted(options, key=lambda x: x.get('position', 0))
+        return [o.get('name', '') for o in sorted_opts]
+    except:
+        return []
 
 # ============================================================
 # VIDAXL SCRAPER
@@ -789,7 +809,7 @@ def build_new_products(product_groups, config, underkat_config, rum_dict, existi
 # MATRIXIFY OUTPUT — MERGE VARIANTER
 # ============================================================
 
-def build_merge_variants(product_groups, config, underkat_config, handle_to_options):
+def build_merge_variants(product_groups, config, underkat_config, store, token):
     """Byg merge-fil med KUN variant-kolonner (ingen produkt-level felter)"""
     rows = []
 
@@ -820,8 +840,10 @@ def build_merge_variants(product_groups, config, underkat_config, handle_to_opti
                 if 'Sammenligningspris %' in ukat.columns and pd.notna(ukat['Sammenligningspris %'].iloc[0]):
                     compare_pct = float(ukat['Sammenligningspris %'].iloc[0])
 
-        # Hent eksisterende option-rækkefølge fra Shopify
-        existing_option_names = handle_to_options.get(existing_handle, [])
+        # Hent eksisterende option-rækkefølge fra Shopify (on-demand)
+        existing_option_names = fetch_product_options(store, token, existing_handle)
+        if existing_option_names:
+            print(f"   📋 Options for {existing_handle}: {existing_option_names}")
 
         for _, row in feed_rows.iterrows():
             try:
@@ -909,7 +931,7 @@ try:
     feed['B2B price'] = pd.to_numeric(feed['B2B price'], errors='coerce').fillna(0)
     print(f"✅ {len(feed):,} produkter i feed")
 
-    sku_to_handle, all_handles, handle_to_options = fetch_shopify_data(SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN)
+    sku_to_handle, all_handles = fetch_shopify_data(SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN)
     shopify_skus = set(sku_to_handle.keys())
 
     feed_by_sku = {}
@@ -1100,7 +1122,7 @@ try:
         print(f"   ⚠️ Ingen nye produkter")
 
     # Merge varianter
-    df_merge = build_merge_variants(product_groups, config, underkat, handle_to_options)
+    df_merge = build_merge_variants(product_groups, config, underkat, SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN)
     if len(df_merge) > 0:
         with pd.ExcelWriter('output/matrixify_create_merge.xlsx', engine='openpyxl') as writer:
             df_merge.to_excel(writer, index=False, sheet_name='Products')
