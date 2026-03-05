@@ -1,0 +1,76 @@
+name: Stor Produkt Oprettelse
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check-toggle:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Check automation toggle
+        id: check
+        run: |
+          ENABLED="${{ vars.AUTOMATION_ENABLED || 'true' }}"
+          echo "enabled=$ENABLED" >> $GITHUB_OUTPUT
+          if [ "$ENABLED" != "true" ]; then
+            echo "⚠️ Automation er slået fra (AUTOMATION_ENABLED=$ENABLED)"
+          fi
+
+  create-large:
+    needs: check-toggle
+    if: needs.check-toggle.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      large_products: ${{ steps.run.outputs.large_products }}
+      large_variant_count: ${{ steps.run.outputs.large_variant_count }}
+      remaining_skipped: ${{ steps.run.outputs.remaining_skipped }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas requests openpyxl beautifulsoup4
+      - name: Kør stor produkt oprettelse
+        id: run
+        env:
+          FEED_URL: ${{ vars.FEED_URL }}
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+          MAX_LARGE_PRODUCTS: ${{ vars.MAX_LARGE_PRODUCTS || '5' }}
+        run: python scripts/create_large_products.py
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add output/matrixify_create_large_new.xlsx output/matrixify_create_large_merge.xlsx output/skipped_large_products.json output/daily_variant_count.txt
+          git diff --staged --quiet && echo "Ingen ændringer" && exit 0
+          git commit -m "🏗️ Stor: ${{ steps.run.outputs.large_products }} produkter, ${{ steps.run.outputs.large_variant_count }} var, ${{ steps.run.outputs.remaining_skipped }} resterende ($(date +%Y-%m-%d))"
+          git pull --rebase
+          git push
+
+  notify:
+    needs: [check-toggle, create-large]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "## 🏗️ Stor Produkt Oprettelse" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.check-toggle.outputs.enabled }}" != "true" ]; then
+            echo "⏸️ **Automation slået fra**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Metric | Værdi |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Produkter | ${{ needs.create-large.outputs.large_products }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Varianter | ${{ needs.create-large.outputs.large_variant_count }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Resterende | ${{ needs.create-large.outputs.remaining_skipped }} |" >> $GITHUB_STEP_SUMMARY
+          fi
