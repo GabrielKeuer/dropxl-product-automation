@@ -20,10 +20,11 @@ print("=" * 60)
 FEED_URL = os.environ.get('FEED_URL', '')
 SHOPIFY_STORE = os.environ.get('SHOPIFY_STORE', '')
 SHOPIFY_ACCESS_TOKEN = os.environ.get('SHOPIFY_ACCESS_TOKEN', '')
-MAX_GROUPS = int(os.environ.get('MAX_PRODUCTS_PER_RUN', '50'))
-MAX_VARIANTS = 1000
+MAX_GROUPS = int(os.environ.get('MAX_PRODUCTS_PER_RUN', '999'))
+MAX_VARIANTS = int(os.environ.get('MAX_VARIANTS_PER_RUN', '999'))
 MIN_STOCK_PRIMARY = 20
 MIN_STOCK_VARIANT = 4
+PRODUCT_ORDER = os.environ.get('PRODUCT_ORDER', 'newest')  # 'newest' eller 'random'
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'Kategori_Config.xlsx')
 
 BROWSER_HEADERS = {
@@ -39,6 +40,8 @@ if not SHOPIFY_ACCESS_TOKEN: missing.append('SHOPIFY_ACCESS_TOKEN')
 if missing:
     print(f"❌ Manglende: {', '.join(missing)}")
     sys.exit(1)
+
+print(f"⚙️ Max grupper: {MAX_GROUPS}, Max varianter: {MAX_VARIANTS}, Rækkefølge: {PRODUCT_ORDER}")
 
 # ============================================================
 # HJÆLPEFUNKTIONER
@@ -137,21 +140,15 @@ def get_all_images(row):
 STICKY_AFTER_NUMBER = {'stk.', 'stk', 'sæt', 'dele', 'pak', 'pakke', 'par'}
 
 def clean_title_from_options(title, option_values):
-    """
-    Fjern option-værdier fra titel (case insensitive).
-    Fjerner også klæbeord der hænger sammen med fjernede tal.
-    """
     if pd.isna(title) or not title: return ''
     title = clean_vidaxl(title)
 
     for opt_val in option_values:
         if not opt_val: continue
         opt_str = str(opt_val).strip()
-        # Case insensitive fjernelse
         pattern = re.compile(re.escape(opt_str), re.IGNORECASE)
         title = pattern.sub(' ', title)
 
-        # Hvis et tal blev fjernet → fjern klæbeord
         if opt_str.isdigit():
             words = title.split()
             cleaned = []
@@ -161,7 +158,6 @@ def clean_title_from_options(title, option_values):
                 cleaned.append(w)
             title = ' '.join(cleaned)
 
-    # Rens forældreløse enheder
     title = re.sub(r'(?<!\d)\s+[Cc][Mm]\.?\b', '', title)
     title = re.sub(r'\b[xX]\b', '', title)
     title = re.sub(r'(?<!\d)\s+[Mm][Mm]\.?\b', '', title)
@@ -186,7 +182,6 @@ def fetch_feed(url):
     return df
 
 def fetch_shopify_sku_handle_map(store, token):
-    """Hent SKU → handle mapping + alle handles fra Shopify via GraphQL"""
     print(f"\n📥 Henter Shopify SKU→handle map via GraphQL...")
     sku_to_handle = {}
     all_handles = set()
@@ -242,7 +237,7 @@ def fetch_shopify_sku_handle_map(store, token):
         if has_next and edges: cursor = edges[-1].get('cursor')
         if total % 5000 == 0: print(f"   {total:,} varianter...")
 
-    print(f"✅ {len(sku_to_handle):,} SKU→handle mappings, {len(all_handles):,} unikke handles")
+    print(f"✅ {len(sku_to_handle):,} SKU→handle, {len(all_handles):,} handles")
     return sku_to_handle, all_handles
 
 # ============================================================
@@ -250,7 +245,6 @@ def fetch_shopify_sku_handle_map(store, token):
 # ============================================================
 
 def scrape_vidaxl(url):
-    """Scrape VidaXL produktside → master_pid + options"""
     result = {'master_pid': None, 'options': {}, 'success': False}
     try:
         resp = requests.get(url, headers=BROWSER_HEADERS, timeout=30)
@@ -258,7 +252,6 @@ def scrape_vidaxl(url):
         html = resp.text
         soup = BeautifulSoup(html, 'html.parser')
 
-        # Master PID
         pid_match = re.search(r'pid=([A-Z]\d+)', html)
         if pid_match:
             result['master_pid'] = pid_match.group(1)
@@ -304,7 +297,6 @@ def scrape_vidaxl(url):
                 if attr_value and not any(e['value'] == attr_value for e in other_options[attr_name]):
                     other_options[attr_name].append({'value': attr_value, 'display': display_value.strip()})
 
-        # Display-navne fra labels
         for attr_name, values in other_options.items():
             display_name = attr_name
             label_div = soup.find('div', class_=re.compile(f'{attr_name}.*font-weight-bold'))
@@ -322,14 +314,12 @@ def scrape_vidaxl(url):
 
 
 def fetch_variant_skus(master_pid, options):
-    """Kald Product-Variation API for alle kombinationer → SKU map"""
     base_url = "https://www.vidaxl.dk/on/demandware.store/Sites-vidaxl-dk-Site/da_DK/Product-Variation"
     option_names = list(options.keys())
     option_values_list = [options[name]['values'] for name in option_names]
 
     if not option_values_list: return {}
 
-    # Generer alle kombinationer
     combos = [{}]
     for name, values in zip(option_names, option_values_list):
         new = []
@@ -398,7 +388,6 @@ def build_matrixify(product_groups, config, underkat_config, rum_dict, existing_
         first = feed_rows.iloc[0]
         hovedkat = str(first['Category']).split(' > ')[0] if pd.notna(first['Category']) else ''
 
-        # Config
         cat_cfg = config[config['Kategori_Config'] == hovedkat]
         markup = float(cat_cfg['Markup %'].iloc[0]) if len(cat_cfg) > 0 and pd.notna(cat_cfg['Markup %'].iloc[0]) else 70.0
         slutciffer = int(cat_cfg['Slutciffer'].iloc[0]) if len(cat_cfg) > 0 and pd.notna(cat_cfg['Slutciffer'].iloc[0]) else 9
@@ -482,7 +471,6 @@ def build_matrixify(product_groups, config, underkat_config, rum_dict, existing_
                 relevant = {k: v for k, v in opts.items() if k not in irrelevant}
                 opt_list = list(relevant.items())
 
-                # Skal vi skrive produkt-felter? Kun for første variant af nyt produkt
                 write_product_fields = is_first_new and not is_merge
 
                 product_row = {
@@ -528,13 +516,11 @@ def build_matrixify(product_groups, config, underkat_config, rum_dict, existing_
                         product_row[f'Option{i} Name'] = ''
                         product_row[f'Option{i} Value'] = ''
 
-                # Variant metafields
                 if not (is_first_new and not is_merge):
                     product_row['Variant Metafield: custom.produktinfo [multi_line_text_field]'] = clean_html
                     if all_images:
                         product_row['Variant Metafield: custom.variantbilleder [list.single_line_text_field]'] = ', '.join(all_images)
 
-                # Billeder (kun for nye produkter, første variant)
                 if write_product_fields and all_images:
                     product_row['Image Src'] = all_images[0]
                     product_row['Image Position'] = '1'
@@ -573,7 +559,6 @@ try:
     sku_to_handle, all_handles = fetch_shopify_sku_handle_map(SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN)
     shopify_skus = set(sku_to_handle.keys())
 
-    # Feed lookup
     feed_by_sku = {}
     for _, r in feed.iterrows():
         s = normalize_sku(r['SKU'])
@@ -601,7 +586,7 @@ try:
     aktive = config[config['Import?'] == 'JA']['Kategori_Config'].tolist()
     print(f"✅ Aktive kategorier: {', '.join(aktive)}")
 
-    # 3. Kandidater (nye, lager≥20, pris>0, aktiv kategori)
+    # 3. Kandidater
     print(f"\n🔍 Filtrerer kandidater...")
     candidates = feed[
         (~feed['SKU'].isin(shopify_skus)) &
@@ -611,14 +596,20 @@ try:
     candidates['Hovedkategori'] = candidates['Category'].str.split(' > ').str[0]
     candidates = candidates[candidates['Hovedkategori'].isin(aktive)].copy()
 
-    # Nyeste først
-    candidates['SKU_num'] = pd.to_numeric(candidates['SKU'], errors='coerce')
-    candidates = candidates.sort_values('SKU_num', ascending=False).reset_index(drop=True)
+    # Sortér efter valgt rækkefølge
+    if PRODUCT_ORDER == 'random':
+        candidates = candidates.sample(frac=1, random_state=int(time.time()) % 10000).reset_index(drop=True)
+        print(f"   Rækkefølge: TILFÆLDIG")
+    else:
+        candidates['SKU_num'] = pd.to_numeric(candidates['SKU'], errors='coerce')
+        candidates = candidates.sort_values('SKU_num', ascending=False).reset_index(drop=True)
+        print(f"   Rækkefølge: NYESTE FØRST")
+
     print(f"✅ {len(candidates):,} kandidater")
 
     if len(candidates) == 0:
         print("\n⚠️ INGEN NYE PRODUKTER!")
-        pd.DataFrame().to_csv('output/matrixify_create.csv', index=False, encoding='utf-8-sig')
+        pd.DataFrame().to_excel('output/matrixify_create.xlsx', index=False, engine='openpyxl')
         sys.exit(0)
 
     # 4. Scrape og grupper
@@ -672,7 +663,6 @@ try:
         for on, od in scrape['options'].items():
             print(f"   {od['display_name']}: {len(od['values'])} værdier")
 
-        # Hent alle variant SKUs via API
         variant_map = fetch_variant_skus(scrape['master_pid'], scrape['options'])
 
         if not variant_map:
@@ -713,23 +703,18 @@ try:
             processed_skus.add(sku)
             continue
 
-        # Variant cap
         if total_variants + len(new_skus) > MAX_VARIANTS:
             print(f"   → Overskriver variant-cap ({total_variants}+{len(new_skus)}>{MAX_VARIANTS})")
             break
 
-        # Bestem merge vs nyt
         is_merge = existing_handle_for_group is not None
 
         if is_merge:
-            print(f"   → MERGE til eksisterende handle: {existing_handle_for_group} ({len(existing_skus_in_group)} eksist., {len(new_skus)} nye)")
+            print(f"   → MERGE til: {existing_handle_for_group} ({len(existing_skus_in_group)} eksist., {len(new_skus)} nye)")
         else:
             print(f"   → NYT produkt med {len(new_skus)} varianter")
 
-        # Hent feed-data for nye varianter
         group_feed = feed[feed['SKU'].isin(new_skus)].copy()
-
-        # Filtrer variant_map til kun nye
         new_variant_map = {s: variant_map[s] for s in new_skus if s in variant_map}
 
         for s in new_skus: processed_skus.add(s)
@@ -745,24 +730,24 @@ try:
         total_variants += len(new_skus)
         print(f"   → {len(new_skus)} varianter (total: {total_variants})")
 
-    print(f"\n✅ {scrape_count} sider scraped, {len(product_groups)} grupper, {total_variants} varianter")
+    print(f"\n✅ {scrape_count} sider, {len(product_groups)} grupper, {total_variants} varianter")
 
     if not product_groups:
         print("\n⚠️ Ingen grupper!")
-        pd.DataFrame().to_csv('output/matrixify_create.csv', index=False, encoding='utf-8-sig')
+        pd.DataFrame().to_excel('output/matrixify_create.xlsx', index=False, engine='openpyxl')
         sys.exit(0)
 
-    # 5. Byg CSV
-    print(f"\n📝 Genererer CSV...")
+    # 5. Byg output
+    print(f"\n📝 Genererer XLSX...")
     matrixify = build_matrixify(product_groups, config, underkat, rum_dict, all_handles)
 
     if len(matrixify) == 0:
         print("⚠️ Tom output!")
-        pd.DataFrame().to_csv('output/matrixify_create.csv', index=False, encoding='utf-8-sig')
+        pd.DataFrame().to_excel('output/matrixify_create.xlsx', index=False, engine='openpyxl')
         sys.exit(0)
 
-    # 6. Gem
-    matrixify.to_csv('output/matrixify_create.csv', index=False, encoding='utf-8-sig', sep=',')
+    # 6. Gem som XLSX
+    matrixify.to_excel('output/matrixify_create.xlsx', index=False, engine='openpyxl')
 
     merges = sum(1 for g in product_groups if g['is_merge'])
     news = len(product_groups) - merges
@@ -770,7 +755,7 @@ try:
     print(f"\n✅ SUCCESS!")
     print(f"📊 {len(matrixify):,} rækker")
     print(f"   Nye produkter: {news}")
-    print(f"   Merge til eksisterende: {merges}")
+    print(f"   Merge: {merges}")
     print(f"   Varianter: {total_variants}")
 
     gh = os.environ.get('GITHUB_OUTPUT', '')
