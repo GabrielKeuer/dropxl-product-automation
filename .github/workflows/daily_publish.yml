@@ -1,0 +1,55 @@
+name: Publicer til Salgskanaler
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # Kl. 05:00 UTC - efter Matrixify import er færdig
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-toggle:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Check automation toggle
+        id: check
+        run: |
+          ENABLED="${{ vars.AUTOMATION_ENABLED || 'true' }}"
+          echo "enabled=$ENABLED" >> $GITHUB_OUTPUT
+
+  publish:
+    needs: check-toggle
+    if: needs.check-toggle.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      published_count: ${{ steps.run.outputs.published_count }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Publicer til alle kanaler
+        id: run
+        env:
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        run: python scripts/publish_channels.py
+
+  notify:
+    needs: [check-toggle, publish]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "## 📡 Salgskanal Publicering" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.check-toggle.outputs.enabled }}" != "true" ]; then
+            echo "⏸️ **Automation slået fra**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Publiceret: **${{ needs.publish.outputs.published_count }}** produkter til alle kanaler" >> $GITHUB_STEP_SUMMARY
+          fi
