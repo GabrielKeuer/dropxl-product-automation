@@ -56,6 +56,7 @@ jobs:
           git add output/matrixify_create.csv
           git diff --staged --quiet && echo "Ingen ændringer" && exit 0
           git commit -m "✨ Oprettelse: ${{ steps.run.outputs.new_count }} nye + ${{ steps.run.outputs.merge_count }} merge, ${{ steps.run.outputs.variant_count }} varianter ($(date +%Y-%m-%d))"
+          git pull --rebase
           git push
 
   notify:
