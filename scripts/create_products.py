@@ -233,7 +233,9 @@ try:
         product_groups.append({
             'feed_rows': group_feed, 'variant_map': new_variant_map,
             'options': scrape['options'],
-            'existing_handle': existing_handle_for_group, 'is_merge': is_merge
+            'existing_handle': existing_handle_for_group, 'is_merge': is_merge,
+            'existing_skus': existing_skus_in_group if is_merge else [],
+            'all_variant_map': variant_map if is_merge else {}
         })
         total_variants += len(new_skus)
         print(f"   → {len(new_skus)} varianter (total: {total_variants})")
