@@ -30,7 +30,8 @@ jobs:
     outputs:
       product_count: ${{ steps.run.outputs.product_count }}
       variant_count: ${{ steps.run.outputs.variant_count }}
-      row_count: ${{ steps.run.outputs.row_count }}
+      new_rows: ${{ steps.run.outputs.new_rows }}
+      merge_rows: ${{ steps.run.outputs.merge_rows }}
       merge_count: ${{ steps.run.outputs.merge_count }}
       new_count: ${{ steps.run.outputs.new_count }}
 
@@ -55,7 +56,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/matrixify_create.xlsx
+          git add output/matrixify_create_new.xlsx output/matrixify_create_merge.xlsx
           git diff --staged --quiet && echo "Ingen ændringer" && exit 0
           git commit -m "✨ Oprettelse: ${{ steps.run.outputs.new_count }} nye + ${{ steps.run.outputs.merge_count }} merge, ${{ steps.run.outputs.variant_count }} varianter ($(date +%Y-%m-%d))"
           git pull --rebase
@@ -75,7 +76,8 @@ jobs:
             echo "| Metric | Værdi |" >> $GITHUB_STEP_SUMMARY
             echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
             echo "| Nye produkter | ${{ needs.create.outputs.new_count }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Merge | ${{ needs.create.outputs.merge_count }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Varianter | ${{ needs.create.outputs.variant_count }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Rækker | ${{ needs.create.outputs.row_count }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Nye rækker | ${{ needs.create.outputs.new_rows }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Merge grupper | ${{ needs.create.outputs.merge_count }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Merge rækker | ${{ needs.create.outputs.merge_rows }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Total varianter | ${{ needs.create.outputs.variant_count }} |" >> $GITHUB_STEP_SUMMARY
           fi
