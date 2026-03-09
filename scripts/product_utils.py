@@ -20,15 +20,15 @@ def _load_supabase_config():
             return None
         from supabase import create_client
         sb = create_client(url, key)
-        res = sb.table('hub_settings').select('key, value').eq('key', 'product_automation_categories').execute()
+        keys = ['product_automation_categories', 'product_automation_subcategory_overrides', 'vidaxl_rum_mapping']
+        res = sb.table('hub_settings').select('key, value').in_('key', keys).execute()
         if not res.data:
             return None
-        categories = res.data[0].get('value')
+        data_map = {r['key']: r['value'] for r in res.data}
+        categories = data_map.get('product_automation_categories')
         if not categories or not isinstance(categories, list) or len(categories) == 0:
             return None
         config_rows = []
-        underkat_rows = []
-        rum_dict = {}
         for cat in categories:
             config_rows.append({
                 'Kategori_Config': cat.get('kategori', ''),
@@ -37,14 +37,26 @@ def _load_supabase_config():
                 'Slutciffer': cat.get('slutciffer', 9),
                 'Sammenligningspris %': cat.get('sammenligning_pct', 0),
             })
-            if cat.get('underkategori', '').strip():
-                underkat_rows.append({
-                    'Underkategori_Config': cat['underkategori'],
-                    'Markup %': cat.get('markup_pct', 70),
-                    'Sammenligningspris %': cat.get('sammenligning_pct', 0),
-                })
-            if cat.get('rum', '').strip():
-                rum_dict[cat.get('kategori', '')] = cat['rum']
+        # Underkategori overrides fra hub
+        underkat_rows = []
+        sub_overrides = data_map.get('product_automation_subcategory_overrides', [])
+        if isinstance(sub_overrides, list):
+            for ov in sub_overrides:
+                path = ov.get('path', '')
+                handling = ov.get('handling', 'TILFØJ')
+                if not path:
+                    continue
+                row = {
+                    'Underkategori_Config': path,
+                    'Handling': handling,
+                    'Markup %': ov.get('markup_pct') if ov.get('markup_pct') is not None else 70,
+                    'Sammenligningspris %': ov.get('sammenligning_pct') if ov.get('sammenligning_pct') is not None else 35,
+                }
+                underkat_rows.append(row)
+        # Rum mapping
+        rum_dict = data_map.get('vidaxl_rum_mapping', {})
+        if not isinstance(rum_dict, dict):
+            rum_dict = {}
         config_df = pd.DataFrame(config_rows)
         config_df['Markup %'] = pd.to_numeric(config_df['Markup %'], errors='coerce')
         config_df['Slutciffer'] = pd.to_numeric(config_df['Slutciffer'], errors='coerce')
@@ -52,7 +64,7 @@ def _load_supabase_config():
         underkat_df = pd.DataFrame(underkat_rows) if underkat_rows else pd.DataFrame()
         if not underkat_df.empty and 'Markup %' in underkat_df.columns:
             underkat_df['Markup %'] = pd.to_numeric(underkat_df['Markup %'], errors='coerce')
-        print(f"[CONFIG] Loaded {len(config_rows)} kategorier fra Supabase")
+        print(f"[CONFIG] Loaded {len(config_rows)} kategorier + {len(underkat_rows)} underkategori-overrides + {len(rum_dict)} rum-mappings fra Supabase")
         return config_df, underkat_df, rum_dict
     except Exception as e:
         print(f"[CONFIG] Supabase fejl, falder tilbage til XLSX: {e}")
