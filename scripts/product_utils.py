@@ -9,6 +9,54 @@ import json
 import os
 import re
 import time
+
+# Supabase config loading (fallback til lokal XLSX)
+def _load_supabase_config():
+    """Forsog at hente kategori-config fra Supabase hub_settings."""
+    try:
+        url = os.environ.get('SUPABASE_URL')
+        key = os.environ.get('SUPABASE_SERVICE_KEY')
+        if not url or not key:
+            return None
+        from supabase import create_client
+        sb = create_client(url, key)
+        res = sb.table('hub_settings').select('key, value').eq('key', 'product_automation_categories').execute()
+        if not res.data:
+            return None
+        categories = res.data[0].get('value')
+        if not categories or not isinstance(categories, list) or len(categories) == 0:
+            return None
+        config_rows = []
+        underkat_rows = []
+        rum_dict = {}
+        for cat in categories:
+            config_rows.append({
+                'Kategori_Config': cat.get('kategori', ''),
+                'Import?': 'JA' if cat.get('aktiv', True) else 'NEJ',
+                'Markup %': cat.get('markup_pct', 70),
+                'Slutciffer': cat.get('slutciffer', 9),
+                'Sammenligningspris %': cat.get('sammenligning_pct', 0),
+            })
+            if cat.get('underkategori', '').strip():
+                underkat_rows.append({
+                    'Underkategori_Config': cat['underkategori'],
+                    'Markup %': cat.get('markup_pct', 70),
+                    'Sammenligningspris %': cat.get('sammenligning_pct', 0),
+                })
+            if cat.get('rum', '').strip():
+                rum_dict[cat.get('kategori', '')] = cat['rum']
+        config_df = pd.DataFrame(config_rows)
+        config_df['Markup %'] = pd.to_numeric(config_df['Markup %'], errors='coerce')
+        config_df['Slutciffer'] = pd.to_numeric(config_df['Slutciffer'], errors='coerce')
+        config_df['Sammenligningspris %'] = pd.to_numeric(config_df['Sammenligningspris %'], errors='coerce')
+        underkat_df = pd.DataFrame(underkat_rows) if underkat_rows else pd.DataFrame()
+        if not underkat_df.empty and 'Markup %' in underkat_df.columns:
+            underkat_df['Markup %'] = pd.to_numeric(underkat_df['Markup %'], errors='coerce')
+        print(f"[CONFIG] Loaded {len(config_rows)} kategorier fra Supabase")
+        return config_df, underkat_df, rum_dict
+    except Exception as e:
+        print(f"[CONFIG] Supabase fejl, falder tilbage til XLSX: {e}")
+        return None
 from collections import defaultdict
 from bs4 import BeautifulSoup
 
@@ -501,6 +549,11 @@ def fetch_variant_skus(master_pid, options):
 # ============================================================
 
 def load_config(config_path):
+    # Forsog Supabase forst (hub-styret config)
+    sb_result = _load_supabase_config()
+    if sb_result is not None:
+        return sb_result
+    print(f"[CONFIG] Bruger lokal XLSX: {config_path}")
     config = pd.read_excel(config_path, sheet_name='Kategori_Config')
     config['Markup %'] = pd.to_numeric(config['Markup %'], errors='coerce')
     config['Slutciffer'] = pd.to_numeric(config['Slutciffer'], errors='coerce')
