@@ -1,1 +1,357 @@
-{}
+{
+  "M3032253": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLFrostbeskyttelsesPlantefleeceDække3pcsHvid3x3,93m/8721359310917.html",
+    "title": "vidaXL Frostbeskyttelses Plantefleece Dække 3 pcs Hvid 3 x 3,93 m",
+    "master_pid": "M3032253",
+    "sku": "42021060",
+    "num_combos": 120,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Beige",
+            "display": "Beige"
+          },
+          {
+            "value": "Green",
+            "display": "Grøn"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "1_x_155_m",
+            "display": "1 x 1,55 m"
+          },
+          {
+            "value": "155_x_155_m",
+            "display": "1,55 x 1,55 m"
+          },
+          {
+            "value": "12_x_18_m",
+            "display": "1,2 x 1,8 m"
+          },
+          {
+            "value": "236_x_2_m",
+            "display": "2,36 x 2 m"
+          },
+          {
+            "value": "314_x_25_m",
+            "display": "3,14 x 2,5 m"
+          },
+          {
+            "value": "393_x_35_m",
+            "display": "3,93 x 3,5 m"
+          },
+          {
+            "value": "2_x_24_m",
+            "display": "2 x 2,4 m"
+          },
+          {
+            "value": "25_x_35_m",
+            "display": "2,5 x 3,5 m"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Antal i pakke",
+        "values": [
+          {
+            "value": "2",
+            "display": "2"
+          },
+          {
+            "value": "1",
+            "display": "1"
+          },
+          {
+            "value": "4",
+            "display": "4"
+          },
+          {
+            "value": "10",
+            "display": "10"
+          },
+          {
+            "value": "5",
+            "display": "5"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3017261": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-med-madras-90x190-cm-stof-morkebrun/8720287338895.html",
+    "title": "vidaXL kontinentalseng med madras 90x190 cm stof mørkebrun",
+    "master_pid": "M3017261",
+    "sku": "3132116",
+    "num_combos": 560,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Plain_with_nails",
+            "display": "Ensfarvet med søm"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Horizontal_stripes",
+            "display": "vandrette striber"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          },
+          {
+            "value": "Lines_design",
+            "display": "Linjer design"
+          },
+          {
+            "value": "Button_tufted",
+            "display": "Knap tuftet"
+          },
+          {
+            "value": "Diamond_blocks_design",
+            "display": "Diamant blokke design"
+          },
+          {
+            "value": "Diamond_block_design",
+            "display": "Diamant blok design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3017246": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-med-madras-160x200-cm-stof-bla/8720287404552.html",
+    "title": "vidaXL kontinentalseng med madras 160x200 cm stof blå",
+    "master_pid": "M3017246",
+    "sku": "3126579",
+    "num_combos": 640,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Plain_with_nails",
+            "display": "Ensfarvet med søm"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Horizontal_stripes",
+            "display": "vandrette striber"
+          },
+          {
+            "value": "Vertical_stripes",
+            "display": "Lodrette striber"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Lines_design",
+            "display": "Linjer design"
+          },
+          {
+            "value": "Button_tufted",
+            "display": "Knap tuftet"
+          },
+          {
+            "value": "Diamond_blocks_design",
+            "display": "Diamant blokke design"
+          },
+          {
+            "value": "Diamond_block_design",
+            "display": "Diamant blok design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
