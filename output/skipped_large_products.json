@@ -1,1 +1,110 @@
-{}
+{
+  "M3033851": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-sammenrullelig-sidemarkise-100x500-cm-grabrun/8721012483712.html",
+    "title": "vidaXL sammenrullelig sidemarkise 100x500 cm gråbrun",
+    "master_pid": "M3033851",
+    "sku": "4004394",
+    "num_combos": 110,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Beige",
+            "display": "Beige"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracitgrå"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Terracotta",
+            "display": "Terrakotta"
+          },
+          {
+            "value": "Red",
+            "display": "Rød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "117_x_300_cm",
+            "display": "117 x 300 cm"
+          },
+          {
+            "value": "140_x_300_cm",
+            "display": "140 x 300 cm"
+          },
+          {
+            "value": "160_x_300_cm",
+            "display": "160 x 300 cm"
+          },
+          {
+            "value": "170_x_300_cm",
+            "display": "170 x 300 cm"
+          },
+          {
+            "value": "120_x_500_cm",
+            "display": "120 x 500 cm"
+          },
+          {
+            "value": "140_x_500_cm",
+            "display": "140 x 500 cm"
+          },
+          {
+            "value": "120_x_600_cm",
+            "display": "120 x 600 cm"
+          },
+          {
+            "value": "140_x_600_cm",
+            "display": "140 x 600 cm"
+          },
+          {
+            "value": "160_x_600_cm",
+            "display": "160 x 600 cm"
+          },
+          {
+            "value": "180_x_600_cm",
+            "display": "180 x 600 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
