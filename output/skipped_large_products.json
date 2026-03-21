@@ -1,1 +1,110 @@
-{}
+{
+  "M3042958": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLKøkkenskabKalmarBetonGrå50x31x100cmKonstruerettræ/8721359456486.html",
+    "title": "vidaXL Køkkenskab Kalmar Beton Grå 50 x 31 x 100 cm Konstrueret træ",
+    "master_pid": "M3042958",
+    "sku": "884777",
+    "num_combos": 110,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "High_gloss_white",
+            "display": "Hvid højglans"
+          },
+          {
+            "value": "Sonoma_oak",
+            "display": "Sonoma-eg"
+          },
+          {
+            "value": "Concrete_grey",
+            "display": "Betongrå"
+          },
+          {
+            "value": "Smoked_oak",
+            "display": "Røget eg"
+          },
+          {
+            "value": "Grey_sonoma",
+            "display": "Grå sonoma-eg"
+          },
+          {
+            "value": "Brown_oak",
+            "display": "Brun eg"
+          },
+          {
+            "value": "Old_wood",
+            "display": "Gammelt træ"
+          },
+          {
+            "value": "Artisan_oak",
+            "display": "artisan eg"
+          },
+          {
+            "value": "Black_oak",
+            "display": "Sort eg"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "30_x_31_x_60_cm",
+            "display": "30 x 31 x 60 cm"
+          },
+          {
+            "value": "40_x_31_x_60_cm",
+            "display": "40 x 31 x 60 cm"
+          },
+          {
+            "value": "30_x_31_x_40_cm",
+            "display": "30 x 31 x 40 cm"
+          },
+          {
+            "value": "40_x_31_x_40_cm",
+            "display": "40 x 31 x 40 cm"
+          },
+          {
+            "value": "50_x_31_x_40_cm",
+            "display": "50 x 31 x 40 cm"
+          },
+          {
+            "value": "30_x_31_x_80_cm",
+            "display": "30 x 31 x 80 cm"
+          },
+          {
+            "value": "40_x_31_x_80_cm",
+            "display": "40 x 31 x 80 cm"
+          },
+          {
+            "value": "50_x_31_x_80_cm",
+            "display": "50 x 31 x 80 cm"
+          },
+          {
+            "value": "30_x_31_x_100_cm",
+            "display": "30 x 31 x 100 cm"
+          },
+          {
+            "value": "40_x_31_x_100_cm",
+            "display": "40 x 31 x 100 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
