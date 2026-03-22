@@ -1,1 +1,239 @@
-{}
+{
+  "M3700001218": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLVinterdyneLysegrå155x220cmMikrofiber/8721364406216.html",
+    "title": "vidaXL Vinter dyne Lysegrå 155 x 220 cm Mikrofiber",
+    "master_pid": "M3700001218",
+    "sku": "42025747",
+    "num_combos": 110,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Anthracite",
+            "display": "Antracit"
+          },
+          {
+            "value": "Anthracite_and_taupe",
+            "display": "Antracit og taupe"
+          },
+          {
+            "value": "Green",
+            "display": "Grøn"
+          },
+          {
+            "value": "Green_and_anthracite",
+            "display": "Grøn og antracit"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Black_and_anthracite",
+            "display": "Sort og antracit"
+          },
+          {
+            "value": "Black_and_taupe",
+            "display": "Sort og taupe"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Light_grey_and_anthracite",
+            "display": "Lysegrå og antracit"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "135_x_200_cm",
+            "display": "135 x 200 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "155_x_200_cm",
+            "display": "155 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          },
+          {
+            "value": "200_x_240_cm",
+            "display": "200 x 240 cm"
+          },
+          {
+            "value": "135_x_220_cm",
+            "display": "135 x 220 cm"
+          },
+          {
+            "value": "140_x_220_cm",
+            "display": "140 x 220 cm"
+          },
+          {
+            "value": "200_x_220_cm",
+            "display": "200 x 220 cm"
+          },
+          {
+            "value": "220_x_240_cm",
+            "display": "220 x 240 cm"
+          },
+          {
+            "value": "220_x_260_cm",
+            "display": "220 x 260 cm"
+          },
+          {
+            "value": "240_x_260_cm",
+            "display": "240 x 260 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3032087": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-handklaeder-frogn-2-stk-bordeaux-50x100-cm-360-gsm/8721012143753.html",
+    "title": "vidaXL håndklæder FROGN 2 stk. bordeaux 50x100 cm 360 gsm",
+    "master_pid": "M3032087",
+    "sku": "136734",
+    "num_combos": 204,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracitgrå"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Bordeaux",
+            "display": "Bordeaux"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Navy_blue",
+            "display": "Marineblå"
+          },
+          {
+            "value": "Gold",
+            "display": "Guld"
+          },
+          {
+            "value": "Grey",
+            "display": "Grå"
+          },
+          {
+            "value": "Green",
+            "display": "Grøn"
+          },
+          {
+            "value": "Purple",
+            "display": "Lilla"
+          },
+          {
+            "value": "Orange",
+            "display": "Orange"
+          },
+          {
+            "value": "Red",
+            "display": "Rød"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Turquoise",
+            "display": "Turkis"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Apple_green",
+            "display": "Æblegrøn"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "30_x_30_cm",
+            "display": "30 x 30 cm"
+          },
+          {
+            "value": "30_x_50_cm",
+            "display": "30 x 50 cm"
+          },
+          {
+            "value": "70_x_140_cm",
+            "display": "70 x 140 cm"
+          },
+          {
+            "value": "100_x_150_cm",
+            "display": "100 x 150 cm"
+          },
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Antal i pakke",
+        "values": [
+          {
+            "value": "4",
+            "display": "4"
+          },
+          {
+            "value": "10",
+            "display": "10"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
