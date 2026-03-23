@@ -1,1 +1,738 @@
-{}
+{
+  "M3017268": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-med-madras-og-led-lys-140x190-cm-velour-lysegra/8720287380436.html",
+    "title": "vidaXL kontinentalseng med madras og LED-lys 140x190 cm velour lysegrå",
+    "master_pid": "M3017268",
+    "sku": "3134519",
+    "num_combos": 600,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Dark_blue",
+            "display": "Mørkeblå"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Plain_with_nails",
+            "display": "Ensfarvet med søm"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Horizontal_stripes",
+            "display": "vandrette striber"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          },
+          {
+            "value": "Crystal_button_tufted",
+            "display": "Krystal knap tufted"
+          },
+          {
+            "value": "Button_tufted",
+            "display": "Knap tuftet"
+          },
+          {
+            "value": "Diamond_blocks_design",
+            "display": "Diamant blokke design"
+          },
+          {
+            "value": "Diamond_block_design",
+            "display": "Diamant blok design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3032087": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-vaskehandklaeder-frogn-2-stk-guld-30x30-cm-360-gsm/8721012144415.html",
+    "title": "vidaXL vaskehåndklæder FROGN 2 stk. guld 30x30 cm 360 gsm",
+    "master_pid": "M3032087",
+    "sku": "136800",
+    "num_combos": 204,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracitgrå"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Bordeaux",
+            "display": "Bordeaux"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Navy_blue",
+            "display": "Marineblå"
+          },
+          {
+            "value": "Gold",
+            "display": "Guld"
+          },
+          {
+            "value": "Grey",
+            "display": "Grå"
+          },
+          {
+            "value": "Green",
+            "display": "Grøn"
+          },
+          {
+            "value": "Purple",
+            "display": "Lilla"
+          },
+          {
+            "value": "Orange",
+            "display": "Orange"
+          },
+          {
+            "value": "Red",
+            "display": "Rød"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Turquoise",
+            "display": "Turkis"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Apple_green",
+            "display": "Æblegrøn"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "30_x_50_cm",
+            "display": "30 x 50 cm"
+          },
+          {
+            "value": "50_x_100_cm",
+            "display": "50 x 100 cm"
+          },
+          {
+            "value": "70_x_140_cm",
+            "display": "70 x 140 cm"
+          },
+          {
+            "value": "100_x_150_cm",
+            "display": "100 x 150 cm"
+          },
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Antal i pakke",
+        "values": [
+          {
+            "value": "4",
+            "display": "4"
+          },
+          {
+            "value": "10",
+            "display": "10"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3038775": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-med-madras-160x200-cm-stof-morkegra/8721102746901.html",
+    "title": "vidaXL kontinentalseng med madras 160x200 cm stof mørkegrå",
+    "master_pid": "M3038775",
+    "sku": "3289808",
+    "num_combos": 210,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3700000503": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLHovedgærdemedhovedgærdeGlossHvid160cmKonstruerettræ/8721359345223.html",
+    "title": "vidaXL Hovedgærde med hovedgærde Gloss Hvid 160 cm Konstrueret træ",
+    "master_pid": "M3700000503",
+    "sku": "887741",
+    "num_combos": 100,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Sonoma_oak",
+            "display": "Sonoma-eg"
+          },
+          {
+            "value": "Concrete_grey",
+            "display": "Betongrå"
+          },
+          {
+            "value": "High_gloss_white",
+            "display": "Hvid højglans"
+          },
+          {
+            "value": "Smoked_oak",
+            "display": "Røget eg"
+          },
+          {
+            "value": "Grey_sonoma",
+            "display": "Grå sonoma-eg"
+          },
+          {
+            "value": "Brown_oak",
+            "display": "Brun eg"
+          },
+          {
+            "value": "Old_wood",
+            "display": "Gammelt træ"
+          },
+          {
+            "value": "Artisan_oak",
+            "display": "artisan eg"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "200_cm",
+            "display": "200 cm"
+          },
+          {
+            "value": "180_cm",
+            "display": "180 cm"
+          },
+          {
+            "value": "150_cm",
+            "display": "150 cm"
+          },
+          {
+            "value": "140_cm",
+            "display": "140 cm"
+          },
+          {
+            "value": "135_cm",
+            "display": "135 cm"
+          },
+          {
+            "value": "120_cm",
+            "display": "120 cm"
+          },
+          {
+            "value": "100_cm",
+            "display": "100 cm"
+          },
+          {
+            "value": "90_cm",
+            "display": "90 cm"
+          },
+          {
+            "value": "80_cm",
+            "display": "80 cm"
+          },
+          {
+            "value": "75_cm",
+            "display": "75 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3049886": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLSofapuder2pcsLyserød50x30cmVelourstof/8721288943774.html",
+    "title": "vidaXL Sofapuder 2 pcs Lyserød 50 x 30 cm Velourstof",
+    "master_pid": "M3049886",
+    "sku": "42013631",
+    "num_combos": 130,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Light_green",
+            "display": "Lysegrøn"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          },
+          {
+            "value": "Wine_red",
+            "display": "Vinrød"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Yellow",
+            "display": "Gul"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Sea_green",
+            "display": "havgrøn"
+          },
+          {
+            "value": "Police_blue",
+            "display": "Politi blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "40_x_60_cm",
+            "display": "40 x 60 cm"
+          },
+          {
+            "value": "40_x_80_cm",
+            "display": "40 x 80 cm"
+          },
+          {
+            "value": "50_x_70_cm",
+            "display": "50 x 70 cm"
+          },
+          {
+            "value": "40_x_120_cm",
+            "display": "40 x 120 cm"
+          },
+          {
+            "value": "40_x_145_cm",
+            "display": "40 x 145 cm"
+          },
+          {
+            "value": "40_x_200_cm",
+            "display": "40 x 200 cm"
+          },
+          {
+            "value": "45_x_45_cm",
+            "display": "45 x 45 cm"
+          },
+          {
+            "value": "50_x_50_cm",
+            "display": "50 x 50 cm"
+          },
+          {
+            "value": "60_x_60_cm",
+            "display": "60 x 60 cm"
+          },
+          {
+            "value": "80_x_80_cm",
+            "display": "80 x 80 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3032091": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-premium-vaskehandklaeder-solund-2-stk-sorte-30x30-cm-600-gsm/8721012150607.html",
+    "title": "vidaXL Premium vaskehåndklæder SOLUND 2 stk. sorte 30x30 cm 600 gsm",
+    "master_pid": "M3032091",
+    "sku": "137419",
+    "num_combos": 504,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracit"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Bordeaux",
+            "display": "Bordeaux"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Navy_blue",
+            "display": "Marineblå"
+          },
+          {
+            "value": "Gold",
+            "display": "Guld"
+          },
+          {
+            "value": "Grey",
+            "display": "Grå"
+          },
+          {
+            "value": "Green",
+            "display": "Grøn"
+          },
+          {
+            "value": "Purple",
+            "display": "Lilla"
+          },
+          {
+            "value": "Orange",
+            "display": "Orange"
+          },
+          {
+            "value": "Red",
+            "display": "Rød"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Turquoise",
+            "display": "Turkis"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "green",
+            "display": "grøn"
+          },
+          {
+            "value": "Apple_green",
+            "display": "Æblegrøn"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "15_x_21_cm",
+            "display": "15 x 21 cm"
+          },
+          {
+            "value": "30_x_50_cm",
+            "display": "30 x 50 cm"
+          },
+          {
+            "value": "50_x_100_cm",
+            "display": "50 x 100 cm"
+          },
+          {
+            "value": "70_x_140_cm",
+            "display": "70 x 140 cm"
+          },
+          {
+            "value": "100_x_150_cm",
+            "display": "100 x 150 cm"
+          },
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Antal i pakke",
+        "values": [
+          {
+            "value": "4",
+            "display": "4"
+          },
+          {
+            "value": "10",
+            "display": "10"
+          },
+          {
+            "value": "50",
+            "display": "50"
+          },
+          {
+            "value": "25",
+            "display": "25"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
