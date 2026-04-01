@@ -1,1 +1,106 @@
-{}
+{
+  "M3700000508": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLHovedgærdeSorteg160cmKonstruerettræ/8721359350258.html",
+    "title": "vidaXL Hovedgærde Sort eg 90 cm Konstrueret træ",
+    "master_pid": "M3700000508",
+    "sku": "888276",
+    "num_combos": 100,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Sonoma_oak",
+            "display": "Sonoma-eg"
+          },
+          {
+            "value": "Concrete_grey",
+            "display": "Betongrå"
+          },
+          {
+            "value": "High_gloss_white",
+            "display": "Hvid højglans"
+          },
+          {
+            "value": "Smoked_oak",
+            "display": "Røget eg"
+          },
+          {
+            "value": "Grey_sonoma",
+            "display": "Grå sonoma-eg"
+          },
+          {
+            "value": "Brown_oak",
+            "display": "Brun eg"
+          },
+          {
+            "value": "Old_wood",
+            "display": "Gammelt træ"
+          },
+          {
+            "value": "Artisan_oak",
+            "display": "artisan eg"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Bredde",
+        "values": [
+          {
+            "value": "200_cm",
+            "display": "200 cm"
+          },
+          {
+            "value": "180_cm",
+            "display": "180 cm"
+          },
+          {
+            "value": "150_cm",
+            "display": "150 cm"
+          },
+          {
+            "value": "140_cm",
+            "display": "140 cm"
+          },
+          {
+            "value": "135_cm",
+            "display": "135 cm"
+          },
+          {
+            "value": "120_cm",
+            "display": "120 cm"
+          },
+          {
+            "value": "100_cm",
+            "display": "100 cm"
+          },
+          {
+            "value": "90_cm",
+            "display": "90 cm"
+          },
+          {
+            "value": "80_cm",
+            "display": "80 cm"
+          },
+          {
+            "value": "75_cm",
+            "display": "75 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
