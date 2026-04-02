@@ -1,1 +1,348 @@
-{}
+{
+  "M3017249": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-med-madras-90x190-cm-flojl-lysegra/8720287415794.html",
+    "title": "vidaXL kontinentalseng med madras 90x190 cm fløjl lysegrå",
+    "master_pid": "M3017249",
+    "sku": "3127703",
+    "num_combos": 240,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Dark_blue",
+            "display": "Mørkeblå"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Horizontal_stripes",
+            "display": "vandrette striber"
+          },
+          {
+            "value": "Crystal_button_tufted",
+            "display": "Krystal knap tufted"
+          },
+          {
+            "value": "Button_tufted",
+            "display": "Knap tuftet"
+          },
+          {
+            "value": "Diamond_blocks_design",
+            "display": "Diamant blokke design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3044628": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLMørklægningsgardinermedringe2pcsMetalGrå260x140cm/8721158695635.html",
+    "title": "vidaXL Mørklægningsgardiner med ringe 2 pcs Metal Grå 260 x 140 cm",
+    "master_pid": "M3044628",
+    "sku": "4107472",
+    "num_combos": 132,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Beige",
+            "display": "Beige"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Light_blue",
+            "display": "Lyseblå"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracit"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Pale_grey",
+            "display": "Lys grå"
+          },
+          {
+            "value": "Wine_red",
+            "display": "Vinrød"
+          },
+          {
+            "value": "Metal_grey",
+            "display": "Metal grå"
+          },
+          {
+            "value": "Dark_blue",
+            "display": "Mørkeblå"
+          },
+          {
+            "value": "Light_brown",
+            "display": "Lysebrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Purple",
+            "display": "Lilla"
+          },
+          {
+            "value": "Pure_white",
+            "display": "Ren hvid"
+          },
+          {
+            "value": "green",
+            "display": "grøn"
+          },
+          {
+            "value": "Mustard_yellow",
+            "display": "sennepsgul"
+          },
+          {
+            "value": "Bright_orange",
+            "display": "Lys orange"
+          },
+          {
+            "value": "Bright_pink",
+            "display": "Lyserød"
+          },
+          {
+            "value": "Baby_pink",
+            "display": "Baby lyserød"
+          },
+          {
+            "value": "Terracotta",
+            "display": "Terrakotta"
+          },
+          {
+            "value": "Turquoise",
+            "display": "Turkis"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Længde",
+        "values": [
+          {
+            "value": "175_cm",
+            "display": "175 cm"
+          },
+          {
+            "value": "225_cm",
+            "display": "225 cm"
+          },
+          {
+            "value": "245_cm",
+            "display": "245 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Ophængningsmåder",
+        "values": [
+          {
+            "value": "Grommets",
+            "display": "Øjer"
+          },
+          {
+            "value": "Tab_tops",
+            "display": "Tab tops"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3700000511": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLHovedgærdeArtisanEgetræ90cmKonstruerettræ/8721359353532.html",
+    "title": "vidaXL Hovedgærde Artisan Egetræ 90 cm Konstrueret træ",
+    "master_pid": "M3700000511",
+    "sku": "888637",
+    "num_combos": 100,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Sonoma_oak",
+            "display": "Sonoma-eg"
+          },
+          {
+            "value": "Concrete_grey",
+            "display": "Betongrå"
+          },
+          {
+            "value": "High_gloss_white",
+            "display": "Hvid højglans"
+          },
+          {
+            "value": "Smoked_oak",
+            "display": "Røget eg"
+          },
+          {
+            "value": "Grey_sonoma",
+            "display": "Grå sonoma-eg"
+          },
+          {
+            "value": "Brown_oak",
+            "display": "Brun eg"
+          },
+          {
+            "value": "Old_wood",
+            "display": "Gammelt træ"
+          },
+          {
+            "value": "Artisan_oak",
+            "display": "artisan eg"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Bredde",
+        "values": [
+          {
+            "value": "200_cm",
+            "display": "200 cm"
+          },
+          {
+            "value": "160_cm",
+            "display": "160 cm"
+          },
+          {
+            "value": "150_cm",
+            "display": "150 cm"
+          },
+          {
+            "value": "140_cm",
+            "display": "140 cm"
+          },
+          {
+            "value": "135_cm",
+            "display": "135 cm"
+          },
+          {
+            "value": "120_cm",
+            "display": "120 cm"
+          },
+          {
+            "value": "100_cm",
+            "display": "100 cm"
+          },
+          {
+            "value": "90_cm",
+            "display": "90 cm"
+          },
+          {
+            "value": "80_cm",
+            "display": "80 cm"
+          },
+          {
+            "value": "75_cm",
+            "display": "75 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
