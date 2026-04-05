@@ -1,1 +1,107 @@
-{}
+{
+  "M3038796": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-med-madras-160x200-cm-stof-morkegra/8721102769900.html",
+    "title": "vidaXL kontinentalseng med madras 160x200 cm stof mørkegrå",
+    "master_pid": "M3038796",
+    "sku": "3292108",
+    "num_combos": 189,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
