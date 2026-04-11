@@ -1,1 +1,215 @@
-{}
+{
+  "M3048662": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLSengmedopbevaringogmadrasmedmadrasMørkegrå180x200cm/8721288557971.html",
+    "title": "vidaXL Seng med opbevaring og madras med madras Mørkegrå 180 x 200 cm",
+    "master_pid": "M3048662",
+    "sku": "3370651",
+    "num_combos": 162,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Block med firkanter"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Quilted design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3700002322": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLHængendeHovedgavlLysegråFløjl/8721364703131.html",
+    "title": "vidaXL Hængende Hovedgavl Lysegrå Fløjl",
+    "master_pid": "M3700002322",
+    "sku": "42032052",
+    "num_combos": 105,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Light_green",
+            "display": "Lysegrøn"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          },
+          {
+            "value": "Wine_red",
+            "display": "Vinrød"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Yellow",
+            "display": "Gul"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Turquoise",
+            "display": "Turkis"
+          },
+          {
+            "value": "Sea_green",
+            "display": "havgrøn"
+          },
+          {
+            "value": "Police_blue",
+            "display": "Politi blå"
+          },
+          {
+            "value": "Purple",
+            "display": "Lilla"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Bredde",
+        "values": [
+          {
+            "value": "80_cm",
+            "display": "80 cm"
+          },
+          {
+            "value": "100_cm",
+            "display": "100 cm"
+          },
+          {
+            "value": "120_cm",
+            "display": "120 cm"
+          },
+          {
+            "value": "140_cm",
+            "display": "140 cm"
+          },
+          {
+            "value": "160_cm",
+            "display": "160 cm"
+          },
+          {
+            "value": "180_cm",
+            "display": "180 cm"
+          },
+          {
+            "value": "200_cm",
+            "display": "200 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
