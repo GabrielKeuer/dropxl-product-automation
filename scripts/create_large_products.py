@@ -90,7 +90,7 @@ try:
         s = normalize_sku(r['SKU'])
         if s and s not in feed_by_sku: feed_by_sku[s] = r
 
-    config, underkat, rum_dict = load_config(CONFIG_PATH)
+    config, underkat, rum_dict, pris_config = load_config(CONFIG_PATH)
 
     # 4. Process store produkter
     print(f"\n🔍 Processerer store produkter (budget: {budget})...")
@@ -279,11 +279,11 @@ try:
     print(f"\n✅ {products_processed} produkter processeret ({news} nye, {merges} merge), {total_variants} varianter")
 
     print(f"\n📝 Genererer XLSX filer...")
-    df_new = build_new_products(product_groups, config, underkat, rum_dict, all_handles, feed)
+    df_new = build_new_products(product_groups, config, underkat, rum_dict, all_handles, feed, pris_config)
     save_xlsx(df_new, 'output/matrixify_create_large_new.xlsx')
     print(f"   ✅ Nye: {len(df_new)} rækker")
 
-    df_merge = build_merge_variants(product_groups, config, underkat, SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, feed)
+    df_merge = build_merge_variants(product_groups, config, underkat, SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, feed, pris_config)
     save_xlsx(df_merge, 'output/matrixify_create_large_merge.xlsx')
     print(f"   ✅ Merge: {len(df_merge)} rækker")
 

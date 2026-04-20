@@ -9,6 +9,8 @@ import json
 import os
 import re
 import time
+import math
+import random
 
 # Supabase config loading (fallback til lokal XLSX)
 def _load_supabase_config():
@@ -20,7 +22,7 @@ def _load_supabase_config():
             return None
         from supabase import create_client
         sb = create_client(url, key)
-        keys = ['product_automation_categories', 'product_automation_subcategory_overrides', 'vidaxl_rum_mapping']
+        keys = ['product_automation_categories', 'product_automation_subcategory_overrides', 'vidaxl_rum_mapping', 'product_automation_pricing']
         res = sb.table('hub_settings').select('key, value').in_('key', keys).execute()
         if not res.data:
             return None
@@ -33,9 +35,6 @@ def _load_supabase_config():
             config_rows.append({
                 'Kategori_Config': cat.get('kategori', ''),
                 'Import?': 'JA' if cat.get('aktiv', True) else 'NEJ',
-                'Markup %': cat.get('markup_pct', 70),
-                'Slutciffer': cat.get('slutciffer', 9),
-                'Sammenligningspris %': cat.get('sammenligning_pct', 0),
             })
         # Underkategori overrides fra hub
         underkat_rows = []
@@ -49,23 +48,28 @@ def _load_supabase_config():
                 row = {
                     'Underkategori_Config': path,
                     'Handling': handling,
-                    'Markup %': ov.get('markup_pct') if ov.get('markup_pct') is not None else 70,
-                    'Sammenligningspris %': ov.get('sammenligning_pct') if ov.get('sammenligning_pct') is not None else 35,
                 }
                 underkat_rows.append(row)
         # Rum mapping
         rum_dict = data_map.get('vidaxl_rum_mapping', {})
         if not isinstance(rum_dict, dict):
             rum_dict = {}
+        # Pris tabel
+        pricing_tiers = data_map.get('product_automation_pricing', [])
+        if isinstance(pricing_tiers, list) and pricing_tiers:
+            pris_rows = [{'Indkøb': t.get('indkob', 0), 'Markup': t.get('markup', 1.7)} for t in pricing_tiers]
+            pris_df = pd.DataFrame(pris_rows)
+        else:
+            pris_df = pd.DataFrame()
+
         config_df = pd.DataFrame(config_rows)
-        config_df['Markup %'] = pd.to_numeric(config_df['Markup %'], errors='coerce')
-        config_df['Slutciffer'] = pd.to_numeric(config_df['Slutciffer'], errors='coerce')
-        config_df['Sammenligningspris %'] = pd.to_numeric(config_df['Sammenligningspris %'], errors='coerce')
         underkat_df = pd.DataFrame(underkat_rows) if underkat_rows else pd.DataFrame()
-        if not underkat_df.empty and 'Markup %' in underkat_df.columns:
-            underkat_df['Markup %'] = pd.to_numeric(underkat_df['Markup %'], errors='coerce')
-        print(f"[CONFIG] Loaded {len(config_rows)} kategorier + {len(underkat_rows)} underkategori-overrides + {len(rum_dict)} rum-mappings fra Supabase")
-        return config_df, underkat_df, rum_dict
+        if not pris_df.empty:
+            pris_df['Indkøb'] = pd.to_numeric(pris_df['Indkøb'], errors='coerce')
+            pris_df['Markup'] = pd.to_numeric(pris_df['Markup'], errors='coerce')
+            pris_df = pris_df.sort_values('Indkøb').reset_index(drop=True)
+        print(f"[CONFIG] Loaded {len(config_rows)} kategorier + {len(underkat_rows)} underkategori-overrides + {len(rum_dict)} rum-mappings + {len(pris_df)} pristrin fra Supabase")
+        return config_df, underkat_df, rum_dict, pris_df
     except Exception as e:
         print(f"[CONFIG] Supabase fejl, falder tilbage til XLSX: {e}")
         return None
@@ -124,12 +128,9 @@ def generate_handle(title, existing_handles):
     existing_handles.add(handle)
     return handle
 
-def calculate_price(base_price, slutciffer=9):
-    rounded = round(base_price)
-    last = rounded % 10
-    if last == 0: return rounded - 1
-    elif last == 9: return rounded
-    else: return (int(rounded / 10) + 1) * 10 - 1
+def calculate_price(raw_price):
+    """Afrund op til nærmeste 50, minus 1. Eks: 265 → 300 → 299"""
+    return int(math.ceil(raw_price / 50) * 50 - 1)
 
 def validate_url(url):
     if pd.isna(url) or not url: return False
@@ -567,14 +568,9 @@ def load_config(config_path):
         return sb_result
     print(f"[CONFIG] Bruger lokal XLSX: {config_path}")
     config = pd.read_excel(config_path, sheet_name='Kategori_Config')
-    config['Markup %'] = pd.to_numeric(config['Markup %'], errors='coerce')
-    config['Slutciffer'] = pd.to_numeric(config['Slutciffer'], errors='coerce')
-    config['Sammenligningspris %'] = pd.to_numeric(config['Sammenligningspris %'], errors='coerce')
 
     try:
         underkat = pd.read_excel(config_path, sheet_name='Underkategori_Config')
-        if 'Markup %' in underkat.columns: underkat['Markup %'] = pd.to_numeric(underkat['Markup %'], errors='coerce')
-        if 'Sammenligningspris %' in underkat.columns: underkat['Sammenligningspris %'] = pd.to_numeric(underkat['Sammenligningspris %'], errors='coerce')
     except: underkat = pd.DataFrame()
 
     try:
@@ -582,28 +578,46 @@ def load_config(config_path):
         rum_dict = dict(zip(rum_map.iloc[:, 0], rum_map.iloc[:, 1]))
     except: rum_dict = {}
 
-    return config, underkat, rum_dict
+    try:
+        pris_df = pd.read_excel(config_path, sheet_name='Pris_Config')
+        pris_df['Indkøb'] = pd.to_numeric(pris_df['Indkøb'], errors='coerce')
+        pris_df['Markup'] = pd.to_numeric(pris_df['Markup'], errors='coerce')
+        pris_df = pris_df.sort_values('Indkøb').reset_index(drop=True)
+        print(f"[CONFIG] {len(pris_df)} pristrin loaded")
+    except:
+        pris_df = pd.DataFrame()
+        print("[CONFIG] ⚠️ Ingen Pris_Config sheet fundet, bruger fallback 1.7x")
+
+    return config, underkat, rum_dict, pris_df
 
 # ============================================================
 # PRICING & TAGS HELPERS
 # ============================================================
 
-def get_pricing(row, config, underkat_config):
-    hovedkat = str(row['Category']).split(' > ')[0] if pd.notna(row['Category']) else ''
-    cat_cfg = config[config['Kategori_Config'] == hovedkat]
-    markup = float(cat_cfg['Markup %'].iloc[0]) if len(cat_cfg) > 0 and pd.notna(cat_cfg['Markup %'].iloc[0]) else 70.0
-    slutciffer = int(cat_cfg['Slutciffer'].iloc[0]) if len(cat_cfg) > 0 and pd.notna(cat_cfg['Slutciffer'].iloc[0]) else 9
-    compare_pct = float(cat_cfg['Sammenligningspris %'].iloc[0]) if len(cat_cfg) > 0 and pd.notna(cat_cfg['Sammenligningspris %'].iloc[0]) else 0
+def get_markup(b2b_price, pris_config):
+    """Slå markup-multiplikator op baseret på indkøbspris.
+    Pristabellen definerer intervaller: 100 = 1-100, 200 = 101-200, osv.
+    Over højeste trin bruges 1.7x (flat)."""
+    if pris_config.empty:
+        return 1.7  # Fallback
+    b2b = float(b2b_price)
+    # Find det trin hvor Indkøb >= b2b (laveste interval der dækker prisen)
+    matching = pris_config[pris_config['Indkøb'] >= b2b]
+    if len(matching) > 0:
+        return float(matching.iloc[0]['Markup'])
+    # Over højeste trin → brug sidste trin (1.7x)
+    return float(pris_config.iloc[-1]['Markup'])
 
-    if not underkat_config.empty:
-        cs = str(row['Category']).strip() if pd.notna(row['Category']) else ''
-        ukat = underkat_config[underkat_config['Underkategori_Config'].astype(str).str.strip() == cs]
-        if len(ukat) > 0:
-            if pd.notna(ukat['Markup %'].iloc[0]): markup = float(ukat['Markup %'].iloc[0])
-            if 'Sammenligningspris %' in ukat.columns and pd.notna(ukat['Sammenligningspris %'].iloc[0]):
-                compare_pct = float(ukat['Sammenligningspris %'].iloc[0])
 
-    return markup, slutciffer, compare_pct
+def calculate_compare_price(selling_price):
+    """Beregn sammenligningspris: random 15-35% rabat, ceil-50-minus-1, max 9999."""
+    discount_pct = random.uniform(0.15, 0.35)
+    raw_compare = selling_price / (1 - discount_pct)
+    compare = calculate_price(raw_compare)
+    # Cap ved 9999 medmindre udsalgspris > 9800
+    if selling_price <= 9800 and compare > 9999:
+        compare = 9999
+    return compare
 
 
 def build_tags(row, rum_dict):
@@ -626,7 +640,7 @@ def build_tags(row, rum_dict):
 # MATRIXIFY OUTPUT — NYE PRODUKTER
 # ============================================================
 
-def build_new_products(product_groups, config, underkat, rum_dict, existing_handles, feed):
+def build_new_products(product_groups, config, underkat, rum_dict, existing_handles, feed, pris_config=None):
     rows = []
     handles_used = existing_handles.copy()
 
@@ -642,7 +656,8 @@ def build_new_products(product_groups, config, underkat, rum_dict, existing_hand
         if len(feed_rows) == 0: continue
 
         first = feed_rows.iloc[0]
-        markup, slutciffer, compare_pct = get_pricing(first, config, underkat)
+        if pris_config is None:
+            pris_config = pd.DataFrame()
 
         # Titel
         all_opt_displays = set()
@@ -678,10 +693,9 @@ def build_new_products(product_groups, config, underkat, rum_dict, existing_hand
             try:
                 sku = normalize_sku(row['SKU'])
                 cost_kr = float(row['B2B price'])
-                price = calculate_price(cost_kr * (1 + markup / 100), slutciffer)
-                c_price = ''
-                if compare_pct > 0:
-                    c_price = calculate_price(price / (1 - compare_pct / 100), slutciffer)
+                markup = get_markup(cost_kr, pris_config)
+                price = calculate_price(cost_kr * markup)
+                c_price = calculate_compare_price(price)
 
                 tags = build_tags(row, rum_dict)
                 body_html = format_body_html(row.get('HTML_description', ''))
@@ -771,13 +785,12 @@ def build_new_products(product_groups, config, underkat, rum_dict, existing_hand
 # MATRIXIFY OUTPUT — MERGE VARIANTER
 # ============================================================
 
-def _build_merge_row(handle, sku, row, ordered_opts, markup, slutciffer, compare_pct):
+def _build_merge_row(handle, sku, row, ordered_opts, pris_config):
     """Byg én merge-række fra feed-data"""
     cost_kr = float(row['B2B price'])
-    price = calculate_price(cost_kr * (1 + markup / 100), slutciffer)
-    c_price = ''
-    if compare_pct > 0:
-        c_price = calculate_price(price / (1 - compare_pct / 100), slutciffer)
+    markup = get_markup(cost_kr, pris_config)
+    price = calculate_price(cost_kr * markup)
+    c_price = calculate_compare_price(price)
 
     raw_html = clean_vidaxl(row.get('HTML_description', ''))
     all_images = get_all_images(row)
@@ -817,8 +830,10 @@ def _build_merge_row(handle, sku, row, ordered_opts, markup, slutciffer, compare
     return merge_row
 
 
-def build_merge_variants(product_groups, config, underkat, store, token, feed):
+def build_merge_variants(product_groups, config, underkat, store, token, feed, pris_config=None):
     rows = []
+    if pris_config is None:
+        pris_config = pd.DataFrame()
 
     # Byg feed lookup
     feed_by_sku = {}
@@ -836,11 +851,6 @@ def build_merge_variants(product_groups, config, underkat, store, token, feed):
         existing_handle = group['existing_handle']
         existing_skus = group.get('existing_skus', [])
         all_variant_map = group.get('all_variant_map', {})
-
-        if len(feed_rows) == 0 or not existing_handle: continue
-
-        first = feed_rows.iloc[0]
-        markup, slutciffer, compare_pct = get_pricing(first, config, underkat)
 
         # Hent eksisterende options fra Shopify
         existing_option_names = fetch_product_options(store, token, existing_handle)
@@ -883,7 +893,7 @@ def build_merge_variants(product_groups, config, underkat, store, token, feed):
                     if not ex_opts: continue
 
                     ordered = order_opts(ex_opts)
-                    merge_row = _build_merge_row(existing_handle, ex_sku, ex_row, ordered, markup, slutciffer, compare_pct)
+                    merge_row = _build_merge_row(existing_handle, ex_sku, ex_row, ordered, pris_config)
                     rows.append(merge_row)
                     print(f"   📝 Eksisterende variant {ex_sku} opdateret med nye options")
                 except Exception as e:
@@ -895,7 +905,7 @@ def build_merge_variants(product_groups, config, underkat, store, token, feed):
                 sku = normalize_sku(row['SKU'])
                 opts = variant_map.get(sku, {})
                 ordered = order_opts(opts)
-                merge_row = _build_merge_row(existing_handle, sku, row, ordered, markup, slutciffer, compare_pct)
+                merge_row = _build_merge_row(existing_handle, sku, row, ordered, pris_config)
                 rows.append(merge_row)
             except Exception as e:
                 print(f"   ⚠️ Merge fejl SKU {row.get('SKU','?')}: {str(e)[:100]}")

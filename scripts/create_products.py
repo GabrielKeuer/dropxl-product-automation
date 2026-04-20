@@ -62,7 +62,7 @@ try:
 
     # 2. Config
     print(f"\n📋 Læser config...")
-    config, underkat, rum_dict = load_config(CONFIG_PATH)
+    config, underkat, rum_dict, pris_config = load_config(CONFIG_PATH)
     aktive = config[config['Import?'] == 'JA']['Kategori_Config'].tolist()
     print(f"✅ Aktive kategorier: {', '.join(aktive)}")
 
@@ -247,11 +247,11 @@ try:
 
     # 5. Byg output
     print(f"\n📝 Genererer XLSX filer...")
-    df_new = build_new_products(product_groups, config, underkat, rum_dict, all_handles, feed)
+    df_new = build_new_products(product_groups, config, underkat, rum_dict, all_handles, feed, pris_config)
     save_xlsx(df_new, 'output/matrixify_create_new.xlsx')
     print(f"   ✅ Nye: {len(df_new)} rækker")
 
-    df_merge = build_merge_variants(product_groups, config, underkat, SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, feed)
+    df_merge = build_merge_variants(product_groups, config, underkat, SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, feed, pris_config)
     save_xlsx(df_merge, 'output/matrixify_create_merge.xlsx')
     print(f"   ✅ Merge: {len(df_merge)} rækker")
 
