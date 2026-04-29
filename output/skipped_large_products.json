@@ -1,1 +1,252 @@
-{}
+{
+  "M30164951": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-vaeghylder-4-stk-40x10x15-cm-konstrueret-trae-gra-sonoma-eg/8721012209060.html",
+    "title": "vidaXL væghylder 4 stk. 40x10x1,5 cm konstrueret træ grå sonoma-eg",
+    "master_pid": "M30164951",
+    "sku": "838197",
+    "num_combos": 126,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Grey",
+            "display": "Grå"
+          },
+          {
+            "value": "Sonoma_oak",
+            "display": "Sonoma-eg"
+          },
+          {
+            "value": "Concrete_grey",
+            "display": "Betongrå"
+          },
+          {
+            "value": "High_gloss_grey",
+            "display": "Grå højglans"
+          },
+          {
+            "value": "High_gloss_white",
+            "display": "Hvid højglans"
+          },
+          {
+            "value": "High_gloss_black",
+            "display": "Sort højglans"
+          },
+          {
+            "value": "Smoked_oak",
+            "display": "Røget eg"
+          },
+          {
+            "value": "Grey_sonoma",
+            "display": "Grå sonoma-eg"
+          },
+          {
+            "value": "Brown_oak",
+            "display": "Brun eg"
+          },
+          {
+            "value": "Old_wood",
+            "display": "Gammelt træ"
+          },
+          {
+            "value": "Artisan_oak",
+            "display": "Artisan eg"
+          },
+          {
+            "value": "Black_oak",
+            "display": "Sort eg"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "40_x_30_x_15_cm",
+            "display": "40 x 30 x 1,5 cm"
+          },
+          {
+            "value": "60_x_10_x_15_cm",
+            "display": "60 x 10 x 1,5 cm"
+          },
+          {
+            "value": "60_x_20_x_15_cm",
+            "display": "60 x 20 x 1,5 cm"
+          },
+          {
+            "value": "60_x_30_x_15_cm",
+            "display": "60 x 30 x 1,5 cm"
+          },
+          {
+            "value": "60_x_40_x_15_cm",
+            "display": "60 x 40 x 1,5 cm"
+          },
+          {
+            "value": "80_x_20_x_15_cm",
+            "display": "80 x 20 x 1,5 cm"
+          },
+          {
+            "value": "80_x_40_x_15_cm",
+            "display": "80 x 40 x 1,5 cm"
+          },
+          {
+            "value": "100_x_10_x_15_cm",
+            "display": "100 x 10 x 1,5 cm"
+          },
+          {
+            "value": "100_x_20_x_15_cm",
+            "display": "100 x 20 x 1,5 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Antal i pakke",
+        "values": [
+          {
+            "value": "8",
+            "display": "8"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3017247": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-med-madras-90x200-cm-stof-morkebrun/8720287407324.html",
+    "title": "vidaXL kontinentalseng med madras 90x200 cm stof mørkebrun",
+    "master_pid": "M3017247",
+    "sku": "3126856",
+    "num_combos": 504,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Plain_with_nails",
+            "display": "Ensfarvet med søm"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Vertical_stripes",
+            "display": "Lodrette striber"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          },
+          {
+            "value": "Lines_design",
+            "display": "Linjer design"
+          },
+          {
+            "value": "Button_tufted",
+            "display": "Knap tuftet"
+          },
+          {
+            "value": "Diamond_blocks_design",
+            "display": "Diamant blokke design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
