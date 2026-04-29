@@ -90,7 +90,12 @@ try:
         s = normalize_sku(r['SKU'])
         if s and s not in feed_by_sku: feed_by_sku[s] = r
 
-    config, underkat, rum_dict, pris_config = load_config(CONFIG_PATH)
+    config, underkat, rum_dict, _legacy_pris_config = load_config(CONFIG_PATH)
+    pricing_cfg = pricing.load_pricing_config()
+    if pricing_cfg and pricing_cfg.get('tiers'):
+        print(f"✅ Pricing tiers: {len(pricing_cfg['tiers'])} trin loaded fra Supabase")
+    else:
+        print("⚠️ Pricing tiers IKKE loaded — pricing-modul falder til 1.7x flat fallback")
 
     # 4. Process store produkter
     print(f"\n🔍 Processerer store produkter (budget: {budget})...")
@@ -279,13 +284,15 @@ try:
     print(f"\n✅ {products_processed} produkter processeret ({news} nye, {merges} merge), {total_variants} varianter")
 
     print(f"\n📝 Genererer XLSX filer...")
-    df_new = build_new_products(product_groups, config, underkat, rum_dict, all_handles, feed, pris_config)
+    df_new, state_new = build_new_products(product_groups, config, underkat, rum_dict, all_handles, feed, pricing_cfg)
     save_xlsx(df_new, 'output/matrixify_create_large_new.xlsx')
-    print(f"   ✅ Nye: {len(df_new)} rækker")
+    print(f"   ✅ Nye: {len(df_new)} rækker, {len(state_new)} state-records")
 
-    df_merge = build_merge_variants(product_groups, config, underkat, SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, feed, pris_config)
+    df_merge, state_merge = build_merge_variants(product_groups, config, underkat, SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, feed, pricing_cfg)
     save_xlsx(df_merge, 'output/matrixify_create_large_merge.xlsx')
-    print(f"   ✅ Merge: {len(df_merge)} rækker")
+    print(f"   ✅ Merge: {len(df_merge)} rækker, {len(state_merge)} state-records")
+
+    upsert_warmup_state(state_new + state_merge)
 
     # 6. Opdater variant count (addér til eksisterende)
     new_total = daily_used + total_variants

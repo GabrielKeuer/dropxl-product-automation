@@ -8,9 +8,19 @@ import io
 import json
 import os
 import re
+import sys
 import time
 import math
 import random
+from datetime import datetime, timedelta, timezone
+
+# Shared pricing module (tier-based markup, sale rounding, group assignment)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pricing
+
+# Number of days a new product stays in 'warmup' status before it can join a sale rotation.
+# Matches Omnibus 30-day reference + 4.4-rule (sale max half of normalpris-period).
+WARMUP_DAYS = 60
 
 # Supabase config loading (fallback til lokal XLSX)
 def _load_supabase_config():
@@ -640,8 +650,18 @@ def build_tags(row, rum_dict):
 # MATRIXIFY OUTPUT — NYE PRODUKTER
 # ============================================================
 
-def build_new_products(product_groups, config, underkat, rum_dict, existing_handles, feed, pris_config=None):
+def build_new_products(product_groups, config, underkat, rum_dict, existing_handles, feed, pricing_cfg=None):
+    """Build Matrixify rows for entirely new products.
+
+    New products are created WITHOUT compare_at_price (warmup state) — they are
+    inserted into vidaxl_pricing_state with status='warmup' so they get picked up
+    in the next rotation cycle of their group once warmup_complete_at has passed.
+
+    Returns (DataFrame, list_of_state_records).
+    """
     rows = []
+    state_records = []
+    warmup_until = (datetime.now(timezone.utc) + timedelta(days=WARMUP_DAYS)).isoformat()
     handles_used = existing_handles.copy()
 
     for group in product_groups:
@@ -656,8 +676,6 @@ def build_new_products(product_groups, config, underkat, rum_dict, existing_hand
         if len(feed_rows) == 0: continue
 
         first = feed_rows.iloc[0]
-        if pris_config is None:
-            pris_config = pd.DataFrame()
 
         # Titel
         all_opt_displays = set()
@@ -693,9 +711,19 @@ def build_new_products(product_groups, config, underkat, rum_dict, existing_hand
             try:
                 sku = normalize_sku(row['SKU'])
                 cost_kr = float(row['B2B price'])
-                markup = get_markup(cost_kr, pris_config)
-                price = calculate_price(cost_kr * markup)
-                c_price = calculate_compare_price(price)
+                price = pricing.calculate_normal_price(cost_kr, pricing_cfg)
+                sale_price = pricing.calculate_sale_price(cost_kr, pricing_cfg)
+                pricing_group = pricing.assign_group(sku)
+
+                state_records.append({
+                    'sku': sku,
+                    'pricing_group': pricing_group,
+                    'status': 'warmup',
+                    'b2b_cost': cost_kr,
+                    'normal_price': price,
+                    'sale_price': sale_price,
+                    'warmup_complete_at': warmup_until,
+                })
 
                 tags = build_tags(row, rum_dict)
                 body_html = format_body_html(row.get('HTML_description', ''))
@@ -729,7 +757,7 @@ def build_new_products(product_groups, config, underkat, rum_dict, existing_hand
                     'Variant Barcode': str(row.get('EAN', '')),
                     'Variant Position': variant_pos,
                     'Variant Price': int(price),
-                    'Variant Compare At Price': int(c_price) if c_price else '',
+                    'Variant Compare At Price': '',
                     'Variant Cost': int(cost_kr),
                     'Variant Weight': weight, 'Variant Weight Unit': 'g',
                     'Variant Inventory Tracker': 'shopify',
@@ -779,18 +807,29 @@ def build_new_products(product_groups, config, underkat, rum_dict, existing_hand
                 print(f"   ⚠️ Fejl SKU {row.get('SKU','?')}: {str(e)[:100]}")
                 continue
 
-    return pd.DataFrame(rows) if rows else pd.DataFrame()
+    return (pd.DataFrame(rows) if rows else pd.DataFrame(), state_records)
 
 # ============================================================
 # MATRIXIFY OUTPUT — MERGE VARIANTER
 # ============================================================
 
-def _build_merge_row(handle, sku, row, ordered_opts, pris_config):
-    """Byg én merge-række fra feed-data"""
+def _build_merge_row(handle, sku, row, ordered_opts, pricing_cfg):
+    """Byg én merge-række fra feed-data. Returnerer (merge_row, state_record)."""
     cost_kr = float(row['B2B price'])
-    markup = get_markup(cost_kr, pris_config)
-    price = calculate_price(cost_kr * markup)
-    c_price = calculate_compare_price(price)
+    price = pricing.calculate_normal_price(cost_kr, pricing_cfg)
+    sale_price = pricing.calculate_sale_price(cost_kr, pricing_cfg)
+    pricing_group = pricing.assign_group(sku)
+    warmup_until = (datetime.now(timezone.utc) + timedelta(days=WARMUP_DAYS)).isoformat()
+
+    state_record = {
+        'sku': sku,
+        'pricing_group': pricing_group,
+        'status': 'warmup',
+        'b2b_cost': cost_kr,
+        'normal_price': price,
+        'sale_price': sale_price,
+        'warmup_complete_at': warmup_until,
+    }
 
     raw_html = clean_vidaxl(row.get('HTML_description', ''))
     all_images = get_all_images(row)
@@ -804,7 +843,7 @@ def _build_merge_row(handle, sku, row, ordered_opts, pris_config):
         'Handle': handle, 'Variant Command': 'MERGE',
         'Variant SKU': sku, 'Variant Barcode': str(row.get('EAN', '')),
         'Variant Price': int(price),
-        'Variant Compare At Price': int(c_price) if c_price else '',
+        'Variant Compare At Price': '',
         'Variant Cost': int(cost_kr),
         'Variant Weight': weight, 'Variant Weight Unit': 'g',
         'Variant Inventory Tracker': 'shopify', 'Variant Inventory Policy': 'deny',
@@ -827,13 +866,19 @@ def _build_merge_row(handle, sku, row, ordered_opts, pris_config):
             merge_row[f'Option{i} Name'] = ''
             merge_row[f'Option{i} Value'] = ''
 
-    return merge_row
+    return (merge_row, state_record)
 
 
-def build_merge_variants(product_groups, config, underkat, store, token, feed, pris_config=None):
+def build_merge_variants(product_groups, config, underkat, store, token, feed, pricing_cfg=None):
+    """Build merge rows for new variants on existing products.
+
+    Like build_new_products, new variants are created with no compare_at_price
+    and inserted into vidaxl_pricing_state with status='warmup'.
+
+    Returns (DataFrame, list_of_state_records).
+    """
     rows = []
-    if pris_config is None:
-        pris_config = pd.DataFrame()
+    state_records = []
 
     # Byg feed lookup
     feed_by_sku = {}
@@ -893,8 +938,9 @@ def build_merge_variants(product_groups, config, underkat, store, token, feed, p
                     if not ex_opts: continue
 
                     ordered = order_opts(ex_opts)
-                    merge_row = _build_merge_row(existing_handle, ex_sku, ex_row, ordered, pris_config)
+                    merge_row, state_record = _build_merge_row(existing_handle, ex_sku, ex_row, ordered, pricing_cfg)
                     rows.append(merge_row)
+                    state_records.append(state_record)
                     print(f"   📝 Eksisterende variant {ex_sku} opdateret med nye options")
                 except Exception as e:
                     print(f"   ⚠️ Fejl eksist. SKU {ex_sku}: {str(e)[:100]}")
@@ -905,13 +951,47 @@ def build_merge_variants(product_groups, config, underkat, store, token, feed, p
                 sku = normalize_sku(row['SKU'])
                 opts = variant_map.get(sku, {})
                 ordered = order_opts(opts)
-                merge_row = _build_merge_row(existing_handle, sku, row, ordered, pris_config)
+                merge_row, state_record = _build_merge_row(existing_handle, sku, row, ordered, pricing_cfg)
                 rows.append(merge_row)
+                state_records.append(state_record)
             except Exception as e:
                 print(f"   ⚠️ Merge fejl SKU {row.get('SKU','?')}: {str(e)[:100]}")
                 continue
 
-    return pd.DataFrame(rows) if rows else pd.DataFrame()
+    return (pd.DataFrame(rows) if rows else pd.DataFrame(), state_records)
+
+
+def upsert_warmup_state(state_records, supabase=None):
+    """Idempotently insert warmup state rows into vidaxl_pricing_state.
+
+    Uses ON CONFLICT (sku) DO NOTHING semantics so that re-runs / merge variants
+    that already have a state row are NEVER overwritten — protects existing
+    on_sale / normal status from being reset to warmup.
+    """
+    if not state_records:
+        return 0
+    if supabase is None:
+        url = os.environ.get('SUPABASE_URL')
+        key = os.environ.get('SUPABASE_SERVICE_KEY')
+        if not url or not key:
+            print("[WARMUP] Mangler SUPABASE_URL/SUPABASE_SERVICE_KEY — kan ikke skrive state")
+            return 0
+        try:
+            from supabase import create_client
+            supabase = create_client(url, key)
+        except Exception as e:
+            print(f"[WARMUP] Supabase init fejlede: {e}")
+            return 0
+    try:
+        res = supabase.table('vidaxl_pricing_state').upsert(
+            state_records, on_conflict='sku', ignore_duplicates=True
+        ).execute()
+        inserted = len(res.data) if res.data else 0
+        print(f"[WARMUP] Indsat {inserted} nye state-rækker (af {len(state_records)} forsøgt)")
+        return inserted
+    except Exception as e:
+        print(f"[WARMUP] Upsert fejlede: {e}")
+        return 0
 
 
 def save_xlsx(df, path, sheet_name='Products'):
