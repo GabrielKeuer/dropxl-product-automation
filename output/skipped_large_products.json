@@ -1,1 +1,733 @@
-{}
+{
+  "M3043763": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-osmannisk-sengeramme-med-madrasser-90x190-cm-flojl-morkegra/8721158491480.html",
+    "title": "vidaXL osmannisk sengeramme med madrasser 90x190 cm fløjl mørkegrå",
+    "master_pid": "M3043763",
+    "sku": "3314361",
+    "num_combos": 180,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Dark_blue",
+            "display": "Mørkeblå"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3028287": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLElektriskUtrækkeligMarkiseAnthracitoghvid2,5x2m/8721364639379.html",
+    "title": "vidaXL Elektrisk Utrækkelig Markise Anthracit og hvid 2,5 x 2 m",
+    "master_pid": "M3028287",
+    "sku": "3418949",
+    "num_combos": 184,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Blue_and_white",
+            "display": "Blå og hvid"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Yellow",
+            "display": "Gul"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracit"
+          },
+          {
+            "value": "Orange_and_brown",
+            "display": "orange og brun"
+          },
+          {
+            "value": "Yellow_and_white",
+            "display": "Gul og hvid"
+          },
+          {
+            "value": "Burgundy",
+            "display": "Bordeaux"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Anthracite_and_white",
+            "display": "Antracitgrå og hvid"
+          },
+          {
+            "value": "Orange_black_and_yellow",
+            "display": "Orange, Sort, Gul"
+          },
+          {
+            "value": "Yellow_and_orange",
+            "display": "gul og orange"
+          },
+          {
+            "value": "Red_and_white",
+            "display": "Rød og hvid"
+          },
+          {
+            "value": "Orange_grey_blue_and_white",
+            "display": "Orange, grå, blå og hvid"
+          },
+          {
+            "value": "Yellow_grey_and_white",
+            "display": "Gul, grå og hvid"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Beige",
+            "display": "Beige"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Red",
+            "display": "Rød"
+          },
+          {
+            "value": "Green_and_yellow",
+            "display": "Grøn og gul"
+          },
+          {
+            "value": "Green_and_white",
+            "display": "Grøn og hvid"
+          },
+          {
+            "value": "Yellow_orange_and_white",
+            "display": "Gul, orange og hvid"
+          },
+          {
+            "value": "Orange_grey_and_blue",
+            "display": "Orange, grå, blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "3_x_25_m",
+            "display": "3 x 2,5 m"
+          },
+          {
+            "value": "35_x_25_m",
+            "display": "3,5 x 2,5 m"
+          },
+          {
+            "value": "4_x_3_m",
+            "display": "4 × 3 m"
+          },
+          {
+            "value": "45_x_3_m",
+            "display": "4,5 × 3 m"
+          },
+          {
+            "value": "5_x_3_m",
+            "display": "5 x 3 m"
+          },
+          {
+            "value": "3_x_2_m",
+            "display": "3 x 2 m"
+          },
+          {
+            "value": "35_x_2_m",
+            "display": "3,5 x 2 m"
+          },
+          {
+            "value": "4_x_2_m",
+            "display": "4 x 2 m"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3004914": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-insektgardin-56-x-185-cm-brun-og-beige/8719883605616.html",
+    "title": "vidaXL insektgardin 56 x 185 cm brun og beige",
+    "master_pid": "M3004914",
+    "sku": "284276",
+    "num_combos": 154,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Beige_and_light_brown",
+            "display": "beige og lysebrun"
+          },
+          {
+            "value": "Grey_and_white",
+            "display": "Grå og hvid"
+          },
+          {
+            "value": "Blue_and_white",
+            "display": "Blå og hvid"
+          },
+          {
+            "value": "Brown_and_beige",
+            "display": "Brun og beige"
+          },
+          {
+            "value": "White_and_grey",
+            "display": "Hvid og grå"
+          },
+          {
+            "value": "Beige",
+            "display": "Beige"
+          },
+          {
+            "value": "Silver",
+            "display": "Sølv"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracitgrå"
+          },
+          {
+            "value": "Green_and_white",
+            "display": "Grøn og hvid"
+          },
+          {
+            "value": "Beige_and_brown",
+            "display": "Beige og brun"
+          },
+          {
+            "value": "Brown_and_white",
+            "display": "Brun og hvid"
+          },
+          {
+            "value": "Light_grey_and_dark_grey",
+            "display": "Lysegrå og mørkegrå"
+          },
+          {
+            "value": "Ochre_and_white",
+            "display": "Okkerfarvet og hvid"
+          },
+          {
+            "value": "Taupe_and_white",
+            "display": "Gråbrun og hvid"
+          },
+          {
+            "value": "Light_grey_and_white",
+            "display": "Lysegrå og hvid"
+          },
+          {
+            "value": "Beige_and_dark_brown",
+            "display": "beige og mørkebrun"
+          },
+          {
+            "value": "Grey_and_black",
+            "display": "Grå og sort"
+          },
+          {
+            "value": "Black_and_white",
+            "display": "Sort og hvid"
+          },
+          {
+            "value": "Beige_and_white",
+            "display": "Beige og hvid"
+          },
+          {
+            "value": "Grey",
+            "display": "Grå"
+          },
+          {
+            "value": "Dark_brown_and_beige",
+            "display": "mørkebrun og beige"
+          },
+          {
+            "value": "Grey_and_pink",
+            "display": "Grå og pink"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "90_x_220_cm",
+            "display": "90 x 220 cm"
+          },
+          {
+            "value": "100_x_220_cm",
+            "display": "100 x 220 cm"
+          },
+          {
+            "value": "56_x_200_cm",
+            "display": "56 x 200 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "118_x_220_cm",
+            "display": "118 x 220 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "100_x_230_cm",
+            "display": "100 x 230 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3048676": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLSengmedopbevaringogmadrasMørkegrå140x200cmPolyester/8721288570574.html",
+    "title": "vidaXL Seng med opbevaring og madras Mørkegrå 140 x 200 cm Polyester",
+    "master_pid": "M3048676",
+    "sku": "3371911",
+    "num_combos": 162,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Block med firkanter"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Quilted design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3048678": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLSengmedopbevaringogmadrasLysegrå100x200cmFløjl/8721288572158.html",
+    "title": "vidaXL Seng med opbevaring og madras Lysegrå 100 x 200 cm Fløjl",
+    "master_pid": "M3048678",
+    "sku": "3372069",
+    "num_combos": 162,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Dark_blue",
+            "display": "Mørkeblå"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Block med firkanter"
+          },
+          {
+            "value": "Buttons",
+            "display": "Knapper"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3007207": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLMarkisedugemedGrønogHvid400×300cmPolyester/8721158810854.html",
+    "title": "vidaXL Markiseduge med Grøn og Hvid 400 × 300 cm Polyester",
+    "master_pid": "M3007207",
+    "sku": "3330726",
+    "num_combos": 160,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Blue_and_white",
+            "display": "Blå og hvid"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Yellow_and_white",
+            "display": "Gul og hvid"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracitgrå"
+          },
+          {
+            "value": "Orange_and_brown",
+            "display": "orange og brun"
+          },
+          {
+            "value": "Burgundy",
+            "display": "Bordeaux"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Anthracite_and_white",
+            "display": "Antracitgrå og hvid"
+          },
+          {
+            "value": "Orangeblackyellow",
+            "display": "Orange/sort/gul"
+          },
+          {
+            "value": "Yellow_and_orange",
+            "display": "gul og orange"
+          },
+          {
+            "value": "Red_and_white",
+            "display": "Rød og hvid"
+          },
+          {
+            "value": "Blue_and_orange",
+            "display": "Blå og orange"
+          },
+          {
+            "value": "Yellowgreywhite",
+            "display": "Gul/grå/hvid"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Beige",
+            "display": "Beige"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Red",
+            "display": "Rød"
+          },
+          {
+            "value": "Green_and_yellow",
+            "display": "Grøn og gul"
+          },
+          {
+            "value": "Green_and_white",
+            "display": "Grøn og hvid"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "300_x_250_cm",
+            "display": "300 x 250 cm"
+          },
+          {
+            "value": "350_x_250_cm",
+            "display": "350 x 250 cm"
+          },
+          {
+            "value": "400_x_350_cm",
+            "display": "400 × 350 cm"
+          },
+          {
+            "value": "450_x_300_cm",
+            "display": "450 × 300 cm"
+          },
+          {
+            "value": "450_x_350_cm",
+            "display": "450 × 350 cm"
+          },
+          {
+            "value": "500_x_300_cm",
+            "display": "500 × 300 cm"
+          },
+          {
+            "value": "500_x_350_cm",
+            "display": "500 × 350 cm"
+          },
+          {
+            "value": "600_x_300_cm",
+            "display": "600 × 300 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
