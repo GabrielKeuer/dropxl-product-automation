@@ -1,1 +1,440 @@
-{}
+{
+  "M3032253": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLFrostbeskyttelsesPlantefleeceDække3pcsHvid3,5x2,5m/8721359310887.html",
+    "title": "vidaXL Frostbeskyttelses Plantefleece Dække 3 pcs Hvid 3,5 x 2,5 m",
+    "master_pid": "M3032253",
+    "sku": "42021057",
+    "num_combos": 120,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Beige",
+            "display": "Beige"
+          },
+          {
+            "value": "Green",
+            "display": "Grøn"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "1_x_155_m",
+            "display": "1 x 1,55 m"
+          },
+          {
+            "value": "155_x_155_m",
+            "display": "1,55 x 1,55 m"
+          },
+          {
+            "value": "12_x_18_m",
+            "display": "1,2 x 1,8 m"
+          },
+          {
+            "value": "236_x_2_m",
+            "display": "2,36 x 2 m"
+          },
+          {
+            "value": "314_x_25_m",
+            "display": "3,14 x 2,5 m"
+          },
+          {
+            "value": "393_x_3_m",
+            "display": "3,93 x 3 m"
+          },
+          {
+            "value": "393_x_35_m",
+            "display": "3,93 x 3,5 m"
+          },
+          {
+            "value": "2_x_24_m",
+            "display": "2 x 2,4 m"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Antal i pakke",
+        "values": [
+          {
+            "value": "2",
+            "display": "2"
+          },
+          {
+            "value": "1",
+            "display": "1"
+          },
+          {
+            "value": "4",
+            "display": "4"
+          },
+          {
+            "value": "10",
+            "display": "10"
+          },
+          {
+            "value": "5",
+            "display": "5"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3017291": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLBoxspringsengmedmadrasCreme80x200cmStof/8721158213952.html",
+    "title": "vidaXL Box spring seng med madras Creme 80 x 200 cm Stof",
+    "master_pid": "M3017291",
+    "sku": "3339348",
+    "num_combos": 630,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Plain_with_nails",
+            "display": "Ensfarvet med søm"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Horizontal_stripes",
+            "display": "vandrette striber"
+          },
+          {
+            "value": "Vertical_stripes",
+            "display": "Lodrette striber"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          },
+          {
+            "value": "Lines_design",
+            "display": "Linjer design"
+          },
+          {
+            "value": "Diamond_blocks_design",
+            "display": "Diamant blokke design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3700001217": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLHelårsdyneGråbrun155x220cmMikrofiber/8721364404533.html",
+    "title": "vidaXL Helårs dyne Gråbrun 155 x 220 cm Mikrofiber",
+    "master_pid": "M3700001217",
+    "sku": "42025579",
+    "num_combos": 110,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Anthracite",
+            "display": "Antracit"
+          },
+          {
+            "value": "Anthracite_and_taupe",
+            "display": "Antracit og taupe"
+          },
+          {
+            "value": "Green",
+            "display": "Grøn"
+          },
+          {
+            "value": "Green_and_anthracite",
+            "display": "Grøn og antracit"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Black_and_anthracite",
+            "display": "Sort og antracit"
+          },
+          {
+            "value": "Black_and_taupe",
+            "display": "Sort og taupe"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Light_grey_and_anthracite",
+            "display": "Lysegrå og antracit"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "135_x_200_cm",
+            "display": "135 x 200 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "155_x_200_cm",
+            "display": "155 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          },
+          {
+            "value": "200_x_240_cm",
+            "display": "200 x 240 cm"
+          },
+          {
+            "value": "135_x_220_cm",
+            "display": "135 x 220 cm"
+          },
+          {
+            "value": "140_x_220_cm",
+            "display": "140 x 220 cm"
+          },
+          {
+            "value": "200_x_220_cm",
+            "display": "200 x 220 cm"
+          },
+          {
+            "value": "220_x_240_cm",
+            "display": "220 x 240 cm"
+          },
+          {
+            "value": "220_x_260_cm",
+            "display": "220 x 260 cm"
+          },
+          {
+            "value": "240_x_260_cm",
+            "display": "240 x 260 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3048492": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLUdendørssofagruppemedpude6pcsNaturligogAntracit/8721288477866.html",
+    "title": "vidaXL Udendørs sofagruppe med pude 6 pcs Naturlig og Antracit",
+    "master_pid": "M3048492",
+    "sku": "3367480",
+    "num_combos": 100,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Natural",
+            "display": "Naturfarvet"
+          },
+          {
+            "value": "Natural_and_cream",
+            "display": "Natur og cremefarvet"
+          },
+          {
+            "value": "Natural_and_light_grey",
+            "display": "Naturfarvet og lysegrå"
+          },
+          {
+            "value": "Natural_and_anthracite",
+            "display": "Naturlig og antracit"
+          },
+          {
+            "value": "Natural_and_beige",
+            "display": "Naturlig og beige"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "White_and_cream",
+            "display": "Hvid og creme"
+          },
+          {
+            "value": "White_and_light_grey",
+            "display": "Hvid og lys grå"
+          },
+          {
+            "value": "White_and_anthracite",
+            "display": "hvid og antracitgrå"
+          },
+          {
+            "value": "White_and_beige",
+            "display": "Hvid og beige"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Armlæn stil",
+        "values": [
+          {
+            "value": "Horizontal_slats",
+            "display": "horisontale lameller"
+          },
+          {
+            "value": "Open_frame",
+            "display": "Åben ramme"
+          },
+          {
+            "value": "Vertical_slats",
+            "display": "Lodrette lameller"
+          },
+          {
+            "value": "Curved",
+            "display": "Kurvet"
+          },
+          {
+            "value": "Grid",
+            "display": "Rude"
+          },
+          {
+            "value": "Sloped",
+            "display": "Skrå"
+          },
+          {
+            "value": "Black_rattan",
+            "display": "Sort rattan"
+          },
+          {
+            "value": "Grey_rattan",
+            "display": "Grå rattan"
+          },
+          {
+            "value": "Black_rope",
+            "display": "Sort reb"
+          },
+          {
+            "value": "Coffee_rope",
+            "display": "Kaffereb"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
