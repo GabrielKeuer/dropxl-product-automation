@@ -1,1 +1,475 @@
-{}
+{
+  "M3007206": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLUtrækkeligMarkiseorangeogbrun500×350cm/8721158818423.html",
+    "title": "vidaXL Utrækkelig Markise orange og brun 500 × 350 cm",
+    "master_pid": "M3007206",
+    "sku": "3331483",
+    "num_combos": 180,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Yellow_and_white",
+            "display": "Gul og hvid"
+          },
+          {
+            "value": "Blue_and_white",
+            "display": "Blå og hvid"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracitgrå"
+          },
+          {
+            "value": "Orange_and_brown",
+            "display": "orange og brun"
+          },
+          {
+            "value": "Burgundy",
+            "display": "Bordeaux"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Anthracite_and_white",
+            "display": "Antracitgrå og hvid"
+          },
+          {
+            "value": "Orangeblackyellow",
+            "display": "Orange/sort/gul"
+          },
+          {
+            "value": "Yellow_and_orange",
+            "display": "gul og orange"
+          },
+          {
+            "value": "Red_and_white",
+            "display": "Rød og hvid"
+          },
+          {
+            "value": "Blue_and_orange",
+            "display": "Blå og orange"
+          },
+          {
+            "value": "Yellowgreywhite",
+            "display": "Gul/grå/hvid"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Beige",
+            "display": "Beige"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Red",
+            "display": "Rød"
+          },
+          {
+            "value": "Green_and_yellow",
+            "display": "Grøn og gul"
+          },
+          {
+            "value": "Green_and_white",
+            "display": "Grøn og hvid"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "300_x_250_cm",
+            "display": "300 x 250 cm"
+          },
+          {
+            "value": "350_x_250_cm",
+            "display": "350 x 250 cm"
+          },
+          {
+            "value": "400_x_300_cm",
+            "display": "400 × 300 cm"
+          },
+          {
+            "value": "400_x_350_cm",
+            "display": "400 × 350 cm"
+          },
+          {
+            "value": "450_x_300_cm",
+            "display": "450 × 300 cm"
+          },
+          {
+            "value": "450_x_350_cm",
+            "display": "450 × 350 cm"
+          },
+          {
+            "value": "500_x_300_cm",
+            "display": "500 × 300 cm"
+          },
+          {
+            "value": "600_x_300_cm",
+            "display": "600 × 300 cm"
+          },
+          {
+            "value": "600_x_350_cm",
+            "display": "600 × 350 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3017287": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-med-madras-90x200-cm-stof-morkebrun/8720287447726.html",
+    "title": "vidaXL kontinentalseng med madras 90x200 cm stof mørkebrun",
+    "master_pid": "M3017287",
+    "sku": "3140108",
+    "num_combos": 630,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Plain_with_nails",
+            "display": "Ensfarvet med søm"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Vertical_stripes",
+            "display": "Lodrette striber"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          },
+          {
+            "value": "Lines_design",
+            "display": "Linjer design"
+          },
+          {
+            "value": "Button_tufted",
+            "display": "Knap tuftet"
+          },
+          {
+            "value": "Diamond_blocks_design",
+            "display": "Diamant blokke design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3028286": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-foldemarkise-manuel-betjening-4x3-m-stof-aluminium-gul-hvid/8720845714680.html",
+    "title": "vidaXL foldemarkise manuel betjening 4x3 m stof aluminium gul hvid",
+    "master_pid": "M3028286",
+    "sku": "3154458",
+    "num_combos": 288,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Blue_and_white_white_frame",
+            "display": "Blå og hvid (hvid ramme)"
+          },
+          {
+            "value": "Cream_white_frame",
+            "display": "Cremefarvet (hvid ramme)"
+          },
+          {
+            "value": "Yellow_and_white_white_frame",
+            "display": "Gul og hvid (hvid ramme)"
+          },
+          {
+            "value": "Anthracite_white_frame",
+            "display": "Antracitgrå (hvid ramme)"
+          },
+          {
+            "value": "Orangeblackyellow_white_frame",
+            "display": "Orange/Sort/Gul (hvid ramme)"
+          },
+          {
+            "value": "Blue_and_white_anthracite_frame",
+            "display": "Blå og hvid (anthracitramme)"
+          },
+          {
+            "value": "Cream_anthracite_frame",
+            "display": "Creme (anthracitramme)"
+          },
+          {
+            "value": "Yellow_and_white_anthracite_frame",
+            "display": "Gul og hvid (anthracitramme)"
+          },
+          {
+            "value": "Anthracite_anthracite_frame",
+            "display": "Anthracit (anthracitramme)"
+          },
+          {
+            "value": "Orangeblackyellow_anthracite_frame",
+            "display": "Orange/sort/gul (antracitramme)"
+          },
+          {
+            "value": "Burgundy_white_frame",
+            "display": "Bordeaux (hvid ramme)"
+          },
+          {
+            "value": "Burgundy_anthracite_frame",
+            "display": "Bordeaux (anthracitramme)"
+          },
+          {
+            "value": "Brown_white_frame",
+            "display": "Brun (hvid ramme)"
+          },
+          {
+            "value": "Brown_anthracite_frame",
+            "display": "Brun (anthracitramme)"
+          },
+          {
+            "value": "Anthracite_and_white_white_frame",
+            "display": "Anthracit og hvid (hvid ramme)"
+          },
+          {
+            "value": "Anthracite_and_white_anthracite_frame",
+            "display": "Anthracit og hvid (anthracitramme)"
+          },
+          {
+            "value": "Yelloworangewhite_white_frame",
+            "display": "Gul, Orange, Hvid (hvid ramme)"
+          },
+          {
+            "value": "White_anthracite_frame",
+            "display": "Hvid (anthracitramme)"
+          },
+          {
+            "value": "Green_and_yellow_white_frame",
+            "display": "Grøn og gul (hvid ramme)"
+          },
+          {
+            "value": "Orangegreyblue_anthracite_frame",
+            "display": "Orange/grå/blå (antracitramme)"
+          },
+          {
+            "value": "Black_white_frame",
+            "display": "Sort (hvid ramme)"
+          },
+          {
+            "value": "Red_white_frame",
+            "display": "Rød (hvid ramme)"
+          },
+          {
+            "value": "Orangegreyblue_white_frame",
+            "display": "Orange/grå/blå (hvid ramme)"
+          },
+          {
+            "value": "Green_and_white_anthracite_frame",
+            "display": "Grøn og hvid (anthracitramme)"
+          },
+          {
+            "value": "Red_and_white_white_frame",
+            "display": "Rød og hvid (hvid ramme)"
+          },
+          {
+            "value": "Beige_white_frame",
+            "display": "Beige (hvid ramme)"
+          },
+          {
+            "value": "White_white_frame",
+            "display": "Hvid (hvid ramme)"
+          },
+          {
+            "value": "Light_grey_white_frame",
+            "display": "Lys grå (hvid ramme)"
+          },
+          {
+            "value": "Green_and_white_white_frame",
+            "display": "Grøn og hvid (hvid ramme)"
+          },
+          {
+            "value": "Yellowgreywhite_white_frame",
+            "display": "Gul/grå/hvid (hvid ramme)"
+          },
+          {
+            "value": "Red_and_white_anthracite_frame",
+            "display": "Rød og hvid (anthracitramme)"
+          },
+          {
+            "value": "Beige_anthracite_frame",
+            "display": "Beige (anthracitramme)"
+          },
+          {
+            "value": "Light_grey_anthracite_frame",
+            "display": "Lys grå (anthracitramme)"
+          },
+          {
+            "value": "Green_and_yellow_anthracite_frame",
+            "display": "Grøn og gul (anthracitramme)"
+          },
+          {
+            "value": "Yellowgreywhite_anthracite_frame",
+            "display": "Gul/grå/hvid (antracitramme)"
+          },
+          {
+            "value": "Red_anthracite_frame",
+            "display": "Rød (anthracitramme)"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "3_x_25_m",
+            "display": "3 x 2,5 m"
+          },
+          {
+            "value": "35_x_25_m",
+            "display": "3,5 x 2,5 m"
+          },
+          {
+            "value": "45_x_3_m",
+            "display": "4,5 × 3 m"
+          },
+          {
+            "value": "5_x_3_m",
+            "display": "5 x 3 m"
+          },
+          {
+            "value": "25_x_2_m",
+            "display": "2,5 x 2 m"
+          },
+          {
+            "value": "3_x_2_m",
+            "display": "3 x 2 m"
+          },
+          {
+            "value": "35_x_2_m",
+            "display": "3,5 x 2 m"
+          },
+          {
+            "value": "4_x_2_m",
+            "display": "4 x 2 m"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
