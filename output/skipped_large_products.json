@@ -1,1 +1,340 @@
-{}
+{
+  "M3043752": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-osmannisk-sengeramme-med-madrasser-200x200-cm-stof-sort/8721158481375.html",
+    "title": "vidaXL osmannisk sengeramme med madrasser 200x200 cm stof sort",
+    "master_pid": "M3043752",
+    "sku": "3313350",
+    "num_combos": 210,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3048488": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLUdendørssofagruppemedpude8pcsNaturligogFløde/8721288476494.html",
+    "title": "vidaXL Udendørs sofagruppe med pude 8 pcs Naturlig og Fløde",
+    "master_pid": "M3048488",
+    "sku": "3367343",
+    "num_combos": 100,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Natural",
+            "display": "Naturfarvet"
+          },
+          {
+            "value": "Natural_and_cream",
+            "display": "Natur og cremefarvet"
+          },
+          {
+            "value": "Natural_and_light_grey",
+            "display": "Naturfarvet og lysegrå"
+          },
+          {
+            "value": "Natural_and_anthracite",
+            "display": "Naturlig og antracit"
+          },
+          {
+            "value": "Natural_and_beige",
+            "display": "Naturlig og beige"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "White_and_cream",
+            "display": "Hvid og creme"
+          },
+          {
+            "value": "White_and_light_grey",
+            "display": "Hvid og lys grå"
+          },
+          {
+            "value": "White_and_anthracite",
+            "display": "hvid og antracitgrå"
+          },
+          {
+            "value": "White_and_beige",
+            "display": "Hvid og beige"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Armlæn stil",
+        "values": [
+          {
+            "value": "Horizontal_slats",
+            "display": "horisontale lameller"
+          },
+          {
+            "value": "Open_frame",
+            "display": "Åben ramme"
+          },
+          {
+            "value": "Vertical_slats",
+            "display": "Lodrette lameller"
+          },
+          {
+            "value": "Curved",
+            "display": "Kurvet"
+          },
+          {
+            "value": "Wide_flat",
+            "display": "Bred flad"
+          },
+          {
+            "value": "Sloped",
+            "display": "Skrå"
+          },
+          {
+            "value": "Black_rattan",
+            "display": "Sort rattan"
+          },
+          {
+            "value": "Grey_rattan",
+            "display": "Grå rattan"
+          },
+          {
+            "value": "Black_rope",
+            "display": "Sort reb"
+          },
+          {
+            "value": "Coffee_rope",
+            "display": "Kaffereb"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3017247": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-med-madras-180x200-cm-stof-morkebrun/8720287407805.html",
+    "title": "vidaXL kontinentalseng med madras 180x200 cm stof mørkebrun",
+    "master_pid": "M3017247",
+    "sku": "3126904",
+    "num_combos": 504,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Plain_with_nails",
+            "display": "Ensfarvet med søm"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Vertical_stripes",
+            "display": "Lodrette striber"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          },
+          {
+            "value": "Lines_design",
+            "display": "Linjer design"
+          },
+          {
+            "value": "Button_tufted",
+            "display": "Knap tuftet"
+          },
+          {
+            "value": "Diamond_blocks_design",
+            "display": "Diamant blokke design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
