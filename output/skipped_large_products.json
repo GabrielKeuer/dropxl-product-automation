@@ -1,1 +1,127 @@
-{}
+{
+  "M3043941": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-voile-gardiner-med-stanglommer-2-stk-aeblegron/8721158551818.html",
+    "title": "vidaXL voile-gardiner med stanglommer 2 stk. æblegrøn",
+    "master_pid": "M3043941",
+    "sku": "4102165",
+    "num_combos": 144,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Apple_green",
+            "display": "Æblegrøn"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Light_pink",
+            "display": "Lys pink"
+          },
+          {
+            "value": "Orange",
+            "display": "Orange"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          },
+          {
+            "value": "Purple",
+            "display": "Lilla"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Royal_blue",
+            "display": "Kongeblå"
+          },
+          {
+            "value": "Sand",
+            "display": "Sandfarvet"
+          },
+          {
+            "value": "Light_brown",
+            "display": "Lysebrun"
+          },
+          {
+            "value": "Yellow",
+            "display": "Gul"
+          },
+          {
+            "value": "Terracotta",
+            "display": "Terrakotta"
+          },
+          {
+            "value": "Turquoise",
+            "display": "Turkis"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Wine_red",
+            "display": "Vinrød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "140_x_140_cm",
+            "display": "140 x 140 cm"
+          },
+          {
+            "value": "140_x_175_cm",
+            "display": "140 x 175 cm"
+          },
+          {
+            "value": "140_x_225_cm",
+            "display": "140 x 225 cm"
+          },
+          {
+            "value": "140_x_245_cm",
+            "display": "140 x 245 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "with_grommets",
+            "display": "med øjeringe"
+          },
+          {
+            "value": "with_loops",
+            "display": "med løkker"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
