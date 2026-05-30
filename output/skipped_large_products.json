@@ -1,1 +1,243 @@
-{}
+{
+  "M3017288": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLBoxspringsengmedpudeLysegrå140x200cmStof/8721158209702.html",
+    "title": "vidaXL Box spring seng med pude Lysegrå 140 x 200 cm Stof",
+    "master_pid": "M3017288",
+    "sku": "3338923",
+    "num_combos": 378,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Plain_with_nails",
+            "display": "Ensfarvet med søm"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Horizontal_stripes",
+            "display": "vandrette striber"
+          },
+          {
+            "value": "Vertical_stripes",
+            "display": "Lodrette striber"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          },
+          {
+            "value": "Lines_design",
+            "display": "Linjer design"
+          },
+          {
+            "value": "Diamond_blocks_design",
+            "display": "Diamant blokke design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3033592": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLMarkisekappaerstatningGrønogHvid480x20cmPolyester/8721158766137.html",
+    "title": "vidaXL Markise kappa erstatning Grøn og Hvid 480 x 20 cm Polyester",
+    "master_pid": "M3033592",
+    "sku": "42000811",
+    "num_combos": 114,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Blue_and_white",
+            "display": "Blå og hvid"
+          },
+          {
+            "value": "Cream_stripe",
+            "display": "Cremefarvet stribe"
+          },
+          {
+            "value": "Yellow_and_white",
+            "display": "Gul og hvid"
+          },
+          {
+            "value": "Anthracite_stripe",
+            "display": "antracitgrå stribe"
+          },
+          {
+            "value": "Burgundy_stripe",
+            "display": "Bordeaux stribe"
+          },
+          {
+            "value": "Brown_stripe",
+            "display": "Brun stribe"
+          },
+          {
+            "value": "Anthracite_and_white",
+            "display": "Antracitgrå og hvid"
+          },
+          {
+            "value": "Red_and_white",
+            "display": "Rød og hvid"
+          },
+          {
+            "value": "Multicolour",
+            "display": "Flerfarvet"
+          },
+          {
+            "value": "Yellow_and_grey",
+            "display": "Gul og grå"
+          },
+          {
+            "value": "Light_grey_and_white",
+            "display": "Lysegrå og hvid"
+          },
+          {
+            "value": "Sand",
+            "display": "Sandfarvet"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Orangeblackyellow",
+            "display": "Orange/sort/gul"
+          },
+          {
+            "value": "Beige",
+            "display": "Beige"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Green_and_yellow",
+            "display": "Grøn og gul"
+          },
+          {
+            "value": "Green_and_white",
+            "display": "Grøn og hvid"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "25_m",
+            "display": "2,5 m"
+          },
+          {
+            "value": "3_m",
+            "display": "3 m"
+          },
+          {
+            "value": "35_m",
+            "display": "3,5 m"
+          },
+          {
+            "value": "4_m",
+            "display": "4 m"
+          },
+          {
+            "value": "45_m",
+            "display": "4,5 m"
+          },
+          {
+            "value": "6_m",
+            "display": "6 m"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
