@@ -1,1 +1,243 @@
-{}
+{
+  "M3042960": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLVægskabPORTOGammelttræ40x31x80cmKonstruerettræ/8721359462548.html",
+    "title": "vidaXL Vægskab PORTO Gammelt træ 40 x 31 x 80 cm Konstrueret træ",
+    "master_pid": "M3042960",
+    "sku": "885383",
+    "num_combos": 121,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "High_gloss_white",
+            "display": "Hvid højglans"
+          },
+          {
+            "value": "Sonoma_oak",
+            "display": "Sonoma-eg"
+          },
+          {
+            "value": "Concrete_grey",
+            "display": "Betongrå"
+          },
+          {
+            "value": "Smoked_oak",
+            "display": "Røget eg"
+          },
+          {
+            "value": "Grey_sonoma",
+            "display": "Grå Sonoma"
+          },
+          {
+            "value": "Brown_oak",
+            "display": "Brun eg"
+          },
+          {
+            "value": "Old_wood",
+            "display": "Gammelt træ"
+          },
+          {
+            "value": "Artisan_oak",
+            "display": "Artisan-eg"
+          },
+          {
+            "value": "Black_oak",
+            "display": "Sort eg"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "30_x_31_x_60_cm",
+            "display": "30 x 31 x 60 cm"
+          },
+          {
+            "value": "40_x_31_x_60_cm",
+            "display": "40 x 31 x 60 cm"
+          },
+          {
+            "value": "50_x_31_x_60_cm",
+            "display": "50 x 31 x 60 cm"
+          },
+          {
+            "value": "30_x_31_x_40_cm",
+            "display": "30 x 31 x 40 cm"
+          },
+          {
+            "value": "40_x_31_x_40_cm",
+            "display": "40 x 31 x 40 cm"
+          },
+          {
+            "value": "50_x_31_x_40_cm",
+            "display": "50 x 31 x 40 cm"
+          },
+          {
+            "value": "30_x_31_x_80_cm",
+            "display": "30 x 31 x 80 cm"
+          },
+          {
+            "value": "50_x_31_x_80_cm",
+            "display": "50 x 31 x 80 cm"
+          },
+          {
+            "value": "30_x_31_x_100_cm",
+            "display": "30 x 31 x 100 cm"
+          },
+          {
+            "value": "40_x_31_x_100_cm",
+            "display": "40 x 31 x 100 cm"
+          },
+          {
+            "value": "50_x_31_x_100_cm",
+            "display": "50 x 31 x 100 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3017294": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-med-madras-80x200-cm-flojl-morkebla/8720845517779.html",
+    "title": "vidaXL kontinentalseng med madras 80x200 cm fløjl mørkeblå",
+    "master_pid": "M3017294",
+    "sku": "3143113",
+    "num_combos": 540,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Dark_blue",
+            "display": "Mørkeblå"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Plain_with_nails",
+            "display": "Ensfarvet med søm"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Horizontal_stripes",
+            "display": "vandrette striber"
+          },
+          {
+            "value": "Tufted_design",
+            "display": "Med pynteknapper"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          },
+          {
+            "value": "Crystal_button_tufted",
+            "display": "Krystal knap tufted"
+          },
+          {
+            "value": "Button_tufted",
+            "display": "Knap tuftet"
+          },
+          {
+            "value": "Diamond_blocks_design",
+            "display": "Diamant blokke design"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
