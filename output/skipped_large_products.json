@@ -1,1 +1,122 @@
-{}
+{
+  "M3049898": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLRygpudeMørkegrå60x19x50cmStof/8721288950246.html",
+    "title": "vidaXL Rygpude Mørkegrå 60 x 19 x 50 cm Stof",
+    "master_pid": "M3049898",
+    "sku": "42014659",
+    "num_combos": 128,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Wine_red",
+            "display": "Vinrød"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Light_yellow",
+            "display": "Lysegul"
+          },
+          {
+            "value": "Light_green",
+            "display": "Lysegrøn"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Red",
+            "display": "Rød"
+          },
+          {
+            "value": "Cloud_grey",
+            "display": "Skygrå stof"
+          },
+          {
+            "value": "Jeans_blue",
+            "display": "Jeans Blå"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "50_x_19_x_45_cm",
+            "display": "50 x 19 x 45 cm"
+          },
+          {
+            "value": "80_x_19_x_50_cm",
+            "display": "80 x 19 x 50 cm"
+          },
+          {
+            "value": "100_x_19_x_50_cm",
+            "display": "100 x 19 x 50 cm"
+          },
+          {
+            "value": "120_x_19_x_50_cm",
+            "display": "120 x 19 x 50 cm"
+          },
+          {
+            "value": "140_x_19_x_50_cm",
+            "display": "140 x 19 x 50 cm"
+          },
+          {
+            "value": "160_x_19_x_50_cm",
+            "display": "160 x 19 x 50 cm"
+          },
+          {
+            "value": "180_x_19_x_50_cm",
+            "display": "180 x 19 x 50 cm"
+          },
+          {
+            "value": "200_x_19_x_50_cm",
+            "display": "200 x 19 x 50 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
