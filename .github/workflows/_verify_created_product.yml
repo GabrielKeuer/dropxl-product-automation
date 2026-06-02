@@ -1,0 +1,71 @@
+name: Verify created product
+
+on:
+  workflow_dispatch:
+    inputs:
+      handle:
+        description: "Product handle at undersoege"
+        required: true
+        default: "udendoers-sofagruppe-med-pude-7-dele-naturlig-og-floede-2"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install requests
+      - name: Inspect product
+        env:
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        run: |
+          python -c "
+          import os, requests, json
+          STORE = os.environ['SHOPIFY_STORE']
+          TOKEN = os.environ['SHOPIFY_ACCESS_TOKEN']
+          handle = '${{ inputs.handle }}'
+          q = '''
+          query(\$handle: String!) {
+            productByHandle(handle: \$handle) {
+              id title status vendor productType tags descriptionHtml
+              variants(first: 100) {
+                edges { node { id sku price compareAtPrice selectedOptions { name value } } }
+              }
+              media(first: 20) { edges { node { id mediaContentType ... on MediaImage { image { url } } } } }
+              metafields(first: 20) { edges { node { namespace key type value } } }
+              options { id name values }
+            }
+          }
+          '''
+          r = requests.post(f'https://{STORE}/admin/api/2024-10/graphql.json',
+            headers={'X-Shopify-Access-Token':TOKEN,'Content-Type':'application/json'},
+            json={'query':q, 'variables':{'handle':handle}}, timeout=30)
+          d = r.json()
+          p = d.get('data', {}).get('productByHandle')
+          if not p:
+            print(f'❌ Product {handle!r} ikke fundet')
+            exit(1)
+          print(f'Product: {p[\"title\"]}')
+          print(f'Status: {p[\"status\"]}')
+          print(f'Vendor: {p[\"vendor\"]} | Type: {p[\"productType\"]}')
+          print(f'Tags: {p[\"tags\"]}')
+          print(f'Description: {len(p[\"descriptionHtml\"] or \"\")} chars')
+          opts = p.get('options') or []
+          print(f'Options: {[(o[\"name\"], len(o[\"values\"])) for o in opts]}')
+          variants = [e[\"node\"] for e in p[\"variants\"][\"edges\"]]
+          print(f'Variants: {len(variants)}')
+          for v in variants[:5]:
+            sel = ', '.join(f'{s[\"name\"]}={s[\"value\"]}' for s in v[\"selectedOptions\"])
+            print(f'  - {v[\"sku\"]}: price={v[\"price\"]} | {sel}')
+          if len(variants) > 5: print(f'  ... og {len(variants)-5} flere')
+          media = [e[\"node\"] for e in p[\"media\"][\"edges\"]]
+          print(f'Media: {len(media)} items')
+          mfs = [e[\"node\"] for e in p[\"metafields\"][\"edges\"]]
+          print(f'Product-level metafields: {len(mfs)}')
+          for m in mfs:
+            print(f'  - {m[\"namespace\"]}.{m[\"key\"]} ({m[\"type\"]})')
+          print(f'\\nAdmin URL: https://{STORE}/admin/products/{p[\"id\"].rsplit(\"/\",1)[-1]}')
+          "
