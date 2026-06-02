@@ -448,6 +448,13 @@ def _variant_to_set_input(v: VariantSpec, location_id: str, options_def: list) -
     }
     if v.compare_at_price is not None:
         variant_input["compareAtPrice"] = str(v.compare_at_price)
+    # Variant-image via file (uploades og linkes til varianten af Shopify)
+    if v.image_url:
+        variant_input["file"] = {
+            "originalSource": v.image_url,
+            "contentType": "IMAGE",
+            "alt": f"{v.sku} variant",
+        }
     return variant_input
 
 
@@ -468,8 +475,11 @@ def call_product_set(spec: ProductSpec, location_id: str) -> dict:
         # Single-variant product → default Title option
         product_options = [{"name": "Title", "values": [{"name": "Default Title"}]}]
 
-    # Build files (media)
-    files = [{"originalSource": url, "contentType": "IMAGE"} for url in spec.media_urls]
+    # Build files (media) med alt-text per v1's konvention
+    files = []
+    for i, url in enumerate(spec.media_urls):
+        alt = f"{spec.title} - Hovedbillede" if i == 0 else f"{spec.title} - Billede {i+1}"
+        files.append({"originalSource": url, "contentType": "IMAGE", "alt": alt})
 
     # Build variants
     variants = [_variant_to_set_input(v, location_id, spec.options_definition) for v in spec.variants]
@@ -538,6 +548,9 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
         }
         if v.compare_at_price is not None:
             var_in["compareAtPrice"] = str(v.compare_at_price)
+        # Variant-image via mediaSrc (productVariantsBulkInput-schema)
+        if v.image_url:
+            var_in["mediaSrc"] = [v.image_url]
         var_in = {k: vv for k, vv in var_in.items() if vv is not None}
         variants_input.append(var_in)
 

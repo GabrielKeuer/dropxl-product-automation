@@ -222,6 +222,9 @@ def clean_title_from_options(title, option_values):
     # Fjern forældreløse cm/mm der ikke har tal foran
     title = re.sub(r'(?<!\d)\s+[Cc][Mm]\.?\b', '', title)
     title = re.sub(r'(?<!\d)\s+[Mm][Mm]\.?\b', '', title)
+    # Fjern kommaer der IKKE staar mellem cifre (bevarer danske decimalkommaer som "1,5")
+    # Eksempel: "Polyrattan, Staal Og Massivt Akacietrae" -> "Polyrattan Staal Og Massivt Akacietrae"
+    title = re.sub(r'(?<!\d),(?!\d)', '', title)
     title = re.sub(r'\s+', ' ', title)
     title = title.strip(' ,-–')
     return title
