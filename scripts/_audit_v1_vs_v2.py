@@ -28,7 +28,6 @@ query($handle: String!) {
     id title handle status vendor productType tags descriptionHtml createdAt
     seo { title description }
     onlineStoreUrl publishedAt
-    publishedOnPublication(publicationId: "gid://shopify/Publication/0")
     options { id name values }
     media(first: 50) {
       edges { node { mediaContentType ... on MediaImage { id alt image { url } } } }
@@ -74,7 +73,10 @@ def gql(query, variables=None):
     if variables: payload['variables'] = variables
     r = requests.post(GRAPHQL, headers=HEADERS, json=payload, timeout=30)
     r.raise_for_status()
-    return r.json()
+    d = r.json()
+    if 'errors' in d:
+        print(f"GraphQL ERRORS: {json.dumps(d['errors'], indent=2)}")
+    return d
 
 
 def audit_product(handle):
