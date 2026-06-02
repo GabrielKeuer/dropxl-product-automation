@@ -126,17 +126,18 @@ def gql(query, variables=None):
 
 
 def get_primary_location_id():
-    """Hent primary fulfillment location ID."""
-    q = """
-    query { locations(first: 5) {
-      edges { node { id name isPrimary } }
-    } }
+    """Returner hardcoded primary location GID.
+
+    Dropxl-tokenen mangler read_locations scope (var ikke noedvendigt under
+    Matrixify). Vi hardcoder ID'et hentet fra vidaxl-pris-lager's
+    update_shop_cache.py outputs (verificeret 2026-06-02).
+
+    Senere: tilfoej read_locations til access scope i Shopify Custom App,
+    eller saet LOCATION_ID som GitHub var.
     """
-    d = gql(q)
-    edges = d['data']['locations']['edges']
-    primary = next((e['node'] for e in edges if e['node'].get('isPrimary')), edges[0]['node'])
-    print(f"📍 Primary location: {primary['name']} ({primary['id']})")
-    return primary['id']
+    loc_id = os.environ.get('LOCATION_ID', '97768178013')
+    print(f"📍 Primary location: gid://shopify/Location/{loc_id}")
+    return f"gid://shopify/Location/{loc_id}"
 
 
 def find_product_by_handle(handle: str) -> Optional[str]:
