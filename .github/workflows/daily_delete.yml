@@ -1,5 +1,10 @@
 name: Daglig Produkt Sletning
 
+# Cutover 2026-06-02: delete_products_v2.py kalder productDelete +
+# productVariantsBulkDelete via direct Shopify GraphQL Admin API.
+# Workflow-strukturen er uændret: analyze → approval (hvis >threshold)
+# → deploy. Threshold-gaten og manual-approval-issue er BEVARET 100%.
+
 on:
   schedule:
     - cron: '10 3 * * *'
@@ -38,19 +43,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install pandas requests openpyxl
-      - name: Kør slette-analyse
+      - run: pip install pandas requests
+      - name: Kør slette-analyse (writes delete_list.json)
         id: run
         env:
           FEED_URL: ${{ vars.FEED_URL }}
           SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
           SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
           DELETE_THRESHOLD: ${{ vars.DELETE_THRESHOLD || '1000' }}
-        run: python scripts/delete_products.py
+        run: python scripts/delete_products_v2.py
       - uses: actions/upload-artifact@v4
         with:
-          name: delete-file
-          path: output/matrixify_delete.csv
+          name: delete-list
+          path: output/delete_list.json
           retention-days: 30
 
   approval:
@@ -84,17 +89,27 @@ jobs:
       needs.analyze.outputs.delete_count != '0' &&
       (needs.approval.result == 'success' || needs.approval.result == 'skipped')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas requests
       - uses: actions/download-artifact@v4
         with:
-          name: delete-file
+          name: delete-list
           path: output/
-      - name: Commit
+      - name: Apply deletes (direct API)
+        env:
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        run: python scripts/delete_products_v2.py --apply
+      - name: Commit audit trail
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/matrixify_delete.csv
+          git add output/delete_list.json output/matrixify_delete.csv
           git diff --staged --quiet && echo "Ingen ændringer" && exit 0
           git commit -m "🗑️ Sletning: ${{ needs.analyze.outputs.delete_count }} produkter ($(date +%Y-%m-%d))"
           git pull --rebase
@@ -107,7 +122,7 @@ jobs:
     steps:
       - name: Summary
         run: |
-          echo "## 🗑️ Daglig Sletning" >> $GITHUB_STEP_SUMMARY
+          echo "## 🗑️ Daglig Sletning (direct API)" >> $GITHUB_STEP_SUMMARY
           if [ "${{ needs.check-toggle.outputs.enabled }}" != "true" ]; then
             echo "⏸️ **Automation slået fra**" >> $GITHUB_STEP_SUMMARY
           else
@@ -115,5 +130,5 @@ jobs:
             echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
             echo "| Feed | ${{ needs.analyze.outputs.feed_count }} |" >> $GITHUB_STEP_SUMMARY
             echo "| Shopify | ${{ needs.analyze.outputs.shopify_count }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| **Slettes** | **${{ needs.analyze.outputs.delete_count }}** |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Slettet via API** | **${{ needs.analyze.outputs.delete_count }}** |" >> $GITHUB_STEP_SUMMARY
           fi
