@@ -495,12 +495,17 @@ def call_product_set(spec: ProductSpec, location_id: str) -> dict:
 
 
 def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
-    """Add new variants to existing product."""
+    """Add new variants to existing product.
+
+    NB: productVariantsBulkInput har ANDEN struktur end ProductVariantSetInput:
+      - sku er IKKE top-level — den ligger inde i inventoryItem.sku
+      - inventoryQuantities bruger availableQuantity (ikke name+quantity)
+      - measurement.weight bruger value+unit struktur (samme)
+    """
     product_id = find_product_by_handle(merge.existing_handle)
     if not product_id:
         raise Exception(f"Product handle '{merge.existing_handle}' findes ikke i Shopify")
 
-    # Get current options to compute ordered option list
     cur_options = fetch_product_options(SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, merge.existing_handle)
     full_options = list(cur_options) + [o for o in merge.options_to_add if o not in cur_options]
 
@@ -515,9 +520,9 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
         var_in = {
             "optionValues": option_values,
             "price": str(v.price),
-            "sku": v.sku,
             "barcode": v.barcode if v.barcode else None,
             "inventoryItem": {
+                "sku": v.sku,                                     # SKU her, ikke top-level
                 "cost": str(v.cost),
                 "tracked": True,
                 "requiresShipping": True,
@@ -526,8 +531,7 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
             "inventoryPolicy": "DENY",
             "inventoryQuantities": [{
                 "locationId": location_id,
-                "name": "available",
-                "quantity": v.inventory_quantity,
+                "availableQuantity": v.inventory_quantity,        # availableQuantity, ikke name+quantity
             }],
             "metafields": v.metafields,
             "taxable": True,
