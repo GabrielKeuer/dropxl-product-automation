@@ -1,0 +1,47 @@
+name: Test create_large_products_v2 (manuel)
+
+# Manuel trigger for store produkter (≥100 kombos). Processerer fra
+# skipped_large_products.json. Standard MAX_LARGE_PRODUCTS=5/dag.
+
+on:
+  workflow_dispatch:
+    inputs:
+      live:
+        description: "Faktisk oprettelse i Shopify (default false)"
+        type: boolean
+        default: false
+      limit:
+        description: "Max antal store produkter at oprette. Tom = standard 5."
+        type: string
+        default: "1"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas requests beautifulsoup4 openpyxl supabase
+      - name: Run create_large_products_v2
+        env:
+          FEED_URL: ${{ vars.FEED_URL }}
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          MAX_LARGE_PRODUCTS: ${{ vars.MAX_LARGE_PRODUCTS || '5' }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.live }}" = "true" ]; then ARGS="$ARGS --live"; fi
+          if [ -n "${{ inputs.limit }}" ]; then ARGS="$ARGS --limit ${{ inputs.limit }}"; fi
+          python scripts/create_large_products_v2.py $ARGS
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: large-product-specs
+          path: output/large_product_specs_v2.json
+          retention-days: 30
