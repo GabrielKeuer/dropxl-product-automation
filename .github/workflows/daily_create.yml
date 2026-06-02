@@ -1,8 +1,10 @@
 name: Daglig Produkt Oprettelse
 
 on:
-  schedule:
-    - cron: '20 3 * * *'
+  # PAUSED 2026-06-03: Cron deaktiveret af Gabriel mens v2 audit/fixes køres.
+  # Matrixify-jobbet deaktiveres parallelt. Kun manuel trigger ifb. tests.
+  # schedule:
+  #   - cron: '20 3 * * *'
   workflow_dispatch:
 
 permissions:

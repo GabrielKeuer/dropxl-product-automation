@@ -1,8 +1,10 @@
 name: Stor Produkt Oprettelse
 
 on:
-  schedule:
-    - cron: '0 5 * * *'
+  # PAUSED 2026-06-03: Cron deaktiveret af Gabriel mens v2 audit/fixes køres.
+  # Matrixify-jobbet deaktiveres parallelt. Kun manuel trigger ifb. tests.
+  # schedule:
+  #   - cron: '0 5 * * *'
   workflow_dispatch:
 
 permissions:
