@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install pandas requests openpyxl beautifulsoup4 supabase
-      - name: Kør stor produkt oprettelse
+      - name: Kør stor produkt oprettelse (v2 direct API)
         id: run
         env:
           FEED_URL: ${{ vars.FEED_URL }}
@@ -47,7 +47,7 @@ jobs:
           MAX_LARGE_PRODUCTS: ${{ vars.MAX_LARGE_PRODUCTS || '5' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python scripts/create_large_products.py
+        run: python scripts/create_large_products_v2.py --live
 
       - name: Commit
         run: |
@@ -55,8 +55,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # Gem vores output-filer
           mkdir -p /tmp/output
-          cp output/matrixify_create_large_new.xlsx /tmp/output/ 2>/dev/null || true
-          cp output/matrixify_create_large_merge.xlsx /tmp/output/ 2>/dev/null || true
+          cp output/large_product_specs_v2.json /tmp/output/ 2>/dev/null || true
           cp output/skipped_large_products.json /tmp/output/ 2>/dev/null || true
           cp output/daily_variant_count.txt /tmp/output/ 2>/dev/null || true
           # Hent seneste version fra remote
@@ -65,9 +64,9 @@ jobs:
           # Kopiér vores filer tilbage
           cp /tmp/output/* output/
           # Commit og push
-          git add output/matrixify_create_large_new.xlsx output/matrixify_create_large_merge.xlsx output/skipped_large_products.json output/daily_variant_count.txt
+          git add output/large_product_specs_v2.json output/skipped_large_products.json output/daily_variant_count.txt
           git diff --staged --quiet && echo "Ingen ændringer" && exit 0
-          git commit -m "🏗️ Stor: ${{ steps.run.outputs.large_products }} produkter, ${{ steps.run.outputs.large_variant_count }} var, ${{ steps.run.outputs.remaining_skipped }} resterende ($(date +%Y-%m-%d))"
+          git commit -m "🏗️ Stor v2: ${{ steps.run.outputs.large_products }} produkter, ${{ steps.run.outputs.large_variant_count }} var, ${{ steps.run.outputs.remaining_skipped }} resterende ($(date +%Y-%m-%d))"
           git push
 
   notify:

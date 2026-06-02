@@ -39,7 +39,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install pandas requests openpyxl beautifulsoup4 supabase
-      - name: Kør hurtig produkt oprettelse
+      - name: Kør hurtig produkt oprettelse (v2 direct API)
         id: run
         env:
           FEED_URL: ${{ vars.FEED_URL }}
@@ -50,15 +50,15 @@ jobs:
           PRODUCT_ORDER: ${{ vars.PRODUCT_ORDER || 'newest' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python scripts/create_products.py
+        run: python scripts/create_products_v2.py --live
 
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/matrixify_create_new.xlsx output/matrixify_create_merge.xlsx output/skipped_large_products.json output/daily_variant_count.txt
+          git add output/product_specs_v2.json output/skipped_large_products.json output/daily_variant_count.txt
           git diff --staged --quiet && echo "Ingen ændringer" && exit 0
-          git commit -m "✨ Hurtig: ${{ steps.run.outputs.new_count }} nye + ${{ steps.run.outputs.merge_count }} merge, ${{ steps.run.outputs.variant_count }} var, ${{ steps.run.outputs.skipped_count }} skipped ($(date +%Y-%m-%d))"
+          git commit -m "✨ Hurtig v2: ${{ steps.run.outputs.new_count }} nye + ${{ steps.run.outputs.merge_count }} merge, ${{ steps.run.outputs.variant_count }} var, ${{ steps.run.outputs.skipped_count }} skipped ($(date +%Y-%m-%d))"
           git pull --rebase
           git push
 
