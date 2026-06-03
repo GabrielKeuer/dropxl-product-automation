@@ -791,6 +791,28 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
     # variant-creation i een enkelt mutation. Det undgaar half-mutation-bugget
     # vi havde med productOptionsCreate + productVariantsBulkCreate.
     if merge.options_to_add:
+        # Shopify har et HARD limit paa 3 options per produkt — skip hvis vi
+        # ville overskride. v1 (Matrixify) kan heller ikke omgaa denne grænse.
+        if len(full_options) > 3:
+            print(f"    ⏸  SKIP: produkt ville faa {len(full_options)} options ({full_options}) — Shopify max 3.")
+            skipped_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                        '..', 'output', 'skipped_options_to_add.json')
+            os.makedirs(os.path.dirname(skipped_path), exist_ok=True)
+            existing = {}
+            if os.path.exists(skipped_path):
+                try:
+                    with open(skipped_path, 'r', encoding='utf-8') as f:
+                        existing = json.load(f)
+                except: existing = {}
+            existing[merge.existing_handle] = {
+                "logged_at": datetime.now(timezone.utc).isoformat(),
+                "options_attempted": full_options,
+                "new_variant_skus": [v.sku for v in merge.new_variants],
+                "reason": f"Shopify hard limit: max 3 options per product ({len(full_options)} forsoegt)",
+            }
+            with open(skipped_path, 'w', encoding='utf-8') as f:
+                json.dump(existing, f, ensure_ascii=False, indent=2)
+            return {"productVariants": [], "userErrors": [], "_skipped": True}
         return _call_merge_via_productset(merge, product_id, full_options, location_id)
 
     # Upload alle unikke variant-billeder til produktet FOERST.
