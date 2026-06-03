@@ -342,27 +342,14 @@ def build_merge_specs(product_groups, config, underkat, store, token, feed, pric
         spec = MergeSpec(
             existing_handle=existing_handle,
             options_to_add=options_to_add,
-            existing_skus=existing_skus if needs_refresh else [],
+            existing_skus=existing_skus,
         )
 
-        # Refresh existing variants if new options need adding
-        if needs_refresh:
-            for ex_sku in existing_skus:
-                if ex_sku not in feed_by_sku: continue
-                ex_row = feed_by_sku[ex_sku]
-                ex_opts = all_variant_map.get(ex_sku, {})
-                if not ex_opts: continue
-                ordered = order_opts(ex_opts)
-                opts_dict = dict(ordered)
-                all_images_var = get_all_images(ex_row)
-                raw_html_var = clean_vidaxl(ex_row.get('HTML_description', ''))
-                vspec = _row_to_variant_spec(
-                    ex_row, ex_sku, opts_dict, set(), pricing_cfg,
-                    is_first=False, all_images=all_images_var, raw_html=raw_html_var
-                )
-                # Set ordered option_values explicitly
-                vspec.option_values = ordered
-                spec.new_variants.append(vspec)
+        # NB: Refresh-logikken for eksisterende SKUs er fjernet i v2.
+        # Shopify's productOptionsCreate tildeler automatisk en default-vaerdi for
+        # eksisterende varianter naar et nyt option tilfoejes — derfor behoever vi
+        # ikke at refresh'e dem via productVariantsBulkCreate (det ville give
+        # SKU-duplicate-fejl da varianterne allerede findes).
 
         # Add new variants
         for _, row in feed_rows.iterrows():
@@ -412,6 +399,53 @@ mutation productVariantsBulkCreate($productId: ID!, $variants: [ProductVariantsB
   }
 }
 """
+
+# Hent alle sales channel publication IDs (caches efter foerste opslag)
+PUBLICATIONS_QUERY = """
+query { publications(first: 20) { edges { node { id name } } } }
+"""
+
+PUBLISH_MUTATION = """
+mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
+  publishablePublish(id: $id, input: $input) {
+    publishable { ... on Product { id } }
+    userErrors { field message }
+  }
+}
+"""
+
+# Tilfoej nye options til eksisterende produkt (merge med options_to_add)
+PRODUCT_OPTIONS_CREATE = """
+mutation productOptionsCreate($productId: ID!, $options: [OptionCreateInput!]!) {
+  productOptionsCreate(productId: $productId, options: $options) {
+    product { id options { id name values } }
+    userErrors { field message code }
+  }
+}
+"""
+
+_PUBLICATIONS_CACHE = None
+
+
+def get_all_publications() -> list:
+    """Returnerer alle sales channel publication IDs (caches per process)."""
+    global _PUBLICATIONS_CACHE
+    if _PUBLICATIONS_CACHE is None:
+        d = gql(PUBLICATIONS_QUERY)
+        edges = d.get('data', {}).get('publications', {}).get('edges', [])
+        _PUBLICATIONS_CACHE = [e['node'] for e in edges]
+        print(f"📡 Sales channels: {len(_PUBLICATIONS_CACHE)} ({[p['name'] for p in _PUBLICATIONS_CACHE]})")
+    return _PUBLICATIONS_CACHE
+
+
+def publish_to_all_channels(product_id: str) -> list:
+    """Publish nyt produkt til alle sales channels (matcher v1's 'Published Scope: global')."""
+    pubs = get_all_publications()
+    if not pubs:
+        return []
+    inputs = [{"publicationId": p['id']} for p in pubs]
+    d = gql(PUBLISH_MUTATION, {"id": product_id, "input": inputs})
+    return d.get('data', {}).get('publishablePublish', {}).get('userErrors') or []
 
 
 def _variant_to_set_input(v: VariantSpec, location_id: str, options_def: list) -> dict:
@@ -525,6 +559,9 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
       - sku er IKKE top-level — den ligger inde i inventoryItem.sku
       - inventoryQuantities bruger availableQuantity (ikke name+quantity)
       - measurement.weight bruger value+unit struktur (samme)
+
+    Hvis merge.options_to_add ikke er tom: kalder vi productOptionsCreate FOERST
+    saa Shopify accepterer de nye option-vaerdier paa varianterne.
     """
     product_id = find_product_by_handle(merge.existing_handle)
     if not product_id:
@@ -532,6 +569,30 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
 
     cur_options = fetch_product_options(SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, merge.existing_handle)
     full_options = list(cur_options) + [o for o in merge.options_to_add if o not in cur_options]
+
+    # Hvis nye options skal tilfoejes: kald productOptionsCreate foerst.
+    # Eksisterende varianter faar automatisk "default value" for det nye option.
+    if merge.options_to_add:
+        # Saml alle unikke vaerdier for hver ny option fra new_variants
+        opts_input = []
+        for opt_name in merge.options_to_add:
+            values_set = set()
+            for v in merge.new_variants:
+                for ov_name, ov_val in v.option_values:
+                    if ov_name == opt_name:
+                        values_set.add(ov_val)
+            opts_input.append({
+                "name": opt_name,
+                "values": [{"name": v} for v in sorted(values_set)]
+            })
+        print(f"    📐 Tilfoejer {len(opts_input)} option(s) til produktet: {[o['name'] for o in opts_input]}")
+        d_opts = gql(PRODUCT_OPTIONS_CREATE, {
+            "productId": product_id,
+            "options": opts_input,
+        })
+        opt_errs = d_opts.get('data', {}).get('productOptionsCreate', {}).get('userErrors') or []
+        if opt_errs:
+            raise Exception(f"productOptionsCreate fejl: {opt_errs}")
 
     variants_input = []
     for v in merge.new_variants:
@@ -584,7 +645,7 @@ def apply_specs(product_specs: list, merge_specs: list, location_id: str, limit:
     stats = {"created_products": 0, "merged_products": 0, "merged_variants": 0,
              "errors": 0, "products": [], "merges": []}
 
-    # 1. Create new products
+    # 1. Create new products + publish til alle sales channels
     print(f"\n🚀 Opretter {len(product_specs)} nye produkter via productSet...")
     for i, spec in enumerate(product_specs, 1):
         try:
@@ -602,7 +663,10 @@ def apply_specs(product_specs: list, merge_specs: list, location_id: str, limit:
                     "title": p['title'],
                     "variant_count": len(p['variants']['edges']),
                 })
-                print(f"  [{i}] ✅ {p['handle']}: {p['title'][:60]} ({len(p['variants']['edges'])} variants)")
+                # Publish til alle sales channels (svarer til v1's 'Published Scope: global')
+                pub_errs = publish_to_all_channels(p['id'])
+                pub_status = "✅ published" if not pub_errs else f"⚠ publish errors: {pub_errs[:1]}"
+                print(f"  [{i}] ✅ {p['handle']}: {p['title'][:60]} ({len(p['variants']['edges'])} variants) — {pub_status}")
         except Exception as e:
             stats["errors"] += 1
             print(f"  [{i}] ❌ {spec.handle}: {str(e)[:200]}")

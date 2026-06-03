@@ -21,6 +21,8 @@ NEW_HANDLES = [
     "dyne-med-pude-3-dele-mikrofiber",
     "havesofa-saet-9-dele-polyrattan-staal-og-massivt-akacietrae",
     "kunstigt-juletrae-med-stativ-180-cm-pvc-og-plastik-og-staal",  # 2. test-run partial create
+    "udendoers-sofagruppe-med-pude-7-dele-10",                      # 3. test-run
+    "have-spisebordssaet-7-dele-massivt-akacietrae",                # 3. test-run
 ]
 
 # Merge-targets + SKUs vi tilfoejede per target
@@ -40,6 +42,8 @@ MERGE_DELETES = {
          '3198551', '3198293', '3198484', '3198548', '3198679', '3198230', '3198356',
          '3198353', '3198228', '3198294', '3198358', '3198677', '3198481', '3198225',
          '3198673', '3198357', '3198549', '3198292', '3198231', '3198487', '3198485'],
+    # 3. test-run merges (re-tilfoejede de samme 7 til laenestol — er allerede slettet
+    # ovenfor i 2. run-cleanup. Den 4. var have-privatliv-skaerm-fretwork som FEJLEDE).
 }
 
 
