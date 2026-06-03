@@ -55,7 +55,7 @@ def main():
 
         if apply:
             m = """mutation($pid: ID!, $opts: [ID!]!) {
-              productOptionsDelete(productId: $pid, options: $opts, strategy: LEAVE_AS_IS) {
+              productOptionsDelete(productId: $pid, options: $opts) {
                 deletedOptionsIds userErrors { field message code }
               }
             }"""
