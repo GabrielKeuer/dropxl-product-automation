@@ -100,8 +100,13 @@ class MergeSpec:
     """Bruges når nye varianter skal tilføjes til EKSISTERENDE produkt (samme handle)."""
     existing_handle: str
     options_to_add: list = field(default_factory=list)        # nye option-navne der ikke fandtes
-    existing_skus: list = field(default_factory=list)         # for refresh hvis options ændres
+    existing_skus: list = field(default_factory=list)         # eksisterende SKUs paa produktet
     new_variants: list = field(default_factory=list)          # list of VariantSpec
+    # NOEDVENDIG for productSet-baseret merge naar options_to_add ikke er tom:
+    # map fra existing_sku -> ordnet liste af (option_name, option_value) tupler fra scrape.
+    # Bruges til at tildele KORREKTE option-vaerdier til eksisterende varianter
+    # naar nye options tilfoejes til produktet.
+    existing_variant_options: dict = field(default_factory=dict)
 
 
 # === GRAPHQL HJÆLPERE ==================================================
@@ -339,17 +344,21 @@ def build_merge_specs(product_groups, config, underkat, store, token, feed, pric
                 ordered = list(opts.items())
             return ordered
 
+        # Hvis nye options skal tilfoejes: gem scrape-derived option-vaerdier for
+        # eksisterende SKUs saa vi kan kalde productSet med korrekte vaerdier.
+        existing_variant_options = {}
+        if options_to_add:
+            for ex_sku in existing_skus:
+                ex_opts = all_variant_map.get(ex_sku, {})
+                if ex_opts:
+                    existing_variant_options[ex_sku] = order_opts(ex_opts)
+
         spec = MergeSpec(
             existing_handle=existing_handle,
             options_to_add=options_to_add,
             existing_skus=existing_skus,
+            existing_variant_options=existing_variant_options,
         )
-
-        # NB: Refresh-logikken for eksisterende SKUs er fjernet i v2.
-        # Shopify's productOptionsCreate tildeler automatisk en default-vaerdi for
-        # eksisterende varianter naar et nyt option tilfoejes — derfor behoever vi
-        # ikke at refresh'e dem via productVariantsBulkCreate (det ville give
-        # SKU-duplicate-fejl da varianterne allerede findes).
 
         # Add new variants
         for _, row in feed_rows.iterrows():
@@ -383,7 +392,7 @@ mutation productSet($input: ProductSetInput!, $synchronous: Boolean) {
   productSet(input: $input, synchronous: $synchronous) {
     product {
       id title handle
-      variants(first: 100) { edges { node { id sku } } }
+      variants(first: 250) { edges { node { id sku } } }
     }
     productSetOperation { id status }
     userErrors { field message code }
@@ -432,6 +441,30 @@ mutation productOptionsCreate($productId: ID!, $options: [OptionCreateInput!]!) 
   productOptionsCreate(productId: $productId, options: $options) {
     product { id options { id name values } }
     userErrors { field message code }
+  }
+}
+"""
+
+# Hent fuld state af eksisterende produkt for productSet-baseret merge
+FETCH_EXISTING_PRODUCT_STATE = """
+query($id: ID!) {
+  product(id: $id) {
+    id
+    options { id name values }
+    variants(first: 250) {
+      edges {
+        node {
+          id sku price compareAtPrice barcode taxable inventoryPolicy
+          selectedOptions { name value }
+          image { id }
+          inventoryItem {
+            sku tracked requiresShipping
+            unitCost { amount }
+            measurement { weight { value unit } }
+          }
+        }
+      }
+    }
   }
 }
 """
@@ -564,6 +597,177 @@ def call_product_set(spec: ProductSpec, location_id: str) -> dict:
     return d['data']['productSet']
 
 
+def _call_merge_via_productset(merge: MergeSpec, product_id: str,
+                                full_options: list, location_id: str) -> dict:
+    """Merge med options_to_add via productSet (atomic).
+
+    Bruges naar de nye varianter har options som det eksisterende produkt ikke
+    har endnu. productOptionsCreate + productVariantsBulkCreate er IKKE atomic
+    og efterlader produktet i half-state ved fejl. productSet haandterer det
+    hele i een atomic mutation.
+
+    Strategi:
+      1. Fetch eksisterende variants (id, sku, selectedOptions, price etc.)
+      2. Upload nye variant-billeder via productCreateMedia
+      3. Byg fuld variants-liste = eksisterende (med id + nye option-vaerdier
+         fra scrape) + nye varianter
+      4. Kald productSet med full state
+
+    Eksisterende varianter faar deres KORREKTE option-vaerdier (fra scrape's
+    all_variant_map), ikke Shopify's auto-default.
+    """
+    # 1. Fetch full existing state
+    d_existing = gql(FETCH_EXISTING_PRODUCT_STATE, {"id": product_id})
+    p = d_existing.get('data', {}).get('product')
+    if not p:
+        raise Exception(f"Kunne ikke hente eksisterende produkt {product_id}")
+    existing_variants = [e['node'] for e in p['variants']['edges']]
+    print(f"    🔍 productSet-merge: {len(existing_variants)} eksisterende variants, +{len(merge.new_variants)} nye, options={full_options}")
+
+    # 2. Upload nye variant-billeder (eksisterende variants har allerede deres
+    # billeder i produktets media — vi rør dem ikke).
+    unique_new_urls = []
+    seen = set()
+    for v in merge.new_variants:
+        if v.image_url and v.image_url not in seen:
+            seen.add(v.image_url)
+            unique_new_urls.append(v.image_url)
+
+    url_to_media_id = {}
+    if unique_new_urls:
+        media_input = [
+            {"originalSource": url, "mediaContentType": "IMAGE",
+             "alt": f"Variant billede ({i+1}/{len(unique_new_urls)})"}
+            for i, url in enumerate(unique_new_urls)
+        ]
+        d_media = gql(PRODUCT_CREATE_MEDIA, {"productId": product_id, "media": media_input})
+        media_res = d_media.get('data', {}).get('productCreateMedia', {})
+        media_errs = media_res.get('mediaUserErrors') or []
+        if media_errs:
+            print(f"    ⚠ media-upload errors: {media_errs[:2]}")
+        for url, m in zip(unique_new_urls, media_res.get('media') or []):
+            url_to_media_id[url] = m['id']
+        print(f"    📷 Uploadede {len(url_to_media_id)} variant-billeder til produktet")
+
+    # 3. Saml alle unikke option-vaerdier per option (eksisterende + nye)
+    option_values_map = defaultdict(set)
+    # Fra eksisterende variants (deres nuvaerende selectedOptions)
+    for ev in existing_variants:
+        for so in ev['selectedOptions']:
+            if so['name'] in full_options:
+                option_values_map[so['name']].add(so['value'])
+    # Fra scrape-data for eksisterende SKUs (de KORREKTE nye option-vaerdier)
+    for sku, opts in merge.existing_variant_options.items():
+        for ov_name, ov_val in opts:
+            if ov_name in full_options:
+                option_values_map[ov_name].add(ov_val)
+    # Fra nye varianter
+    for v in merge.new_variants:
+        for ov_name, ov_val in v.option_values:
+            if ov_name in full_options:
+                option_values_map[ov_name].add(ov_val)
+
+    product_options_input = [
+        {"name": opt, "values": [{"name": val} for val in sorted(option_values_map[opt])]}
+        for opt in full_options
+    ]
+
+    # 4. Byg variants-liste
+
+    def _option_values_for_existing(ev) -> list:
+        """Byg optionValues for en eksisterende variant.
+
+        Bruger scrape-data hvis tilgaengeligt for nye options, ellers fallback
+        til Shopify's nuvaerende selectedOptions eller foerste option-vaerdi.
+        """
+        sku = ev.get('sku', '')
+        scrape_opts = dict(merge.existing_variant_options.get(sku, []))
+        current_opts = {so['name']: so['value'] for so in ev['selectedOptions']}
+
+        out = []
+        for opt_name in full_options:
+            # Prioritet: scrape > nuvaerende > foerste vaerdi
+            if opt_name in scrape_opts:
+                val = scrape_opts[opt_name]
+            elif opt_name in current_opts:
+                val = current_opts[opt_name]
+            elif option_values_map[opt_name]:
+                val = sorted(option_values_map[opt_name])[0]
+            else:
+                continue
+            out.append({"optionName": opt_name, "name": val})
+        return out
+
+    variants_input = []
+
+    # Eksisterende variants — PATCH-style: id + optionValues, intet andet (bevarer pris/cost/lager).
+    for ev in existing_variants:
+        variants_input.append({
+            "id": ev['id'],
+            "optionValues": _option_values_for_existing(ev),
+        })
+
+    # Nye varianter — fuld state
+    for v in merge.new_variants:
+        opt_vals = []
+        opts_dict = dict(v.option_values)
+        for opt_name in full_options:
+            if opt_name in opts_dict:
+                opt_vals.append({"optionName": opt_name, "name": opts_dict[opt_name]})
+            elif option_values_map[opt_name]:
+                # Variant har ikke det option — brug foerste vaerdi som default
+                opt_vals.append({"optionName": opt_name, "name": sorted(option_values_map[opt_name])[0]})
+
+        inv_item = {
+            "sku": v.sku,
+            "cost": str(v.cost),
+            "tracked": True,
+            "requiresShipping": True,
+            "measurement": {"weight": {"value": v.weight_grams / 1000.0, "unit": "KILOGRAMS"}},
+        }
+        var_in = {
+            "optionValues": opt_vals,
+            "price": str(v.price),
+            "sku": v.sku,
+            "barcode": v.barcode if v.barcode else None,
+            "taxable": True,
+            "inventoryPolicy": "DENY",
+            "inventoryItem": inv_item,
+            "inventoryQuantities": [{
+                "locationId": location_id,
+                "name": "available",
+                "quantity": v.inventory_quantity,
+            }],
+            "metafields": v.metafields,
+        }
+        if v.compare_at_price is not None:
+            var_in["compareAtPrice"] = str(v.compare_at_price)
+        if v.image_url and v.image_url in url_to_media_id:
+            var_in["file"] = {"id": url_to_media_id[v.image_url]}
+        var_in = {k: vv for k, vv in var_in.items() if vv is not None}
+        variants_input.append(var_in)
+
+    # 5. Kald productSet
+    input_payload = {
+        "id": product_id,
+        "productOptions": product_options_input,
+        "variants": variants_input,
+    }
+    d = gql(PRODUCT_SET_MUTATION, {"input": input_payload, "synchronous": True})
+    res = d['data']['productSet']
+    # Normalisér output til samme format som productVariantsBulkCreate's response
+    # saa apply_specs kan haandtere det uniformt.
+    user_errs = res.get('userErrors') or []
+    if user_errs:
+        return {"productVariants": [], "userErrors": user_errs}
+    # Tael KUN de nye varianter (ikke de eksisterende vi opdaterede)
+    all_variants = (res.get('product') or {}).get('variants', {}).get('edges', [])
+    new_skus_set = {v.sku for v in merge.new_variants}
+    new_variants_created = [e['node'] for e in all_variants
+                            if e['node']['sku'] in new_skus_set]
+    return {"productVariants": new_variants_created, "userErrors": []}
+
+
 def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
     """Add new variants to existing product.
 
@@ -582,41 +786,12 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
     cur_options = fetch_product_options(SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, merge.existing_handle)
     full_options = list(cur_options) + [o for o in merge.options_to_add if o not in cur_options]
 
-    # KENDT LIMITATION: Hvis options_to_add ikke er tom, skipper vi merge'en og
-    # logger den til output/skipped_options_to_add.json for manuel behandling.
-    #
-    # Problem: productOptionsCreate auto-tildeler default-vaerdier til
-    # eksisterende varianter (foerste vaerdi af hvert nyt option), hvilket
-    # giver "VARIANT_ALREADY_EXISTS_CHANGE_OPTION_VALUE" conflict naar vi
-    # forsoeger at oprette nye varianter med samme combo.
-    #
-    # Mutationen er IKKE atomic: productOptionsCreate succeeds (muterer
-    # produktet) FOER productVariantsBulkCreate fejler — efterlader produkt
-    # i half-state med tomme/default option-vaerdier.
-    #
-    # Korrekt fix kraever productSet-mutation der atomisk haandterer
-    # option+variant-aendringer (skal implementeres senere). Indtil da:
-    # skip + log.
+    # Hvis nye options skal tilfoejes: brug productSet-baseret merge.
+    # productSet er ATOMIC og haandterer option-tilfoejelse + variant-opdatering +
+    # variant-creation i een enkelt mutation. Det undgaar half-mutation-bugget
+    # vi havde med productOptionsCreate + productVariantsBulkCreate.
     if merge.options_to_add:
-        print(f"    ⏸  SKIP options_to_add={merge.options_to_add} (kraever productSet — se output/skipped_options_to_add.json)")
-        skipped_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                    '..', 'output', 'skipped_options_to_add.json')
-        os.makedirs(os.path.dirname(skipped_path), exist_ok=True)
-        existing = {}
-        if os.path.exists(skipped_path):
-            try:
-                with open(skipped_path, 'r', encoding='utf-8') as f:
-                    existing = json.load(f)
-            except: existing = {}
-        existing[merge.existing_handle] = {
-            "logged_at": datetime.now(timezone.utc).isoformat(),
-            "options_to_add": merge.options_to_add,
-            "new_variant_skus": [v.sku for v in merge.new_variants],
-            "reason": "productOptionsCreate not atomic with productVariantsBulkCreate — requires productSet implementation",
-        }
-        with open(skipped_path, 'w', encoding='utf-8') as f:
-            json.dump(existing, f, ensure_ascii=False, indent=2)
-        return {"productVariants": [], "userErrors": [], "_skipped": True}
+        return _call_merge_via_productset(merge, product_id, full_options, location_id)
 
     # Upload alle unikke variant-billeder til produktet FOERST.
     # Vi bruger productCreateMedia og gemmer URL -> mediaId for at kunne
