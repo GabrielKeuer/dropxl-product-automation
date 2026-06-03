@@ -29,6 +29,12 @@ NEW_HANDLES = [
     "buede-gabionkurve-6-stk-400x50x100120-cm-galvaniseret-jern",
     "udendoers-sofagruppe-5-dele-naturfarvet-og-lysegraa",
     "havesofasaet-med-16-hynder-polyrattan",
+    # 5. test-run
+    "sengestel-med-hovedgaerde-beton-konstrueret-trae",
+    "frostbeskyttelsesplante-fleece-100-x-16-m-non-woven-stof",
+    "rullegardin-uv-beskyttelse-180-x-230-cm-polyester",
+    "altanafskaermning-90x300-cm-oxfordstof-moerkegroen",
+    "gulvtaeppe-60x100-cm-rektangulaer-bambus-lys-naturfarvet",
 ]
 
 # Merge-targets + SKUs vi tilfoejede per target
@@ -61,6 +67,12 @@ MERGE_DELETES = {
     "handklaeder-12-stk-360-g-m2-100-bomuld-bordeauxfarvet":
         ['137108', '137110', '137097', '137104', '137106', '137107', '137111', '137098',
          '137109', '137102', '137100'],
+    # 5. test-run merge (kun sengeramme lykkedes — de 2 andre fejlede)
+    "sengeramme-uden-madras-massivt-fyrretrae-61":
+        ['3301423', '3301454', '3301456', '3301449', '3301437', '3301421', '3301451',
+         '3301445', '3301452', '3301455', '3301438', '3301422', '3301420', '3301450',
+         '3301448', '3301425', '3301447', '3301444', '3301446', '3301443', '3301442',
+         '3301440'],
 }
 
 
