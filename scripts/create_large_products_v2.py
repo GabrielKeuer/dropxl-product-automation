@@ -108,7 +108,24 @@ def main():
         if s and s not in feed_by_sku: feed_by_sku[s] = r
 
     config, underkat, rum_dict, _ = load_config(CONFIG_PATH)
-    pricing_cfg = pricing.load_pricing_config()
+
+    # Katalog Engine: per-product pricing config-resolver (samme moenster
+    # som create_products_v2.py)
+    _default_cfg = pricing.load_pricing_config()
+    if not _default_cfg or not _default_cfg.get('tiers'):
+        sys.exit("❌ Default pricing-config ikke loaded fra Supabase")
+    try:
+        from supabase import create_client as _sb_create
+        _sb_client = _sb_create(os.environ.get('SUPABASE_URL'), os.environ.get('SUPABASE_SERVICE_KEY'))
+    except Exception:
+        _sb_client = None
+    _pricing_cache = {}
+    def resolve_pricing(vendor, product_type):
+        key = (vendor or 'vidaXL', product_type or '__none__')
+        if key not in _pricing_cache:
+            cfg = pricing.load_pricing_config(_sb_client, vendor=vendor or 'vidaXL', product_type=product_type)
+            _pricing_cache[key] = cfg or _default_cfg
+        return _pricing_cache[key]
 
     # 4. Process store produkter (samme logik som v1)
     print(f"\n🔍 Processerer store produkter...")
@@ -241,9 +258,10 @@ def main():
     print(f"\n✅ {products_processed} processeret ({news} nye, {merges} merge), {total_variants} variants")
 
     product_specs = build_product_specs(product_groups, config, underkat, rum_dict,
-                                        all_handles, feed, pricing_cfg)
+                                        all_handles, feed, resolve_pricing)
     merge_specs = build_merge_specs(product_groups, config, underkat,
-                                    SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, feed, pricing_cfg)
+                                    SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, feed, resolve_pricing)
+    print(f"📋 Pricing-configs anvendt: {len(_pricing_cache)} unikke (vendor, type) kombinationer")
 
     os.makedirs("output", exist_ok=True)
     with open(SPECS_DUMP_PATH, 'w', encoding='utf-8') as f:
@@ -263,16 +281,17 @@ def main():
               f"{stats['merged_products']} merged ({stats['merged_variants']} new variants), "
               f"{stats['errors']} errors")
 
-        # Warmup state
+        # Warmup state — per-product config via resolveren
         warmup_until = (datetime.now(timezone.utc) + timedelta(days=WARMUP_DAYS)).isoformat()
         state_records = []
         for spec in product_specs:
+            _spec_cfg = resolve_pricing(spec.vendor, spec.product_type)
             for v in spec.variants:
                 state_records.append({
                     'sku': v.sku, 'pricing_group': pricing.assign_group(v.sku),
                     'status': 'warmup', 'b2b_cost': v.cost,
                     'normal_price': v.price,
-                    'sale_price': pricing.calculate_sale_price(v.cost, pricing_cfg),
+                    'sale_price': pricing.calculate_sale_price(v.cost, _spec_cfg),
                     'warmup_complete_at': warmup_until,
                 })
         for merge in merge_specs:
@@ -281,7 +300,7 @@ def main():
                     'sku': v.sku, 'pricing_group': pricing.assign_group(v.sku),
                     'status': 'warmup', 'b2b_cost': v.cost,
                     'normal_price': v.price,
-                    'sale_price': pricing.calculate_sale_price(v.cost, pricing_cfg),
+                    'sale_price': pricing.calculate_sale_price(v.cost, _default_cfg),
                     'warmup_complete_at': warmup_until,
                 })
         upsert_warmup_state(state_records)

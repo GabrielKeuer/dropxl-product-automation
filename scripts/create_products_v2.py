@@ -202,11 +202,20 @@ def _row_to_variant_spec(row, sku: str, variant_map_opts: dict, irrelevant: set,
 
 
 def build_product_specs(product_groups, config, underkat, rum_dict,
-                        existing_handles, feed, pricing_cfg=None) -> list:
-    """Bygger ProductSpec[] for completely new products (Command=MERGE i Matrixify
-    var faktisk 'create or merge by handle' — vi her 100% creates fordi handle er nyt)."""
+                        existing_handles, feed, pricing_cfg_resolver=None) -> list:
+    """Bygger ProductSpec[] for completely new products.
+
+    pricing_cfg_resolver: callable(vendor, product_type) -> config dict
+                         Pricing Engine: per-product vendor+type config lookup.
+                         Hvis None → fallback til global default (backward compat).
+    """
     specs = []
     handles_used = existing_handles.copy()
+
+    # Backward compat: hvis ingen resolver, byg en der returnerer global default
+    if pricing_cfg_resolver is None:
+        _default_cfg = pricing.load_pricing_config()
+        pricing_cfg_resolver = lambda v, t: _default_cfg
 
     for group in product_groups:
         if group.get('is_merge', False): continue
@@ -219,6 +228,14 @@ def build_product_specs(product_groups, config, underkat, rum_dict,
         variant_map = group['variant_map']
         option_struct = group.get('options', {})
         first = feed_rows.iloc[0]
+
+        # Resolve pricing-config FOR DETTE PRODUKT (vendor + type) — Katalog Engine
+        _vendor = str(first.get('Brand', '') or 'vidaXL')
+        _ptype = first['Category'].split(' > ')[-1].strip() if pd.notna(first.get('Category')) else None
+        pricing_cfg = pricing_cfg_resolver(_vendor, _ptype)
+        if not pricing_cfg:
+            print(f"   ⚠ Ingen pricing-config for ({_vendor}, {_ptype}) — skipper produkt")
+            continue
 
         # === Titel ===
         all_opt_displays = set()
@@ -316,13 +333,21 @@ def build_product_specs(product_groups, config, underkat, rum_dict,
     return specs
 
 
-def build_merge_specs(product_groups, config, underkat, store, token, feed, pricing_cfg=None) -> list:
-    """Bygger MergeSpec[] for nye varianter på eksisterende produkter."""
+def build_merge_specs(product_groups, config, underkat, store, token, feed, pricing_cfg_resolver=None) -> list:
+    """Bygger MergeSpec[] for nye varianter på eksisterende produkter.
+
+    pricing_cfg_resolver: callable(vendor, product_type) -> config (Katalog Engine).
+    """
     specs = []
     feed_by_sku = {}
     for _, r in feed.iterrows():
         s = normalize_sku(r['SKU'])
         if s and s not in feed_by_sku: feed_by_sku[s] = r
+
+    # Backward compat: hvis ingen resolver, byg en der returnerer global default
+    if pricing_cfg_resolver is None:
+        _default_cfg = pricing.load_pricing_config()
+        pricing_cfg_resolver = lambda v, t: _default_cfg
 
     for group in product_groups:
         if not group.get('is_merge', False): continue
@@ -336,6 +361,15 @@ def build_merge_specs(product_groups, config, underkat, store, token, feed, pric
         existing_handle = group['existing_handle']
         existing_skus = group.get('existing_skus', [])
         all_variant_map = group.get('all_variant_map', {})
+        first = feed_rows.iloc[0]
+
+        # Resolve pricing-config FOR DENNE MERGE (vendor + type af eksisterende produkt)
+        _vendor = str(first.get('Brand', '') or 'vidaXL')
+        _ptype = first['Category'].split(' > ')[-1].strip() if pd.notna(first.get('Category')) else None
+        pricing_cfg = pricing_cfg_resolver(_vendor, _ptype)
+        if not pricing_cfg:
+            print(f"   ⚠ Ingen pricing-config for ({_vendor}, {_ptype}) — skipper merge")
+            continue
 
         existing_option_names = fetch_product_options(store, token, existing_handle)
         new_option_names = set()
@@ -1234,7 +1268,27 @@ def main():
 
     config, underkat, rum_dict, _ = load_config(CONFIG_PATH)
     aktive = config[config['Import?'] == 'JA']['Kategori_Config'].tolist()
-    pricing_cfg = pricing.load_pricing_config()
+
+    # Katalog Engine: per-product pricing config-lookup med caching
+    # (én Supabase-call pr unik (vendor, product_type) kombo).
+    _default_cfg = pricing.load_pricing_config()
+    if not _default_cfg or not _default_cfg.get('tiers'):
+        sys.exit("❌ Default pricing-config ikke loaded fra Supabase")
+
+    # Lazy Supabase-client kun til pricing_rules-lookup
+    try:
+        from supabase import create_client as _sb_create
+        _sb_client = _sb_create(os.environ.get('SUPABASE_URL'), os.environ.get('SUPABASE_SERVICE_KEY'))
+    except Exception:
+        _sb_client = None
+
+    _pricing_cache = {}
+    def resolve_pricing(vendor, product_type):
+        key = (vendor or 'vidaXL', product_type or '__none__')
+        if key not in _pricing_cache:
+            cfg = pricing.load_pricing_config(_sb_client, vendor=vendor or 'vidaXL', product_type=product_type)
+            _pricing_cache[key] = cfg or _default_cfg
+        return _pricing_cache[key]
 
     candidates = feed[
         (~feed['SKU'].isin(shopify_skus)) &
@@ -1371,8 +1425,9 @@ def main():
 
     # ===== Byg specs =====
     print(f"\n📝 Bygger ProductSpecs...")
-    product_specs = build_product_specs(product_groups, config, underkat, rum_dict, all_handles, feed, pricing_cfg)
-    merge_specs = build_merge_specs(product_groups, config, underkat, SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, feed, pricing_cfg)
+    product_specs = build_product_specs(product_groups, config, underkat, rum_dict, all_handles, feed, resolve_pricing)
+    merge_specs = build_merge_specs(product_groups, config, underkat, SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, feed, resolve_pricing)
+    print(f"📋 Pricing-configs anvendt: {len(_pricing_cache)} unikke (vendor, type) kombinationer")
 
     # ===== Dump specs til JSON (audit/debug) =====
     os.makedirs("output", exist_ok=True)
@@ -1395,10 +1450,12 @@ def main():
               f"{stats['merged_products']} merged ({stats['merged_variants']} new variants), "
               f"{stats['errors']} errors{skip_str}")
 
-        # Indsæt warmup state for nye SKUs
+        # Indsæt warmup state for nye SKUs — brug per-product pricing-config
+        # saa sale_price fra warmup matcher Katalog Engine-regler.
         state_records = []
         warmup_until = (datetime.now(timezone.utc) + timedelta(days=WARMUP_DAYS)).isoformat()
         for spec in product_specs:
+            _spec_cfg = resolve_pricing(spec.vendor, spec.product_type)
             for v in spec.variants:
                 state_records.append({
                     'sku': v.sku,
@@ -1406,10 +1463,13 @@ def main():
                     'status': 'warmup',
                     'b2b_cost': v.cost,
                     'normal_price': v.price,
-                    'sale_price': pricing.calculate_sale_price(v.cost, pricing_cfg),
+                    'sale_price': pricing.calculate_sale_price(v.cost, _spec_cfg),
                     'warmup_complete_at': warmup_until,
                 })
         for merge in merge_specs:
+            # For merge: vi har ikke product_type direkte paa MergeSpec, brug default
+            # config. sale_price genberegnes alligevel ved naeste sync_prices_v2 run
+            # med korrekt per-product config.
             for v in merge.new_variants:
                 state_records.append({
                     'sku': v.sku,
@@ -1417,7 +1477,7 @@ def main():
                     'status': 'warmup',
                     'b2b_cost': v.cost,
                     'normal_price': v.price,
-                    'sale_price': pricing.calculate_sale_price(v.cost, pricing_cfg),
+                    'sale_price': pricing.calculate_sale_price(v.cost, _default_cfg),
                     'warmup_complete_at': warmup_until,
                 })
         upsert_warmup_state(state_records)
