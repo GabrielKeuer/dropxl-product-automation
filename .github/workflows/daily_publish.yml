@@ -1,9 +1,13 @@
 name: Publicer til Salgskanaler
 
 on:
-  schedule:
-    - cron: '0 8 * * *'
-    - cron: '0 22 * * *'  # Kl. 08:00 UTC - efter Matrixify import er færdig
+  # PAUSED 2026-06-03: Redundant nu hvor v2 (create_products_v2 +
+  # create_large_products_v2) auto-publicerer via publishablePublish til
+  # alle 7 sales channels umiddelbart efter productSet. Beholdes kun som
+  # manual fallback (workflow_dispatch).
+  # schedule:
+  #   - cron: '0 8 * * *'
+  #   - cron: '0 22 * * *'
   workflow_dispatch:
 
 permissions:
