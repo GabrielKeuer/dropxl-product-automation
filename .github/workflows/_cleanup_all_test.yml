@@ -1,0 +1,39 @@
+name: MASTER cleanup — alle test-produkter
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Faktisk delete (default false)"
+        type: boolean
+        default: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install requests
+
+      # Download artifacts fra ALLE 9 test-runs
+      - name: Download test artifacts
+        run: |
+          mkdir -p all_artifacts
+          for run_id in 26843334252 26855108532 26855642904 26856421762 26857093179 26857752274 26870145183 26871009623 26871676454; do
+            mkdir -p "all_artifacts/$run_id"
+            gh run download $run_id --repo GabrielKeuer/dropxl-product-automation --name product-specs --dir "all_artifacts/$run_id" 2>&1 | tail -1 || true
+          done
+          ls -la all_artifacts/*/
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup
+        env:
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.apply }}" = "true" ]; then ARGS="--apply"; fi
+          python scripts/_cleanup_all_test_products.py $ARGS

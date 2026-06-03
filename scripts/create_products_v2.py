@@ -280,10 +280,21 @@ def build_product_specs(product_groups, config, underkat, rum_dict,
         )
 
         # === Variants ===
-        is_first = True
+        # Iterér i SCRAPE-order (variant_map.keys()) IKKE feed-CSV-order.
+        # Det bevarer vidaXL's naturlige display-rækkefølge for option-værdier
+        # (1, 2, 3 / 30 cm, 60 cm, 90 cm — ikke alfabetisk 100, 30, 60).
+        feed_by_sku_local = {}
         for _, row in feed_rows.iterrows():
+            s = normalize_sku(row['SKU'])
+            if s and s not in feed_by_sku_local:
+                feed_by_sku_local[s] = row
+
+        is_first = True
+        for sku in variant_map.keys():
+            if sku not in feed_by_sku_local:
+                continue
+            row = feed_by_sku_local[sku]
             try:
-                sku = normalize_sku(row['SKU'])
                 opts = variant_map.get(sku, {})
                 all_images_var = get_all_images(row)
                 raw_html_var = clean_vidaxl(row.get('HTML_description', ''))
@@ -296,7 +307,7 @@ def build_product_specs(product_groups, config, underkat, rum_dict,
                 spec.variants.append(vspec)
                 is_first = False
             except Exception as e:
-                print(f"   ⚠ Variant fejl SKU {row.get('SKU','?')}: {str(e)[:100]}")
+                print(f"   ⚠ Variant fejl SKU {sku}: {str(e)[:100]}")
 
         if spec.variants:
             specs.append(spec)
@@ -344,14 +355,13 @@ def build_merge_specs(product_groups, config, underkat, store, token, feed, pric
                 ordered = list(opts.items())
             return ordered
 
-        # Hvis nye options skal tilfoejes: gem scrape-derived option-vaerdier for
-        # eksisterende SKUs saa vi kan kalde productSet med korrekte vaerdier.
+        # Altid gem scrape-derived option-vaerdier for eksisterende SKUs
+        # (bruges af productSet-baseret merge naar options aendres / renames).
         existing_variant_options = {}
-        if options_to_add:
-            for ex_sku in existing_skus:
-                ex_opts = all_variant_map.get(ex_sku, {})
-                if ex_opts:
-                    existing_variant_options[ex_sku] = order_opts(ex_opts)
+        for ex_sku in existing_skus:
+            ex_opts = all_variant_map.get(ex_sku, {})
+            if ex_opts:
+                existing_variant_options[ex_sku] = order_opts(ex_opts)
 
         spec = MergeSpec(
             existing_handle=existing_handle,
@@ -360,10 +370,18 @@ def build_merge_specs(product_groups, config, underkat, store, token, feed, pric
             existing_variant_options=existing_variant_options,
         )
 
-        # Add new variants
+        # Add new variants — iterér i SCRAPE-order (variant_map.keys()), ikke feed-order
+        feed_by_sku_local = {}
         for _, row in feed_rows.iterrows():
+            s = normalize_sku(row['SKU'])
+            if s and s not in feed_by_sku_local:
+                feed_by_sku_local[s] = row
+
+        for sku in variant_map.keys():
+            if sku not in feed_by_sku_local:
+                continue
+            row = feed_by_sku_local[sku]
             try:
-                sku = normalize_sku(row['SKU'])
                 opts = variant_map.get(sku, {})
                 ordered = order_opts(opts)
                 opts_dict = dict(ordered)
@@ -376,7 +394,7 @@ def build_merge_specs(product_groups, config, underkat, store, token, feed, pric
                 vspec.option_values = ordered
                 spec.new_variants.append(vspec)
             except Exception as e:
-                print(f"   ⚠ Merge fejl SKU {row.get('SKU','?')}: {str(e)[:100]}")
+                print(f"   ⚠ Merge fejl SKU {sku}: {str(e)[:100]}")
 
         if spec.new_variants:
             specs.append(spec)
@@ -541,13 +559,20 @@ def call_product_set(spec: ProductSpec, location_id: str) -> dict:
     """Opret produkt via productSet (synkront)."""
     # Build productOptions
     if spec.options_definition:
-        # Collect unique values per option from variants
-        option_values_map = defaultdict(set)
+        # Collect unique values per option i FIRST-SEEN order (= scrape-order =
+        # vidaXL's naturlige display-order). Vi bruger IKKE sorted() fordi
+        # alfabetisk sort fejler for dimensions ("100 cm" foer "30 cm") og
+        # tal-strenge ("10" foer "2"). spec.variants iterer i scrape-order
+        # (variant_map.keys()) per build_product_specs.
+        option_values_seen = defaultdict(set)
+        option_values_ordered = defaultdict(list)
         for v in spec.variants:
             for opt_name, opt_val in v.option_values:
-                option_values_map[opt_name].add(opt_val)
+                if opt_val not in option_values_seen[opt_name]:
+                    option_values_seen[opt_name].add(opt_val)
+                    option_values_ordered[opt_name].append(opt_val)
         product_options = [
-            {"name": opt, "values": [{"name": val} for val in sorted(option_values_map[opt])]}
+            {"name": opt, "values": [{"name": val} for val in option_values_ordered[opt]]}
             for opt in spec.options_definition
         ]
     else:
@@ -595,6 +620,190 @@ def call_product_set(spec: ProductSpec, location_id: str) -> dict:
 
     d = gql(PRODUCT_SET_MUTATION, {"input": input_payload, "synchronous": True})
     return d['data']['productSet']
+
+
+def _call_merge_via_productset_schema_replace(merge: MergeSpec, product_id: str,
+                                                location_id: str,
+                                                scrape_options_set: set,
+                                                options_to_remove: list) -> dict:
+    """Schema-rename merge via productSet (atomic).
+
+    Bruges naar vidaXL har omstruktureret options (fx Bredde+Hoejde -> Stoerrelse).
+    Produktets schema REPLACES med scrape's schema. Eksisterende variants
+    remappes via SKU-match i merge.existing_variant_options.
+
+    Hvis en eksisterende SKU IKKE er i scrape-data, kan vi ikke remappe den
+    sikkert — vi skipper hele merge'en for at undgaa data-tab.
+    """
+    # 1. Fetch eksisterende variants
+    d_existing = gql(FETCH_EXISTING_PRODUCT_STATE, {"id": product_id})
+    p = d_existing.get('data', {}).get('product')
+    if not p:
+        raise Exception(f"Kunne ikke hente eksisterende produkt {product_id}")
+    existing_variants = [e['node'] for e in p['variants']['edges']]
+
+    # Verify alle eksisterende SKUs er i scrape-data
+    missing_skus = [ev['sku'] for ev in existing_variants
+                    if ev['sku'] and ev['sku'] not in merge.existing_variant_options]
+    if missing_skus:
+        print(f"    ⚠ SCHEMA-RENAME: {len(missing_skus)} eksisterende SKUs mangler i scrape-data ({missing_skus[:3]}...)")
+        print(f"    ⏸  SKIP schema-replace — risiko for data-tab")
+        skipped_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    '..', 'output', 'skipped_options_to_add.json')
+        os.makedirs(os.path.dirname(skipped_path), exist_ok=True)
+        existing = {}
+        if os.path.exists(skipped_path):
+            try:
+                with open(skipped_path, 'r', encoding='utf-8') as f:
+                    existing = json.load(f)
+            except: existing = {}
+        existing[merge.existing_handle] = {
+            "logged_at": datetime.now(timezone.utc).isoformat(),
+            "case": "schema-rename",
+            "options_to_remove": options_to_remove,
+            "scrape_options": sorted(scrape_options_set),
+            "missing_skus_in_scrape": missing_skus,
+            "reason": "Schema-rename ville miste data for SKUs ikke i scrape",
+        }
+        with open(skipped_path, 'w', encoding='utf-8') as f:
+            json.dump(existing, f, ensure_ascii=False, indent=2)
+        return {"productVariants": [], "userErrors": [], "_skipped": True}
+
+    # Brug scrape's option-rækkefølge (rækkefølge fra first sku's scrape opts)
+    # Vi sikrer at "Title" droppes (hvis det var i existing) — vi har real options nu
+    full_options = []
+    for sku, opts in merge.existing_variant_options.items():
+        for ov_name, _ov_val in opts:
+            if ov_name not in full_options:
+                full_options.append(ov_name)
+        break  # første SKU's order er nok — alle skulle have samme schema fra scrape
+
+    # Hvis nye varianter introducerer extra options (sjældent), tilfoej dem
+    for v in merge.new_variants:
+        for ov_name, _ov_val in v.option_values:
+            if ov_name not in full_options:
+                full_options.append(ov_name)
+
+    if len(full_options) > 3:
+        print(f"    ⏸  SKIP schema-replace: {len(full_options)} options > Shopify max 3 ({full_options})")
+        return {"productVariants": [], "userErrors": [], "_skipped": True}
+
+    print(f"    🔄 SCHEMA-RENAME via productSet: drop {options_to_remove} → {full_options}")
+
+    # Upload nye variant-billeder
+    unique_new_urls = []
+    seen = set()
+    for v in merge.new_variants:
+        if v.image_url and v.image_url not in seen:
+            seen.add(v.image_url)
+            unique_new_urls.append(v.image_url)
+
+    url_to_media_id = {}
+    if unique_new_urls:
+        media_input = [
+            {"originalSource": url, "mediaContentType": "IMAGE",
+             "alt": f"Variant billede ({i+1}/{len(unique_new_urls)})"}
+            for i, url in enumerate(unique_new_urls)
+        ]
+        d_media = gql(PRODUCT_CREATE_MEDIA, {"productId": product_id, "media": media_input})
+        media_res = d_media.get('data', {}).get('productCreateMedia', {})
+        for url, m in zip(unique_new_urls, media_res.get('media') or []):
+            url_to_media_id[url] = m['id']
+        print(f"    📷 Uploadede {len(url_to_media_id)} variant-billeder")
+
+    # Saml option-vaerdier i FIRST-SEEN (scrape) order
+    option_values_seen = defaultdict(set)
+    option_values_ordered = defaultdict(list)
+
+    def _add_val(name, val):
+        if name in full_options and val not in option_values_seen[name]:
+            option_values_seen[name].add(val)
+            option_values_ordered[name].append(val)
+
+    # Eksisterende SKUs i scrape-rækkefølge
+    for sku, opts in merge.existing_variant_options.items():
+        for ov_name, ov_val in opts:
+            _add_val(ov_name, ov_val)
+    # Nye varianter
+    for v in merge.new_variants:
+        for ov_name, ov_val in v.option_values:
+            _add_val(ov_name, ov_val)
+
+    product_options_input = [
+        {"name": opt, "values": [{"name": val} for val in option_values_ordered[opt]]}
+        for opt in full_options
+    ]
+
+    # Build variants
+    variants_input = []
+    # Eksisterende — remappet til scrape's schema
+    for ev in existing_variants:
+        sku = ev.get('sku', '')
+        scrape_opts = dict(merge.existing_variant_options.get(sku, []))
+        opt_vals = []
+        for opt_name in full_options:
+            if opt_name in scrape_opts:
+                opt_vals.append({"optionName": opt_name, "name": scrape_opts[opt_name]})
+            elif option_values_ordered[opt_name]:
+                # Fallback: foerste vaerdi i scrape-order
+                opt_vals.append({"optionName": opt_name, "name": option_values_ordered[opt_name][0]})
+        variants_input.append({"id": ev['id'], "optionValues": opt_vals})
+
+    # Nye varianter
+    for v in merge.new_variants:
+        opts_dict = dict(v.option_values)
+        opt_vals = []
+        for opt_name in full_options:
+            if opt_name in opts_dict:
+                opt_vals.append({"optionName": opt_name, "name": opts_dict[opt_name]})
+            elif option_values_ordered[opt_name]:
+                opt_vals.append({"optionName": opt_name, "name": option_values_ordered[opt_name][0]})
+
+        inv_item = {
+            "sku": v.sku,
+            "cost": str(v.cost),
+            "tracked": True,
+            "requiresShipping": True,
+            "measurement": {"weight": {"value": v.weight_grams / 1000.0, "unit": "KILOGRAMS"}},
+        }
+        var_in = {
+            "optionValues": opt_vals,
+            "price": str(v.price),
+            "sku": v.sku,
+            "barcode": v.barcode if v.barcode else None,
+            "taxable": True,
+            "inventoryPolicy": "DENY",
+            "inventoryItem": inv_item,
+            "inventoryQuantities": [{
+                "locationId": location_id,
+                "name": "available",
+                "quantity": v.inventory_quantity,
+            }],
+            "metafields": v.metafields,
+        }
+        if v.compare_at_price is not None:
+            var_in["compareAtPrice"] = str(v.compare_at_price)
+        if v.image_url and v.image_url in url_to_media_id:
+            var_in["file"] = {"id": url_to_media_id[v.image_url]}
+        var_in = {k: vv for k, vv in var_in.items() if vv is not None}
+        variants_input.append(var_in)
+
+    input_payload = {
+        "id": product_id,
+        "productOptions": product_options_input,
+        "variants": variants_input,
+    }
+    d = gql(PRODUCT_SET_MUTATION, {"input": input_payload, "synchronous": True})
+    res = d['data']['productSet']
+    user_errs = res.get('userErrors') or []
+    if user_errs:
+        return {"productVariants": [], "userErrors": user_errs}
+    all_variants = (res.get('product') or {}).get('variants', {}).get('edges', [])
+    new_skus_set = {v.sku for v in merge.new_variants}
+    new_variants_created = [e['node'] for e in all_variants
+                            if e['node']['sku'] in new_skus_set]
+    print(f"    ✅ Schema-rename gennemfoert: {len(existing_variants)} eks. + {len(new_variants_created)} nye variants")
+    return {"productVariants": new_variants_created, "userErrors": []}
 
 
 def _call_merge_via_productset(merge: MergeSpec, product_id: str,
@@ -650,25 +859,34 @@ def _call_merge_via_productset(merge: MergeSpec, product_id: str,
         print(f"    📷 Uploadede {len(url_to_media_id)} variant-billeder til produktet")
 
     # 3. Saml alle unikke option-vaerdier per option (eksisterende + nye)
-    option_values_map = defaultdict(set)
-    # Fra eksisterende variants (deres nuvaerende selectedOptions)
-    for ev in existing_variants:
-        for so in ev['selectedOptions']:
-            if so['name'] in full_options:
-                option_values_map[so['name']].add(so['value'])
-    # Fra scrape-data for eksisterende SKUs (de KORREKTE nye option-vaerdier)
+    # Saml option-vaerdier i FIRST-SEEN order (= scrape-order = vidaXL's
+    # naturlige display-order). Rækkefølge: scrape foerst (autoritær), saa
+    # nye varianter (skulle matche scrape), saa fallback til Shopify's
+    # nuvaerende selectedOptions.
+    option_values_seen = defaultdict(set)
+    option_values_ordered = defaultdict(list)
+
+    def _add_val(name, val):
+        if name in full_options and val not in option_values_seen[name]:
+            option_values_seen[name].add(val)
+            option_values_ordered[name].append(val)
+
+    # 1. Scrape-data for eksisterende SKUs (autoritær order)
     for sku, opts in merge.existing_variant_options.items():
         for ov_name, ov_val in opts:
-            if ov_name in full_options:
-                option_values_map[ov_name].add(ov_val)
-    # Fra nye varianter
+            _add_val(ov_name, ov_val)
+    # 2. Nye varianter
     for v in merge.new_variants:
         for ov_name, ov_val in v.option_values:
-            if ov_name in full_options:
-                option_values_map[ov_name].add(ov_val)
+            _add_val(ov_name, ov_val)
+    # 3. Fallback: Shopify's nuvaerende selectedOptions (kun for options vi ikke
+    # har scrape-data for)
+    for ev in existing_variants:
+        for so in ev['selectedOptions']:
+            _add_val(so['name'], so['value'])
 
     product_options_input = [
-        {"name": opt, "values": [{"name": val} for val in sorted(option_values_map[opt])]}
+        {"name": opt, "values": [{"name": val} for val in option_values_ordered[opt]]}
         for opt in full_options
     ]
 
@@ -686,13 +904,13 @@ def _call_merge_via_productset(merge: MergeSpec, product_id: str,
 
         out = []
         for opt_name in full_options:
-            # Prioritet: scrape > nuvaerende > foerste vaerdi
+            # Prioritet: scrape > nuvaerende > foerste vaerdi (i scrape-order)
             if opt_name in scrape_opts:
                 val = scrape_opts[opt_name]
             elif opt_name in current_opts:
                 val = current_opts[opt_name]
-            elif option_values_map[opt_name]:
-                val = sorted(option_values_map[opt_name])[0]
+            elif option_values_ordered[opt_name]:
+                val = option_values_ordered[opt_name][0]
             else:
                 continue
             out.append({"optionName": opt_name, "name": val})
@@ -714,9 +932,9 @@ def _call_merge_via_productset(merge: MergeSpec, product_id: str,
         for opt_name in full_options:
             if opt_name in opts_dict:
                 opt_vals.append({"optionName": opt_name, "name": opts_dict[opt_name]})
-            elif option_values_map[opt_name]:
-                # Variant har ikke det option — brug foerste vaerdi som default
-                opt_vals.append({"optionName": opt_name, "name": sorted(option_values_map[opt_name])[0]})
+            elif option_values_ordered[opt_name]:
+                # Variant har ikke det option — brug foerste vaerdi (i scrape-order)
+                opt_vals.append({"optionName": opt_name, "name": option_values_ordered[opt_name][0]})
 
         inv_item = {
             "sku": v.sku,
@@ -784,15 +1002,45 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
         raise Exception(f"Product handle '{merge.existing_handle}' findes ikke i Shopify")
 
     cur_options = fetch_product_options(SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, merge.existing_handle)
+
+    # Beregn schema-aendring:
+    #   scrape_options_set: alle options scrape detekterer (fra new + existing
+    #     variant_map data)
+    #   options_to_remove: eksisterende options i Shopify som IKKE er i scrape
+    #
+    # Case A — kun options_to_add, ingen real options_to_remove:
+    #   Eksisterende options beholdes + nye tilfoejes. (Title er "default" og
+    #   regnes ikke som real existing.)
+    #
+    # Case B — schema-rename: options_to_remove indeholder REAL options.
+    #   Det betyder vidaXL har aendret schema (fx Bredde+Hoejde konsolideret
+    #   til Stoerrelse). Vi REPLACER produktets schema med scrape's.
+    scrape_options_set = set(merge.options_to_add)
+    for sku, opts in merge.existing_variant_options.items():
+        for ov_name, _ov_val in opts:
+            scrape_options_set.add(ov_name)
+    for v in merge.new_variants:
+        for ov_name, _ov_val in v.option_values:
+            scrape_options_set.add(ov_name)
+    real_existing = [o for o in cur_options if o != 'Title']
+    options_to_remove = [o for o in real_existing if o not in scrape_options_set]
+
+    if options_to_remove:
+        # CASE B: schema-rename. Bygger fuldt-replaceret schema fra scrape.
+        # Eksisterende variants remappes via SKU-match i existing_variant_options.
+        return _call_merge_via_productset_schema_replace(
+            merge, product_id, location_id, scrape_options_set, options_to_remove)
+
     full_options = list(cur_options) + [o for o in merge.options_to_add if o not in cur_options]
 
-    # Hvis nye options skal tilfoejes: brug productSet-baseret merge.
-    # productSet er ATOMIC og haandterer option-tilfoejelse + variant-opdatering +
-    # variant-creation i een enkelt mutation. Det undgaar half-mutation-bugget
-    # vi havde med productOptionsCreate + productVariantsBulkCreate.
+    # CASE A: Hvis nye options skal tilfoejes til eksisterende schema: brug
+    # productSet-baseret merge. productSet er ATOMIC og haandterer
+    # option-tilfoejelse + variant-opdatering + variant-creation i een enkelt
+    # mutation. Det undgaar half-mutation-bugget vi havde med
+    # productOptionsCreate + productVariantsBulkCreate.
     if merge.options_to_add:
         # Shopify har et HARD limit paa 3 options per produkt — skip hvis vi
-        # ville overskride. v1 (Matrixify) kan heller ikke omgaa denne grænse.
+        # ville overskride.
         if len(full_options) > 3:
             print(f"    ⏸  SKIP: produkt ville faa {len(full_options)} options ({full_options}) — Shopify max 3.")
             skipped_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
