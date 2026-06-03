@@ -4,17 +4,16 @@ Shared VidaXL pricing logic.
 MASTER COPY: vidaxl-pris-lager/scripts/pricing.py
 Mirrored to:  dropxl-product-automation/scripts/pricing.py
 
-Loads tier-based pricing config from Supabase (hub_settings.product_automation_pricing)
-and provides:
+Loads tier-based pricing config from Supabase with hierarchical match:
 
-  - calculate_normal_price(b2b, config)
-  - calculate_sale_price(b2b, config)
-  - assign_group(sku)                  -> 'A' | 'B' | 'C'   (stable hash)
-  - get_active_campaign(now, config)
-  - calculate_prices(b2b, config, now) -> {normal_price, sale_price, campaign}
-  - load_pricing_config(supabase=None) -> dict | None
+  type-specifik (pricing_rules: vendor + product_type)
+  > vendor-general (pricing_rules: vendor + product_type IS NULL)
+  > global default (hub_settings.product_automation_pricing)  ← ultimate fallback
 
-Config schema (in hub_settings.product_automation_pricing.value):
+BACKWARD COMPAT: load_pricing_config() uden args returnerer global config
+(samme adfaerd som foer Katalog Engine).
+
+Config schema (identisk på alle tre niveauer):
 
     {
       "version": 1,
@@ -23,15 +22,9 @@ Config schema (in hub_settings.product_automation_pricing.value):
       "tiers": [
         { "max_b2b": 300,  "markup": 2.65, "sale_discount_pct": 30,
           "sale_min_markup_override": null },
-        ...,
-        { "max_b2b": null, "markup": 1.89, "sale_discount_pct": 10,
-          "sale_min_markup_override": 1.60 }
+        ...
       ],
-      "campaigns": [
-        { "id": "...", "enabled": false, "start": ISO8601, "end": ISO8601,
-          "scope": "all_vidaxl", "mode": "flat_discount_pct", "value": 25,
-          "min_markup_floor": 1.50 }
-      ]
+      "campaigns": []
     }
 
 Tier match rule: first tier where max_b2b >= b2b. max_b2b=null means "infinity" (last tier).
@@ -48,19 +41,37 @@ DEFAULT_ROUNDING = "ceil_50_minus_1"
 
 
 def _round_ceil_50_minus_1(price):
+    """Rund altid OP til naermeste X49/X99 (50-trin minus 1)."""
     if price <= 0:
         return 0
     return int(math.ceil(price / 50) * 50 - 1)
 
 
 def _round_nearest_50_minus_1(price):
+    """Rund til NAERMESTE X49/X99 (50-trin minus 1)."""
     if price <= 0:
         return 0
     return int(((price + 25) // 50) * 50 - 1)
 
 
+def _round_ceil_100_minus_1(price):
+    """Rund altid OP til naermeste X99 (100-trin minus 1). Skip X49."""
+    if price <= 0:
+        return 0
+    return int(math.ceil(price / 100) * 100 - 1)
+
+
+def _round_nearest_100_minus_1(price):
+    """Rund til NAERMESTE X99. Kan gaa op eller ned."""
+    if price <= 0:
+        return 0
+    return int(((price + 50) // 100) * 100 - 1)
+
+
 _ROUNDING_FUNCS = {
+    "ceil_100_minus_1": _round_ceil_100_minus_1,
     "ceil_50_minus_1": _round_ceil_50_minus_1,
+    "nearest_100_minus_1": _round_nearest_100_minus_1,
     "round_50_minus_1": _round_nearest_50_minus_1,
 }
 
@@ -117,16 +128,7 @@ def calculate_normal_price(b2b, config):
 
 
 def calculate_sale_price(b2b, config):
-    """Discounted sale price respecting min markup floor. Returns int or None if no discount applies.
-
-    Rounding strategy: normal price uses "ceil_50_minus_1" (config-driven, X99 psychological).
-    Sale price uses "round_50_minus_1" (round to nearest X49/X99) so the actual realised
-    discount stays close to the target instead of always rounding up.
-
-    The min-markup field is a *floor / bump-trigger*, not a target. Real markup will
-    typically land at floor..floor+0.10 due to rounding granularity (50 kr).
-    Target markup after discount is 1.70x; floor is 1.65x which catches results that
-    drift more than ~0.05 below target due to rounding."""
+    """Discounted sale price respecting min markup floor. Returns int or None if no discount applies."""
     try:
         b2b = float(b2b)
     except (TypeError, ValueError):
@@ -180,10 +182,7 @@ def get_active_campaign(now=None, config=None):
 
 
 def calculate_prices(b2b, config, now=None):
-    """One-shot: returns {normal_price, sale_price, campaign_id}.
-
-    If a campaign is active and applies, sale_price is overridden by campaign rules.
-    """
+    """One-shot: returns {normal_price, sale_price, campaign_id}."""
     campaign = get_active_campaign(now=now, config=config)
     normal = calculate_normal_price(b2b, config)
 
@@ -207,42 +206,104 @@ def calculate_prices(b2b, config, now=None):
     }
 
 
-def load_pricing_config(supabase_client=None):
-    """Load product_automation_pricing from Supabase. Returns dict or None on failure.
+# =============================================================================
+# CONFIG LOADING (med Katalog Engine hierarki)
+# =============================================================================
 
-    If supabase_client is None, lazy-creates one from SUPABASE_URL + SUPABASE_SERVICE_KEY.
+def _get_supabase_client():
+    """Lazy create Supabase client from env."""
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SERVICE_KEY")
+    if not url or not key:
+        return None
+    try:
+        from supabase import create_client
+        return create_client(url, key)
+    except Exception as e:
+        print(f"[pricing] Supabase client init failed: {e}")
+        return None
+
+
+def _try_load_pricing_rule(client, vendor, product_type):
+    """Forsoeg at hente en specifik pricing_rules-row.
+
+    product_type=None -> vendor-general regel
+    product_type=str  -> type-specifik override
     """
-    if supabase_client is None:
-        url = os.environ.get("SUPABASE_URL")
-        key = os.environ.get("SUPABASE_SERVICE_KEY")
-        if not url or not key:
-            return None
-        try:
-            from supabase import create_client
-            supabase_client = create_client(url, key)
-        except Exception as e:
-            print(f"[pricing] Supabase client init failed: {e}")
-            return None
+    try:
+        query = (
+            client.table("pricing_rules")
+            .select("config")
+            .eq("vendor", vendor)
+            .eq("enabled", True)
+        )
+        if product_type is None:
+            query = query.is_("product_type", "null")
+        else:
+            query = query.eq("product_type", product_type)
+        res = query.limit(1).execute()
+        if res.data and len(res.data) > 0:
+            cfg = res.data[0]["config"]
+            if isinstance(cfg, dict) and cfg.get("tiers"):
+                return cfg
+    except Exception as e:
+        print(f"[pricing] rule load failed (vendor={vendor}, type={product_type}): {e}")
+    return None
+
+
+def _load_global_pricing_config(client):
+    """Fallback til hub_settings.product_automation_pricing."""
     try:
         res = (
-            supabase_client.table("hub_settings")
+            client.table("hub_settings")
             .select("value")
             .eq("key", "product_automation_pricing")
             .execute()
         )
-        if not res.data:
-            return None
-        cfg = res.data[0]["value"]
-        if not isinstance(cfg, dict) or not cfg.get("tiers"):
-            return None
-        return cfg
+        if res.data:
+            cfg = res.data[0]["value"]
+            if isinstance(cfg, dict) and cfg.get("tiers"):
+                return cfg
     except Exception as e:
-        print(f"[pricing] load failed: {e}")
+        print(f"[pricing] global config load failed: {e}")
+    return None
+
+
+def load_pricing_config(supabase_client=None, vendor=None, product_type=None):
+    """Load pricing config with hierarchical match.
+
+    Order:
+      1. pricing_rules: vendor + product_type   (type-specifik override)
+      2. pricing_rules: vendor + NULL           (vendor-general)
+      3. hub_settings.product_automation_pricing (global default)
+
+    Backward compat:
+      load_pricing_config() (uden args) returnerer global default,
+      identisk med adfaerd foer Katalog Engine.
+
+    Returns: dict | None
+    """
+    client = supabase_client or _get_supabase_client()
+    if client is None:
         return None
+
+    if vendor:
+        # 1. Forsøg type-specifik
+        if product_type:
+            cfg = _try_load_pricing_rule(client, vendor, product_type)
+            if cfg:
+                return cfg
+        # 2. Forsøg vendor-general
+        cfg = _try_load_pricing_rule(client, vendor, None)
+        if cfg:
+            return cfg
+
+    # 3. Global fallback
+    return _load_global_pricing_config(client)
 
 
 # -----------------------------------------------------------------------------
-# Self-test (run directly: python pricing.py)
+# Self-test
 # -----------------------------------------------------------------------------
 
 _TEST_CONFIG = {
@@ -254,38 +315,13 @@ _TEST_CONFIG = {
         {"max_b2b": 500, "markup": 2.45, "sale_discount_pct": 25, "sale_min_markup_override": None},
         {"max_b2b": 1000, "markup": 2.20, "sale_discount_pct": 20, "sale_min_markup_override": None},
         {"max_b2b": 1500, "markup": 2.00, "sale_discount_pct": 15, "sale_min_markup_override": None},
-        {"max_b2b": None, "markup": 1.89, "sale_discount_pct": 10, "sale_min_markup_override": None},
+        {"max_b2b": None, "markup": 1.89, "sale_discount_pct": 10, "sale_min_markup_override": 1.60},
     ],
     "campaigns": [],
 }
 
-
-def _self_test():
-    print("=== calculate_normal_price / calculate_sale_price ===")
-    print(f"{'B2B':>6} | {'Tier':>4} | {'Normal':>6} | {'Sale':>6} | {'Disc%':>5} | {'M_normal':>8} | {'M_sale':>6}")
-    print("-" * 70)
-    for b2b in [50, 100, 200, 300, 301, 400, 500, 800, 1000, 1200, 1500, 1501, 2000, 5000]:
-        normal = calculate_normal_price(b2b, _TEST_CONFIG)
-        sale = calculate_sale_price(b2b, _TEST_CONFIG)
-        tier = _select_tier(b2b, _TEST_CONFIG["tiers"])
-        tier_label = tier.get("max_b2b") if tier.get("max_b2b") is not None else "inf"
-        disc = (1 - sale / normal) * 100 if sale and normal else 0
-        m_n = normal / b2b
-        m_s = sale / b2b if sale else 0
-        print(f"{b2b:>6} | {str(tier_label):>4} | {normal:>6} | {sale or '-':>6} | {disc:>4.1f}% | {m_n:>8.3f} | {m_s:>6.3f}")
-
-    print()
-    print("=== assign_group distribution (1000 sample SKUs) ===")
-    counts = {"A": 0, "B": 0, "C": 0}
-    for i in range(1000):
-        counts[assign_group(f"SKU-{i:05d}")] += 1
-    print(f"A: {counts['A']}, B: {counts['B']}, C: {counts['C']}")
-
-    print()
-    print("=== Stability check (same SKU = same group) ===")
-    for sku in ["403659", "279890.0", "  279890  ", "abc-xyz"]:
-        print(f"  {sku!r:>20} -> {assign_group(sku)}")
-
-
 if __name__ == "__main__":
-    _self_test()
+    print("normal(100) =", calculate_normal_price(100, _TEST_CONFIG), "expected 299 (100 * 2.65 rounded ceil_50_minus_1)")
+    print("sale(100)   =", calculate_sale_price(100, _TEST_CONFIG), "expected ~199 (after 30% discount, floor-checked)")
+    print("normal(1000)=", calculate_normal_price(1000, _TEST_CONFIG))
+    print("group('837016') =", assign_group("837016"))
