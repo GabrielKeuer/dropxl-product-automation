@@ -13,10 +13,11 @@ TOKEN = os.environ['SHOPIFY_ACCESS_TOKEN']
 GRAPHQL = f"https://{STORE}/admin/api/2024-10/graphql.json"
 HEADERS = {'X-Shopify-Access-Token': TOKEN, 'Content-Type': 'application/json'}
 
-# 2 new products from v2 test + 1 reference v1-product (recent) for comparison
+# Current v2 test products (3rd run with union-fix)
 HANDLES = [
-    "dyne-med-pude-3-dele-mikrofiber",                              # v2 NEW
-    "havesofa-saet-9-dele-polyrattan-staal-og-massivt-akacietrae",  # v2 NEW
+    "udendoers-sofagruppe-med-pude-7-dele-10",       # v2 NEW (single-variant)
+    "have-spisebordssaet-7-dele-massivt-akacietrae", # v2 NEW (single-variant)
+    "laenestol-med-fodskammel-stof-sort",            # v2 MERGE (+7 variants)
 ]
 
 # Pick a recent v1-created product to see how Matrixify-generated products look
