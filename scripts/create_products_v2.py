@@ -582,29 +582,41 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
     cur_options = fetch_product_options(SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, merge.existing_handle)
     full_options = list(cur_options) + [o for o in merge.options_to_add if o not in cur_options]
 
-    # Hvis nye options skal tilfoejes: kald productOptionsCreate foerst.
-    # Eksisterende varianter faar automatisk "default value" for det nye option.
+    # KENDT LIMITATION: Hvis options_to_add ikke er tom, skipper vi merge'en og
+    # logger den til output/skipped_options_to_add.json for manuel behandling.
+    #
+    # Problem: productOptionsCreate auto-tildeler default-vaerdier til
+    # eksisterende varianter (foerste vaerdi af hvert nyt option), hvilket
+    # giver "VARIANT_ALREADY_EXISTS_CHANGE_OPTION_VALUE" conflict naar vi
+    # forsoeger at oprette nye varianter med samme combo.
+    #
+    # Mutationen er IKKE atomic: productOptionsCreate succeeds (muterer
+    # produktet) FOER productVariantsBulkCreate fejler — efterlader produkt
+    # i half-state med tomme/default option-vaerdier.
+    #
+    # Korrekt fix kraever productSet-mutation der atomisk haandterer
+    # option+variant-aendringer (skal implementeres senere). Indtil da:
+    # skip + log.
     if merge.options_to_add:
-        # Saml alle unikke vaerdier for hver ny option fra new_variants
-        opts_input = []
-        for opt_name in merge.options_to_add:
-            values_set = set()
-            for v in merge.new_variants:
-                for ov_name, ov_val in v.option_values:
-                    if ov_name == opt_name:
-                        values_set.add(ov_val)
-            opts_input.append({
-                "name": opt_name,
-                "values": [{"name": v} for v in sorted(values_set)]
-            })
-        print(f"    📐 Tilfoejer {len(opts_input)} option(s) til produktet: {[o['name'] for o in opts_input]}")
-        d_opts = gql(PRODUCT_OPTIONS_CREATE, {
-            "productId": product_id,
-            "options": opts_input,
-        })
-        opt_errs = d_opts.get('data', {}).get('productOptionsCreate', {}).get('userErrors') or []
-        if opt_errs:
-            raise Exception(f"productOptionsCreate fejl: {opt_errs}")
+        print(f"    ⏸  SKIP options_to_add={merge.options_to_add} (kraever productSet — se output/skipped_options_to_add.json)")
+        skipped_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    '..', 'output', 'skipped_options_to_add.json')
+        os.makedirs(os.path.dirname(skipped_path), exist_ok=True)
+        existing = {}
+        if os.path.exists(skipped_path):
+            try:
+                with open(skipped_path, 'r', encoding='utf-8') as f:
+                    existing = json.load(f)
+            except: existing = {}
+        existing[merge.existing_handle] = {
+            "logged_at": datetime.now(timezone.utc).isoformat(),
+            "options_to_add": merge.options_to_add,
+            "new_variant_skus": [v.sku for v in merge.new_variants],
+            "reason": "productOptionsCreate not atomic with productVariantsBulkCreate — requires productSet implementation",
+        }
+        with open(skipped_path, 'w', encoding='utf-8') as f:
+            json.dump(existing, f, ensure_ascii=False, indent=2)
+        return {"productVariants": [], "userErrors": [], "_skipped": True}
 
     # Upload alle unikke variant-billeder til produktet FOERST.
     # Vi bruger productCreateMedia og gemmer URL -> mediaId for at kunne
@@ -713,9 +725,13 @@ def apply_specs(product_specs: list, merge_specs: list, location_id: str, limit:
 
     # 2. Merge variants into existing products
     print(f"\n🚀 Tilføjer variants til {len(merge_specs)} eksisterende produkter...")
+    stats["skipped_merges"] = 0
     for i, merge in enumerate(merge_specs, 1):
         try:
             res = call_variants_merge(merge, location_id)
+            if res.get('_skipped'):
+                stats["skipped_merges"] += 1
+                continue  # printet allerede i call_variants_merge
             errs = res.get('userErrors') or []
             if errs:
                 stats["errors"] += 1
@@ -928,9 +944,11 @@ def main():
     if args.live:
         location_id = get_primary_location_id()
         stats = apply_specs(product_specs, merge_specs, location_id, limit=args.limit)
+        skipped_merges = stats.get('skipped_merges', 0)
+        skip_str = f", {skipped_merges} merge skipped (options_to_add)" if skipped_merges else ""
         print(f"\n📊 STATS: {stats['created_products']} created, "
               f"{stats['merged_products']} merged ({stats['merged_variants']} new variants), "
-              f"{stats['errors']} errors")
+              f"{stats['errors']} errors{skip_str}")
 
         # Indsæt warmup state for nye SKUs
         state_records = []
