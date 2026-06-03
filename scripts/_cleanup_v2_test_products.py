@@ -23,6 +23,12 @@ NEW_HANDLES = [
     "kunstigt-juletrae-med-stativ-180-cm-pvc-og-plastik-og-staal",  # 2. test-run partial create
     "udendoers-sofagruppe-med-pude-7-dele-10",                      # 3. test-run
     "have-spisebordssaet-7-dele-massivt-akacietrae",                # 3. test-run
+    # 4. test-run
+    "zebragardin-120x150-cm-stofbredde-1159-cm-polyester",
+    "3-personers-havebaenk-massivt-teaktrae",
+    "buede-gabionkurve-6-stk-400x50x100120-cm-galvaniseret-jern",
+    "udendoers-sofagruppe-5-dele-naturfarvet-og-lysegraa",
+    "havesofasaet-med-16-hynder-polyrattan",
 ]
 
 # Merge-targets + SKUs vi tilfoejede per target
@@ -44,6 +50,17 @@ MERGE_DELETES = {
          '3198673', '3198357', '3198549', '3198292', '3198231', '3198487', '3198485'],
     # 3. test-run merges (re-tilfoejede de samme 7 til laenestol — er allerede slettet
     # ovenfor i 2. run-cleanup. Den 4. var have-privatliv-skaerm-fretwork som FEJLEDE).
+
+    # 4. test-run merges
+    "modulopbygget-sofaarmlaensendemodul-med-hynder-100-cm":
+        ['4104397', '4104395', '4104392', '4104423', '4104393', '4104422', '4104457', '4104394'],
+    "pallehynder-2-stk-oxfordstof-bladmonster":
+        ['360926', '360931', '360933'],
+    "vaeghaengt-sengebord-2":
+        ['810971', '816952'],
+    "handklaeder-12-stk-360-g-m2-100-bomuld-bordeauxfarvet":
+        ['137108', '137110', '137097', '137104', '137106', '137107', '137111', '137098',
+         '137109', '137102', '137100'],
 }
 
 

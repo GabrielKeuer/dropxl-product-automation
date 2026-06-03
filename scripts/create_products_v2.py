@@ -400,6 +400,18 @@ mutation productVariantsBulkCreate($productId: ID!, $variants: [ProductVariantsB
 }
 """
 
+# Upload nye media-files til produktet — bruges foer productVariantsBulkCreate
+# saa varianter kan referere til mediaId (mediaSrc i bulkCreate linker ikke
+# media til variant — det opretter kun media paa produktet).
+PRODUCT_CREATE_MEDIA = """
+mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
+  productCreateMedia(productId: $productId, media: $media) {
+    media { id alt status mediaContentType }
+    mediaUserErrors { field message code }
+  }
+}
+"""
+
 # Hent alle sales channel publication IDs (caches efter foerste opslag)
 PUBLICATIONS_QUERY = """
 query { publications(first: 20) { edges { node { id name } } } }
@@ -594,6 +606,34 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
         if opt_errs:
             raise Exception(f"productOptionsCreate fejl: {opt_errs}")
 
+    # Upload alle unikke variant-billeder til produktet FOERST.
+    # Vi bruger productCreateMedia og gemmer URL -> mediaId for at kunne
+    # referere via mediaId i productVariantsBulkCreate (mediaSrc-feltet
+    # tilfoejer kun media til produktet uden at linke det til varianten).
+    unique_image_urls = []
+    seen = set()
+    for v in merge.new_variants:
+        if v.image_url and v.image_url not in seen:
+            seen.add(v.image_url)
+            unique_image_urls.append(v.image_url)
+
+    url_to_media_id = {}
+    if unique_image_urls:
+        media_input = [
+            {"originalSource": url, "mediaContentType": "IMAGE",
+             "alt": f"Variant billede ({i+1}/{len(unique_image_urls)})"}
+            for i, url in enumerate(unique_image_urls)
+        ]
+        d_media = gql(PRODUCT_CREATE_MEDIA, {"productId": product_id, "media": media_input})
+        media_res = d_media.get('data', {}).get('productCreateMedia', {})
+        media_errs = media_res.get('mediaUserErrors') or []
+        if media_errs:
+            print(f"    ⚠ media-upload errors: {media_errs[:2]}")
+        # Rækkefølgen i response matcher input-rækkefølgen
+        for url, m in zip(unique_image_urls, media_res.get('media') or []):
+            url_to_media_id[url] = m['id']
+        print(f"    📷 Uploadede {len(url_to_media_id)} variant-billeder til produktet")
+
     variants_input = []
     for v in merge.new_variants:
         option_values = []
@@ -623,9 +663,9 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
         }
         if v.compare_at_price is not None:
             var_in["compareAtPrice"] = str(v.compare_at_price)
-        # Variant-image via mediaSrc (productVariantsBulkInput-schema)
-        if v.image_url:
-            var_in["mediaSrc"] = [v.image_url]
+        # Variant-image via mediaId (refererer til just-uploaded media paa produktet)
+        if v.image_url and v.image_url in url_to_media_id:
+            var_in["mediaId"] = url_to_media_id[v.image_url]
         var_in = {k: vv for k, vv in var_in.items() if vv is not None}
         variants_input.append(var_in)
 
