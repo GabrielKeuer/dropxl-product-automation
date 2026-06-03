@@ -475,11 +475,25 @@ def call_product_set(spec: ProductSpec, location_id: str) -> dict:
         # Single-variant product → default Title option
         product_options = [{"name": "Title", "values": [{"name": "Default Title"}]}]
 
-    # Build files (media) med alt-text per v1's konvention
+    # Build files (media) som UNION af product-master + variant-billeder
+    # Shopify kraever at variant.file.originalSource ogsaa staar i product files-arrayet.
     files = []
+    seen_urls = set()
     for i, url in enumerate(spec.media_urls):
+        if url in seen_urls:
+            continue
+        seen_urls.add(url)
         alt = f"{spec.title} - Hovedbillede" if i == 0 else f"{spec.title} - Billede {i+1}"
         files.append({"originalSource": url, "contentType": "IMAGE", "alt": alt})
+    # Tilfoej variant-specifikke billeder der ikke allerede er i master-listen
+    for v in spec.variants:
+        if v.image_url and v.image_url not in seen_urls:
+            seen_urls.add(v.image_url)
+            files.append({
+                "originalSource": v.image_url,
+                "contentType": "IMAGE",
+                "alt": f"{spec.title} - Variant {v.sku}",
+            })
 
     # Build variants
     variants = [_variant_to_set_input(v, location_id, spec.options_definition) for v in spec.variants]
