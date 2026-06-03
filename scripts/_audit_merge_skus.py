@@ -18,13 +18,8 @@ MERGE_SKUS_TO_CHECK = {
 }
 
 # Faktiske SKUs fra 4. test-run artifact (manual extract)
-MERGE_SKUS_TO_CHECK = {
-    "modulopbygget-sofaarmlaensendemodul-med-hynder-100-cm":
-        ['4104474', '4104470', '4104477', '4104475', '4104473', '4104468', '4104473', '4104471'],
-    "pallehynder-2-stk-oxfordstof-bladmonster": [],  # populate
-    "vaeghaengt-sengebord-2": [],
-    "handklaeder-12-stk-360-g-m2-100-bomuld-bordeauxfarvet": [],
-}
+# Will be populated from artifact JSON
+MERGE_SKUS_TO_CHECK = {}
 
 
 QUERY = """
@@ -52,14 +47,18 @@ def gql(query, variables=None):
 
 
 def main():
-    # Read merge SKUs from latest artifact if passed
+    # Read merge SKUs from artifact path passed as arg
     if len(sys.argv) > 1:
         path = sys.argv[1]
         with open(path) as f:
             specs = json.load(f)
-        for m in specs.get('merge_specs', [])[:5]:  # match limit=5
+        # Inkludér både new products (first 10 SKUs) + merge specs
+        for p in specs.get('product_specs', [])[:5]:
+            h = p['handle']
+            MERGE_SKUS_TO_CHECK[f"NEW {h}"] = [v['sku'] for v in p['variants'][:10]]
+        for m in specs.get('merge_specs', [])[:5]:
             h = m['existing_handle']
-            MERGE_SKUS_TO_CHECK[h] = [v['sku'] for v in m['new_variants']]
+            MERGE_SKUS_TO_CHECK[f"MERGE {h}"] = [v['sku'] for v in m['new_variants'][:10]]
 
     total_checked = 0
     total_with_image = 0
