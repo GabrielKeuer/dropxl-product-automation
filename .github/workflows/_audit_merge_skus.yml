@@ -1,0 +1,28 @@
+name: Audit merge SKUs (debug)
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Run-ID for artifact-download (default: latest test_create_v2)"
+        required: false
+        default: "26856421762"
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install requests
+      - uses: actions/download-artifact@v4
+        with:
+          name: product-specs
+          path: artifact
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.run_id }}
+      - name: Audit merge SKUs
+        env:
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        run: python scripts/_audit_merge_skus.py artifact/product_specs_v2.json
