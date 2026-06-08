@@ -1,0 +1,18 @@
+{
+  "rumdeler-5-paneler-massivt-kejsertrae-brun-og-sort": {
+    "logged_at": "2026-06-08T05:07:32.466953+00:00",
+    "case": "schema-rename",
+    "options_to_remove": [
+      "Antal produkter"
+    ],
+    "scrape_options": [
+      "Antal paneler",
+      "Størrelse"
+    ],
+    "missing_skus_in_scrape": [
+      "358806",
+      "358810"
+    ],
+    "reason": "Schema-rename ville miste data for SKUs ikke i scrape"
+  }
+}
