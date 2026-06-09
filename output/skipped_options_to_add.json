@@ -14,5 +14,28 @@
       "358810"
     ],
     "reason": "Schema-rename ville miste data for SKUs ikke i scrape"
+  },
+  "hovedgaerde-med-knapdrys-lysegra-80-cm-flojl": {
+    "logged_at": "2026-06-09T05:01:56.385038+00:00",
+    "options_attempted": [
+      "Title",
+      "Model",
+      "Farve",
+      "Længde"
+    ],
+    "new_variant_skus": [
+      "3337804",
+      "3337818",
+      "3337831",
+      "3337870",
+      "3337819",
+      "3337871",
+      "3337794",
+      "3337820",
+      "3337833",
+      "3337846",
+      "3337872"
+    ],
+    "reason": "Shopify hard limit: max 3 options per product (4 forsoegt)"
   }
 }
