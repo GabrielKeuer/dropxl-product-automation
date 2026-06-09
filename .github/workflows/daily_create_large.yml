@@ -65,7 +65,12 @@ jobs:
           # Kopiér vores filer tilbage
           cp /tmp/output/* output/
           # Commit og push
-          git add output/large_product_specs_v2.json output/skipped_large_products.json output/skipped_options_to_add.json output/daily_variant_count.txt
+          # Tilføj kun output-filer der faktisk findes. Skip-filerne oprettes
+          # kun når der er noget at skippe; git add på en manglende fil giver
+          # exit 128 og dræbte tidligere commit+push selvom produkter var oprettet.
+          for f in output/large_product_specs_v2.json output/skipped_large_products.json output/skipped_options_to_add.json output/daily_variant_count.txt; do
+            if [ -f "$f" ]; then git add "$f"; fi
+          done
           git diff --staged --quiet && echo "Ingen ændringer" && exit 0
           git commit -m "🏗️ Stor v2: ${{ steps.run.outputs.large_products }} produkter, ${{ steps.run.outputs.large_variant_count }} var, ${{ steps.run.outputs.remaining_skipped }} resterende ($(date +%Y-%m-%d))"
           git push

@@ -56,7 +56,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/product_specs_v2.json output/skipped_large_products.json output/skipped_options_to_add.json output/daily_variant_count.txt
+          # Tilføj kun output-filer der faktisk findes. Skip-filerne oprettes
+          # kun når der er noget at skippe; git add på en manglende fil giver
+          # exit 128 og dræbte tidligere commit+push selvom produkter var oprettet.
+          for f in output/product_specs_v2.json output/skipped_large_products.json output/skipped_options_to_add.json output/daily_variant_count.txt; do
+            if [ -f "$f" ]; then git add "$f"; fi
+          done
           git diff --staged --quiet && echo "Ingen ændringer" && exit 0
           git commit -m "✨ Hurtig v2: ${{ steps.run.outputs.new_count }} nye + ${{ steps.run.outputs.merge_count }} merge, ${{ steps.run.outputs.variant_count }} var, ${{ steps.run.outputs.skipped_count }} skipped ($(date +%Y-%m-%d))"
           git pull --rebase
