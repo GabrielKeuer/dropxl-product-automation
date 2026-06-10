@@ -1,1 +1,212 @@
-{}
+{
+  "M3700000579": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLVindueskarmMarmortekstur120x20x4,5cmPVC/8721452834952.html",
+    "title": "vidaXL Vindueskarm Marmor tekstur 120 x 20 x 4,5 cm PVC",
+    "master_pid": "M3700000579",
+    "sku": "42047007",
+    "num_combos": 200,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Black_with_wood_grain",
+            "display": "Sort med træstruktur"
+          },
+          {
+            "value": "Brown_wood",
+            "display": "Brun træ"
+          },
+          {
+            "value": "Anthracite_with_wood_grain",
+            "display": "Anthracit med træstruktur"
+          },
+          {
+            "value": "Marble_texture",
+            "display": "Marmor tekstur"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Længde",
+        "values": [
+          {
+            "value": "60_cm",
+            "display": "60 cm"
+          },
+          {
+            "value": "80_cm",
+            "display": "80 cm"
+          },
+          {
+            "value": "100_cm",
+            "display": "100 cm"
+          },
+          {
+            "value": "140_cm",
+            "display": "140 cm"
+          },
+          {
+            "value": "160_cm",
+            "display": "160 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Dybde",
+        "values": [
+          {
+            "value": "10_cm",
+            "display": "10 cm"
+          },
+          {
+            "value": "15_cm",
+            "display": "15 cm"
+          },
+          {
+            "value": "25_cm",
+            "display": "25 cm"
+          },
+          {
+            "value": "30_cm",
+            "display": "30 cm"
+          },
+          {
+            "value": "35_cm",
+            "display": "35 cm"
+          },
+          {
+            "value": "40_cm",
+            "display": "40 cm"
+          },
+          {
+            "value": "45_cm",
+            "display": "45 cm"
+          },
+          {
+            "value": "50_cm",
+            "display": "50 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3038796": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-140x200-cm-stof-lysegra/8721102769689.html",
+    "title": "vidaXL kontinentalseng 140x200 cm stof lysegrå",
+    "master_pid": "M3038796",
+    "sku": "3292086",
+    "num_combos": 210,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_190_cm",
+            "display": "120 x 190 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}

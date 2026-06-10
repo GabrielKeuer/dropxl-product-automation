@@ -37,5 +37,36 @@
       "3337872"
     ],
     "reason": "Shopify hard limit: max 3 options per product (4 forsoegt)"
+  },
+  "box-spring-seng-med-madras-lysegraa-160-x-200-cm-stof-5": {
+    "logged_at": "2026-06-10T05:06:29.216948+00:00",
+    "options_attempted": [
+      "Title",
+      "Farve",
+      "Model",
+      "Størrelse"
+    ],
+    "new_variant_skus": [
+      "3342128",
+      "3342135",
+      "3342142",
+      "3342156",
+      "3342129",
+      "3342136",
+      "3342143",
+      "3342157",
+      "3342130",
+      "3342137",
+      "3342144",
+      "3342312",
+      "3342132",
+      "3342139",
+      "3342160",
+      "3342133",
+      "3342140",
+      "3342315",
+      "3342141"
+    ],
+    "reason": "Shopify hard limit: max 3 options per product (4 forsoegt)"
   }
 }
