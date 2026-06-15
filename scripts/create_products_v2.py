@@ -159,10 +159,15 @@ def find_product_by_handle(handle: str) -> Optional[str]:
 
 def _row_to_variant_spec(row, sku: str, variant_map_opts: dict, irrelevant: set,
                          pricing_cfg, is_first: bool, all_images: list,
-                         raw_html: str) -> VariantSpec:
-    """Common variant-spec builder. is_first: kun den første variant har 'master' billede."""
+                         raw_html: str, seed=None) -> VariantSpec:
+    """Common variant-spec builder. is_first: kun den første variant har 'master' billede.
+
+    Mode-bevidst pris (pricing.resolve_variant_pricing):
+      real_discount  -> (normal, None)        [tilbud sættes senere af rotation]
+      fictive_discount -> (sale, førpris)      [altid på tilbud; seed = handle]
+    """
     cost_kr = float(row['B2B price'])
-    price = pricing.calculate_normal_price(cost_kr, pricing_cfg)
+    price, compare_at = pricing.resolve_variant_pricing(cost_kr, pricing_cfg, seed=seed, on_sale=False)
 
     weight = 0
     if pd.notna(row.get('Weight')):
@@ -193,7 +198,7 @@ def _row_to_variant_spec(row, sku: str, variant_map_opts: dict, irrelevant: set,
         weight_grams=weight,
         inventory_quantity=int(row.get('Stock', 0) or 0),
         barcode=str(row.get('EAN', '')) if pd.notna(row.get('EAN')) else '',
-        compare_at_price=None,    # warmup → ingen compareAt
+        compare_at_price=int(compare_at) if compare_at else None,   # fictive: førpris; real: None (rotation)
         option_values=opt_list,
         image_url=all_images[0] if all_images else None,
         metafields=mfields,
@@ -319,7 +324,7 @@ def build_product_specs(product_groups, config, underkat, rum_dict,
                 vspec = _row_to_variant_spec(
                     row, sku, opts, irrelevant, pricing_cfg,
                     is_first=is_first, all_images=all_images_var,
-                    raw_html=raw_html_var
+                    raw_html=raw_html_var, seed=handle
                 )
                 spec.variants.append(vspec)
                 is_first = False
@@ -423,7 +428,8 @@ def build_merge_specs(product_groups, config, underkat, store, token, feed, pric
                 raw_html_var = clean_vidaxl(row.get('HTML_description', ''))
                 vspec = _row_to_variant_spec(
                     row, sku, opts_dict, set(), pricing_cfg,
-                    is_first=False, all_images=all_images_var, raw_html=raw_html_var
+                    is_first=False, all_images=all_images_var, raw_html=raw_html_var,
+                    seed=existing_handle
                 )
                 vspec.option_values = ordered
                 spec.new_variants.append(vspec)
