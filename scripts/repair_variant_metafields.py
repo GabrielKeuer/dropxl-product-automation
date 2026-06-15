@@ -41,7 +41,7 @@ GRAPHQL = f"https://{STORE}/admin/api/2024-10/graphql.json"
 HEADERS = {"X-Shopify-Access-Token": TOKEN or "", "Content-Type": "application/json"}
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_PRODUCTS = os.path.join(HERE, "..", "output", "variant_meta_missing.json")
+DEFAULT_PRODUCTS = os.path.join(HERE, "..", "output", "meta3_affected.json")
 
 def gql(query, variables=None):
     payload = json.dumps({"query": query, "variables": variables or {}}).encode("utf-8")
@@ -63,7 +63,9 @@ def gql(query, variables=None):
 FETCH_VARIANTS = """
 query($id: ID!) { product(id: $id) { title
   variants(first: 250) { edges { node { id sku
-    metafield(namespace: "custom", key: "variantbilleder") { id } } } } } }
+    m_sku: metafield(namespace: "custom", key: "sku") { id }
+    m_pi: metafield(namespace: "custom", key: "produktinfo") { id }
+    m_vb: metafield(namespace: "custom", key: "variantbilleder") { id } } } } } }
 """
 METAFIELDS_SET = """
 mutation($mf: [MetafieldsSetInput!]!) {
@@ -71,14 +73,17 @@ mutation($mf: [MetafieldsSetInput!]!) {
 """
 
 def build_feed_index():
+    """sku -> {"imgs": [...], "html": "..."} fra feed (billeder + HTML-beskrivelse)."""
     feed = pu.fetch_feed(FEED_URL)
     idx = {}
     for _, row in feed.iterrows():
         sku = pu.normalize_sku(row.get("SKU"))
         if not sku: continue
         imgs = pu.get_all_images(row)
-        if imgs: idx[sku] = imgs
-    print(f"📦 Feed-index: {len(idx)} SKUs med billeder")
+        html = pu.clean_vidaxl(row.get("HTML_description", ""))
+        if imgs or html:
+            idx[sku] = {"imgs": imgs, "html": html}
+    print(f"📦 Feed-index: {len(idx)} SKUs (billeder/html)")
     return idx
 
 def main():
@@ -87,6 +92,8 @@ def main():
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--ids", nargs="*", default=None, help="Specifikke produkt-ID'er (legacy numerisk)")
     ap.add_argument("--products", default=DEFAULT_PRODUCTS, help="JSON med liste af {id}")
+    ap.add_argument("--skip-single", action="store_true",
+                    help="Spring single-variant produkter helt over (sæt heller ikke sku-metafelt)")
     args = ap.parse_args()
 
     if not (STORE and TOKEN and FEED_URL):
@@ -103,7 +110,8 @@ def main():
 
     sku_imgs = build_feed_index()
 
-    st = {"products": 0, "set": 0, "already": 0, "nofeed": 0, "errors": 0, "skipped_first": 0}
+    st = {"products": 0, "sku": 0, "pi": 0, "vb": 0, "pi_nofeed": 0, "vb_nofeed": 0,
+          "errors": 0, "skipped_single": 0}
     nofeed_skus = []
     for i, pid in enumerate(ids, 1):
         gid = f"gid://shopify/Product/{pid}"
@@ -112,46 +120,52 @@ def main():
             p = d["data"]["product"]
             if not p:
                 print(f"  [{i}] ⚠ produkt {pid} findes ikke"); continue
-            vs = [e["node"] for e in p["variants"]["edges"]]
-            if len(vs) <= 1:
-                st["skipped_first"] += len(vs); continue   # single-variant: rør ikke
-            nonfirst = vs[1:]                                # første variant: rør ikke
+            vs = [e["node"] for e in p["variants"]["edges"]]   # position-rækkefølge
+            if len(vs) <= 1 and args.skip_single:
+                st["skipped_single"] += 1; continue
             batch = []
-            for v in nonfirst:
-                if v.get("metafield"):
-                    st["already"] += 1; continue
-                imgs = sku_imgs.get(pu.normalize_sku(v["sku"]))
-                if not imgs:
-                    st["nofeed"] += 1
-                    if len(nofeed_skus) < 50: nofeed_skus.append(v["sku"])
-                    continue
-                batch.append({"ownerId": v["id"], "namespace": "custom", "key": "variantbilleder",
-                              "type": "list.single_line_text_field", "value": json.dumps(imgs)})
+            for idx_v, v in enumerate(vs):
+                fd = sku_imgs.get(pu.normalize_sku(v["sku"])) or {}
+                # custom.sku — på ALLE varianter (også første/single)
+                if not v.get("m_sku") and v.get("sku"):
+                    batch.append({"ownerId": v["id"], "namespace": "custom", "key": "sku",
+                                  "type": "single_line_text_field", "value": v["sku"]}); st["sku"] += 1
+                if idx_v >= 1:   # ikke-første: produktinfo + variantbilleder
+                    if not v.get("m_pi"):
+                        html = fd.get("html")
+                        if html:
+                            batch.append({"ownerId": v["id"], "namespace": "custom", "key": "produktinfo",
+                                          "type": "multi_line_text_field", "value": html}); st["pi"] += 1
+                        else: st["pi_nofeed"] += 1
+                    if not v.get("m_vb"):
+                        imgs = fd.get("imgs")
+                        if imgs:
+                            batch.append({"ownerId": v["id"], "namespace": "custom", "key": "variantbilleder",
+                                          "type": "list.single_line_text_field", "value": json.dumps(imgs)}); st["vb"] += 1
+                        else:
+                            st["vb_nofeed"] += 1
+                            if len(nofeed_skus) < 30: nofeed_skus.append(v["sku"])
             if args.live and batch:
                 for j in range(0, len(batch), 25):
                     dm = gql(METAFIELDS_SET, {"mf": batch[j:j+25]})
                     errs = dm["data"]["metafieldsSet"]["userErrors"]
-                    if errs:
-                        st["errors"] += len(errs); print(f"  [{i}] ⚠ {p['title'][:30]}: {errs[:1]}")
-                    else:
-                        st["set"] += len(batch[j:j+25])
-            else:
-                st["set"] += len(batch)   # dry-run: tæl hvad der VILLE blive sat
+                    if errs: st["errors"] += len(errs); print(f"  [{i}] ⚠ {p['title'][:30]}: {errs[:1]}")
             st["products"] += 1
             if i <= 8 or i % 50 == 0:
-                print(f"  [{i}/{len(ids)}] {p['title'][:40]}: {'+'+str(len(batch))+' metafelt' if batch else 'intet at sætte'}")
+                print(f"  [{i}/{len(ids)}] {p['title'][:38]}: +{len(batch)} metafelt")
         except Exception as e:
             st["errors"] += 1; print(f"  [{i}] ❌ {pid}: {str(e)[:150]}")
 
+    verb = "SAT" if args.live else "ville blive sat"
     print(f"\n=== OPSUMMERING ({'LIVE' if args.live else 'DRY-RUN'}) ===")
     print(f"  produkter behandlet: {st['products']}")
-    print(f"  metafelter {'SAT' if args.live else 'ville blive sat'}: {st['set']}")
-    print(f"  havde allerede metafelt: {st['already']}")
-    print(f"  SKU ikke i feed (kan ikke sættes): {st['nofeed']}")
-    print(f"  første/single-varianter sprunget over: {st['skipped_first']}")
+    print(f"  custom.sku {verb}:            {st['sku']}")
+    print(f"  custom.produktinfo {verb}:    {st['pi']}  (mangler i feed: {st['pi_nofeed']})")
+    print(f"  custom.variantbilleder {verb}: {st['vb']}  (mangler i feed: {st['vb_nofeed']})")
+    print(f"  single-variant sprunget over: {st['skipped_single']}")
     print(f"  fejl: {st['errors']}")
     if nofeed_skus:
-        print(f"  eksempel SKU uden feed-billeder: {nofeed_skus[:10]}")
+        print(f"  eksempel SKU uden feed-data: {nofeed_skus[:10]}")
 
 if __name__ == "__main__":
     main()
