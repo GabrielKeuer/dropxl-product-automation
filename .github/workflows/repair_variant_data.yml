@@ -1,0 +1,54 @@
+name: Repair Variant Data (manuel)
+
+# Genkør variant-metafelt- og native-image-reparationerne efter behov.
+# Feed-drevet, idempotent. Default = DRY-RUN (sætter intet før live=true).
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: 'Hvilken repair'
+        required: true
+        default: 'metafields'
+        type: choice
+        options:
+          - metafields       # sku + produktinfo + variantbilleder
+          - native-image     # link native variant-image (match + farve-fallback)
+          - rebalance        # trim ulinkede media + upload + link (fyldte produkter)
+      live:
+        description: 'Live? (false = dry-run)'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+      ids:
+        description: 'Produkt-ID(er), mellemrum-adskilt (tomt = brug committet liste i output/)'
+        required: false
+        type: string
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas requests openpyxl beautifulsoup4
+      - name: Kør repair
+        env:
+          FEED_URL: ${{ vars.FEED_URL }}
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        run: |
+          case "${{ inputs.script }}" in
+            metafields)   FILE=repair_variant_metafields.py ;;
+            native-image) FILE=repair_variant_native_image.py ;;
+            rebalance)    FILE=rebalance_variant_media.py ;;
+            *) echo "Ukendt script"; exit 1 ;;
+          esac
+          ARGS=""
+          if [ "${{ inputs.live }}" = "true" ]; then ARGS="$ARGS --live"; fi
+          if [ -n "${{ inputs.ids }}" ]; then ARGS="$ARGS --ids ${{ inputs.ids }}"; fi
+          echo "▶ python scripts/$FILE $ARGS"
+          python scripts/$FILE $ARGS
