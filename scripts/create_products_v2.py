@@ -1062,6 +1062,38 @@ def _media_headroom(product_id: str) -> int:
         return 250
 
 
+def _color_option_name(options: list):
+    """Find farve-option-navnet (case-insensitivt) blandt produktets options."""
+    return next((o for o in options if str(o).lower() in ('farve', 'color', 'colour')), None)
+
+
+def _color_to_media_map(product_id: str, color_opt: str) -> dict:
+    """Map farve-værdi -> et eksisterende MediaImage-id på produktet (fra varianter
+    der allerede har et billede). Bruges til at give nye/billedløse varianter et
+    farve-korrekt billede UDEN at uploade nyt — afgørende når produktet er på 250-grænsen."""
+    if not color_opt:
+        return {}
+    q = """
+    query($id: ID!) { product(id: $id) { variants(first: 250) { edges { node {
+      selectedOptions { name value }
+      media(first: 1) { edges { node { ... on MediaImage { id } } } } } } } } }
+    """
+    try:
+        d = gql(q, {"id": product_id})
+        cmap = {}
+        for e in d['data']['product']['variants']['edges']:
+            n = e['node']
+            col = next((o['value'] for o in n['selectedOptions'] if o['name'] == color_opt), None)
+            med = n['media']['edges']
+            mid = med[0]['node'].get('id') if med and med[0].get('node') else None
+            if col and mid and col not in cmap:
+                cmap[col] = mid
+        return cmap
+    except Exception as ex:
+        print(f"    ⚠ kunne ikke hente farve→media: {str(ex)[:100]}")
+        return {}
+
+
 def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
     """Add new variants to existing product.
 
@@ -1161,12 +1193,26 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
     # Vi bruger productCreateMedia og gemmer URL -> mediaId for at kunne
     # referere via mediaId i productVariantsBulkCreate (mediaSrc-feltet
     # tilfoejer kun media til produktet uden at linke det til varianten).
+    # Farve-bevidst dækning: HVER variant skal have et variant-billede (bruges mange
+    # steder i shoppen). Da der typisk er langt færre farver end varianter, prioriterer
+    # vi ÉT billede pr. farve FØRST (coverage), så ekstra billeder (richness) op til 250.
+    color_opt = _color_option_name(full_options)
+    color_media = _color_to_media_map(product_id, color_opt) if color_opt else {}
+    def _vcol(v): return dict(v.option_values).get(color_opt) if color_opt else None
+
     unique_image_urls = []
-    seen = set()
+    seen = set(); colors_seen = set()
+    # 1) coverage-pass: ét nyt billede pr. farve der IKKE allerede har media på produktet
+    for v in merge.new_variants:
+        if not v.image_url or v.image_url in seen:
+            continue
+        c = _vcol(v)
+        if color_opt and c is not None and c not in color_media and c not in colors_seen:
+            colors_seen.add(c); seen.add(v.image_url); unique_image_urls.append(v.image_url)
+    # 2) richness-pass: resten af de unikke billeder
     for v in merge.new_variants:
         if v.image_url and v.image_url not in seen:
-            seen.add(v.image_url)
-            unique_image_urls.append(v.image_url)
+            seen.add(v.image_url); unique_image_urls.append(v.image_url)
 
     # Respektér Shopifys hårde grænse på 250 media/produkt — ellers fejler
     # productCreateMedia med PRODUCT_MEDIA_LIMIT_EXCEEDED.
@@ -1196,7 +1242,14 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
             url_to_media_id[url] = m['id']
         print(f"    📷 Uploadede {len(url_to_media_id)} variant-billeder til produktet")
 
+    # Fyld farve→media med de nye uploads (så farver uden eksisterende media nu er dækket)
+    for v in merge.new_variants:
+        c = _vcol(v); mid = url_to_media_id.get(v.image_url)
+        if color_opt and c is not None and mid and not color_media.get(c):
+            color_media[c] = mid
+
     variants_input = []
+    _covered = _fallback = _nocover = 0
     for v in merge.new_variants:
         option_values = []
         opts_dict = dict(v.option_values)
@@ -1225,11 +1278,23 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
         }
         if v.compare_at_price is not None:
             var_in["compareAtPrice"] = str(v.compare_at_price)
-        # Variant-image via mediaId (refererer til just-uploaded media paa produktet)
-        if v.image_url and v.image_url in url_to_media_id:
-            var_in["mediaId"] = url_to_media_id[v.image_url]
+        # Variant-image: eget uploadet billede hvis muligt, ellers FARVE-FALLBACK
+        # (eksisterende/søskende-media i samme farve) — så HVER variant får et
+        # farve-korrekt billede, selv når produktet er på 250-media-grænsen.
+        mid = url_to_media_id.get(v.image_url)
+        if mid:
+            _covered += 1
+        elif color_opt:
+            mid = color_media.get(_vcol(v))
+            if mid: _fallback += 1
+            else: _nocover += 1
+        else:
+            _nocover += 1
+        if mid:
+            var_in["mediaId"] = mid
         var_in = {k: vv for k, vv in var_in.items() if vv is not None}
         variants_input.append(var_in)
+    print(f"    🎨 Variant-billed-dækning: {_covered} eget + {_fallback} farve-fallback, {_nocover} uden ({len(merge.new_variants)} i alt)")
 
     d = gql(VARIANTS_BULK_CREATE, {"productId": product_id, "variants": variants_input})
     return d['data']['productVariantsBulkCreate']
