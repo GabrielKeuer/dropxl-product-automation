@@ -688,5 +688,122 @@
     "variant_map": null,
     "created_skus": [],
     "remaining_skus": null
+  },
+  "M3042834": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-bruserullegardin-90x240-cm-stofbredde-86-cm/8721158351258.html",
+    "title": "vidaXL Bruserullegardin 90x240 cm Stofbredde 86 cm",
+    "master_pid": "M3042834",
+    "sku": "4014824",
+    "num_combos": 110,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Bubble",
+            "display": "Bobbel"
+          },
+          {
+            "value": "Circle",
+            "display": "Cirkel"
+          },
+          {
+            "value": "Green_leaves",
+            "display": "Grønne blade"
+          },
+          {
+            "value": "Leaves",
+            "display": "Blade"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Ornament",
+            "display": "Ornament"
+          },
+          {
+            "value": "Sea_star",
+            "display": "Søstjerne"
+          },
+          {
+            "value": "Shellfish",
+            "display": "Skaldyr"
+          },
+          {
+            "value": "Colourful_words",
+            "display": "Farverige ord"
+          },
+          {
+            "value": "Square",
+            "display": "Firkantet"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "60_x_240_cm",
+            "display": "60 x 240 cm"
+          },
+          {
+            "value": "70_x_240_cm",
+            "display": "70 x 240 cm"
+          },
+          {
+            "value": "80_x_240_cm",
+            "display": "80 x 240 cm"
+          },
+          {
+            "value": "100_x_240_cm",
+            "display": "100 x 240 cm"
+          },
+          {
+            "value": "110_x_240_cm",
+            "display": "110 x 240 cm"
+          },
+          {
+            "value": "120_x_240_cm",
+            "display": "120 x 240 cm"
+          },
+          {
+            "value": "130_x_240_cm",
+            "display": "130 x 240 cm"
+          },
+          {
+            "value": "140_x_240_cm",
+            "display": "140 x 240 cm"
+          },
+          {
+            "value": "150_x_240_cm",
+            "display": "150 x 240 cm"
+          },
+          {
+            "value": "160_x_240_cm",
+            "display": "160 x 240 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "with_cassette",
+            "display": "med kassette"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
   }
 }
