@@ -734,6 +734,12 @@ def _call_merge_via_productset_schema_replace(merge: MergeSpec, product_id: str,
 
     url_to_media_id = {}
     if unique_new_urls:
+        _hr = _media_headroom(product_id)
+        if _hr <= 0:
+            print("    ⏭  Produkt har allerede 250 media — springer billed-upload over"); unique_new_urls = []
+        elif len(unique_new_urls) > _hr:
+            print(f"    ⚠ Kun plads til {_hr} af {len(unique_new_urls)} billeder (250-grænse)"); unique_new_urls = unique_new_urls[:_hr]
+    if unique_new_urls:
         media_input = [
             {"originalSource": url, "mediaContentType": "IMAGE",
              "alt": f"Variant billede ({i+1}/{len(unique_new_urls)})"}
@@ -878,6 +884,12 @@ def _call_merge_via_productset(merge: MergeSpec, product_id: str,
 
     url_to_media_id = {}
     if unique_new_urls:
+        _hr = _media_headroom(product_id)
+        if _hr <= 0:
+            print("    ⏭  Produkt har allerede 250 media — springer billed-upload over"); unique_new_urls = []
+        elif len(unique_new_urls) > _hr:
+            print(f"    ⚠ Kun plads til {_hr} af {len(unique_new_urls)} billeder (250-grænse)"); unique_new_urls = unique_new_urls[:_hr]
+    if unique_new_urls:
         media_input = [
             {"originalSource": url, "mediaContentType": "IMAGE",
              "alt": f"Variant billede ({i+1}/{len(unique_new_urls)})"}
@@ -1020,6 +1032,36 @@ def _call_merge_via_productset(merge: MergeSpec, product_id: str,
     return {"productVariants": new_variants_created, "userErrors": []}
 
 
+def _existing_variant_combo_keys(product_id: str) -> set:
+    """Sæt af frozenset((optionName, value)) for produktets NUVÆRENDE varianter.
+    Bruges til at frafiltrere allerede-eksisterende option-kombos (undgår
+    VARIANT_ALREADY_EXISTS ved gentagen/delvis merge)."""
+    q = """
+    query($id: ID!) { product(id: $id) {
+      variants(first: 250) { edges { node { selectedOptions { name value } } } } } }
+    """
+    try:
+        d = gql(q, {"id": product_id})
+        keys = set()
+        for e in d['data']['product']['variants']['edges']:
+            keys.add(frozenset((o['name'], o['value']) for o in e['node']['selectedOptions']))
+        return keys
+    except Exception as ex:
+        print(f"    ⚠ kunne ikke hente eksisterende variant-kombos: {str(ex)[:120]}")
+        return set()
+
+
+def _media_headroom(product_id: str) -> int:
+    """Hvor mange flere media kan tilføjes før Shopifys hårde grænse på 250/produkt."""
+    q = "query($id: ID!) { product(id: $id) { mediaCount { count } } }"
+    try:
+        d = gql(q, {"id": product_id})
+        cur = (d['data']['product'].get('mediaCount') or {}).get('count', 0)
+        return max(0, 250 - int(cur))
+    except Exception:
+        return 250
+
+
 def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
     """Add new variants to existing product.
 
@@ -1034,6 +1076,24 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
     product_id = find_product_by_handle(merge.existing_handle)
     if not product_id:
         raise Exception(f"Product handle '{merge.existing_handle}' findes ikke i Shopify")
+
+    # Frafiltrér nye varianter hvis option-kombinationen ALLEREDE findes på produktet.
+    # Sker når en tidligere (delvis) merge allerede har tilføjet dem — ellers fejler
+    # productVariantsBulkCreate med VARIANT_ALREADY_EXISTS_CHANGE_OPTION_VALUE og vælter
+    # hele kørslen. (Kombo-keys er option-space-specifikke, så options_to_add påvirkes ikke.)
+    _existing_keys = _existing_variant_combo_keys(product_id)
+    if _existing_keys:
+        _before = len(merge.new_variants)
+        merge.new_variants = [
+            v for v in merge.new_variants
+            if frozenset((n, val) for n, val in v.option_values) not in _existing_keys
+        ]
+        _dropped = _before - len(merge.new_variants)
+        if _dropped:
+            print(f"    ⏭  Sprang {_dropped} variant(er) over — option-kombo findes allerede på produktet")
+        if not merge.new_variants:
+            print(f"    ✅ Alle {_before} varianter findes allerede — intet at merge")
+            return {"productVariants": [], "userErrors": [], "_skipped": True}
 
     cur_options = fetch_product_options(SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN, merge.existing_handle)
 
@@ -1107,6 +1167,17 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
         if v.image_url and v.image_url not in seen:
             seen.add(v.image_url)
             unique_image_urls.append(v.image_url)
+
+    # Respektér Shopifys hårde grænse på 250 media/produkt — ellers fejler
+    # productCreateMedia med PRODUCT_MEDIA_LIMIT_EXCEEDED.
+    if unique_image_urls:
+        _headroom = _media_headroom(product_id)
+        if _headroom <= 0:
+            print(f"    ⏭  Produkt har allerede 250 media — springer billed-upload over")
+            unique_image_urls = []
+        elif len(unique_image_urls) > _headroom:
+            print(f"    ⚠ Kun plads til {_headroom} af {len(unique_image_urls)} nye billeder (250-grænse) — uploader {_headroom}")
+            unique_image_urls = unique_image_urls[:_headroom]
 
     url_to_media_id = {}
     if unique_image_urls:
