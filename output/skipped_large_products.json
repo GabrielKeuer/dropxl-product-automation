@@ -1,1 +1,251 @@
-{}
+{
+  "M3049899": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLRygpudeLysegrå180x50cmVelourstof/8721288960290.html",
+    "title": "vidaXL Rygpude Lysegrå 180 x 50 cm Velourstof",
+    "master_pid": "M3049899",
+    "sku": "42014933",
+    "num_combos": 104,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Dark_green",
+            "display": "Mørkegrøn"
+          },
+          {
+            "value": "Light_green",
+            "display": "Lysegrøn"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          },
+          {
+            "value": "Wine_red",
+            "display": "Vinrød"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Yellow",
+            "display": "Gul"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Sea_green",
+            "display": "havgrøn"
+          },
+          {
+            "value": "Police_blue",
+            "display": "Politi blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "50_x_45_cm",
+            "display": "50 x 45 cm"
+          },
+          {
+            "value": "60_x_50_cm",
+            "display": "60 x 50 cm"
+          },
+          {
+            "value": "80_x_50_cm",
+            "display": "80 x 50 cm"
+          },
+          {
+            "value": "100_x_50_cm",
+            "display": "100 x 50 cm"
+          },
+          {
+            "value": "120_x_50_cm",
+            "display": "120 x 50 cm"
+          },
+          {
+            "value": "140_x_50_cm",
+            "display": "140 x 50 cm"
+          },
+          {
+            "value": "160_x_50_cm",
+            "display": "160 x 50 cm"
+          },
+          {
+            "value": "200_x_50_cm",
+            "display": "200 x 50 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3044628": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLMørklægningsgardinermedringe2pcsRenHvid245x140cm/8721158695871.html",
+    "title": "vidaXL Mørklægningsgardiner med ringe 2 pcs Ren Hvid 245 x 140 cm",
+    "master_pid": "M3044628",
+    "sku": "4107496",
+    "num_combos": 176,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Beige",
+            "display": "Beige"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Light_blue",
+            "display": "Lyseblå"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracit"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Pale_grey",
+            "display": "Lys grå"
+          },
+          {
+            "value": "Wine_red",
+            "display": "Vinrød"
+          },
+          {
+            "value": "Metal_grey",
+            "display": "Metal grå"
+          },
+          {
+            "value": "Dark_blue",
+            "display": "Mørkeblå"
+          },
+          {
+            "value": "Light_brown",
+            "display": "Lysebrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Purple",
+            "display": "Lilla"
+          },
+          {
+            "value": "Pure_white",
+            "display": "Ren hvid"
+          },
+          {
+            "value": "green",
+            "display": "grøn"
+          },
+          {
+            "value": "Mustard_yellow",
+            "display": "sennepsgul"
+          },
+          {
+            "value": "Bright_orange",
+            "display": "Lys orange"
+          },
+          {
+            "value": "Bright_pink",
+            "display": "Lyserød"
+          },
+          {
+            "value": "Baby_pink",
+            "display": "Baby lyserød"
+          },
+          {
+            "value": "Terracotta",
+            "display": "Terrakotta"
+          },
+          {
+            "value": "Turquoise",
+            "display": "Turkis"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Længde",
+        "values": [
+          {
+            "value": "140_cm",
+            "display": "140 cm"
+          },
+          {
+            "value": "175_cm",
+            "display": "175 cm"
+          },
+          {
+            "value": "225_cm",
+            "display": "225 cm"
+          },
+          {
+            "value": "260_cm",
+            "display": "260 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Ophængningsmåder",
+        "values": [
+          {
+            "value": "Grommets",
+            "display": "Øjer"
+          },
+          {
+            "value": "Tab_tops",
+            "display": "Tab tops"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
