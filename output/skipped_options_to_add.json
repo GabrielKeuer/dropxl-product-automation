@@ -68,5 +68,31 @@
       "3342141"
     ],
     "reason": "Shopify hard limit: max 3 options per product (4 forsoegt)"
+  },
+  "box-spring-seng-med-madras-lysegraa-90-x-190-cm-stof-8": {
+    "logged_at": "2026-06-18T05:10:30.286400+00:00",
+    "options_attempted": [
+      "Title",
+      "Model",
+      "Farve",
+      "Størrelse"
+    ],
+    "new_variant_skus": [
+      "3342366",
+      "3342373",
+      "3342367",
+      "3342374",
+      "3342368",
+      "3342375",
+      "3342382",
+      "3342482",
+      "3342489",
+      "3342370",
+      "3342343",
+      "3342371",
+      "3342330",
+      "3342386"
+    ],
+    "reason": "Shopify hard limit: max 3 options per product (4 forsoegt)"
   }
 }
