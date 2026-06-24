@@ -186,5 +186,33 @@
       "3426500"
     ],
     "reason": "Shopify hard limit: max 3 options per product (4 forsoegt)"
+  },
+  "foldemarkise-manuel-betjening": {
+    "logged_at": "2026-06-24T05:00:54.313592+00:00",
+    "case": "schema-rename",
+    "options_to_remove": [
+      "Størrelse"
+    ],
+    "scrape_options": [
+      "Bredde",
+      "Farve"
+    ],
+    "missing_skus_in_scrape": [
+      "368744",
+      "368737",
+      "368745",
+      "368738",
+      "143695",
+      "143689",
+      "368739",
+      "368747",
+      "368740",
+      "368741",
+      "43233",
+      "368742",
+      "368749",
+      "43221"
+    ],
+    "reason": "Schema-rename ville miste data for SKUs ikke i scrape"
   }
 }
