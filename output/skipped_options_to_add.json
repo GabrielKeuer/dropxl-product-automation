@@ -214,5 +214,22 @@
       "43221"
     ],
     "reason": "Schema-rename ville miste data for SKUs ikke i scrape"
+  },
+  "rumdeler-4-paneler-massivt-kejsertrae-hvid-3": {
+    "logged_at": "2026-06-27T04:49:50.645783+00:00",
+    "case": "schema-rename",
+    "options_to_remove": [
+      "Antal produkter"
+    ],
+    "scrape_options": [
+      "Antal paneler",
+      "Størrelse"
+    ],
+    "missing_skus_in_scrape": [
+      "358746",
+      "358747",
+      "358748"
+    ],
+    "reason": "Schema-rename ville miste data for SKUs ikke i scrape"
   }
 }
