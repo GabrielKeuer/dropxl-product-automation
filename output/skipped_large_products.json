@@ -1,1 +1,143 @@
-{}
+{
+  "M3032091": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-premium-gaestehandklaeder-solund-10-stk-antracit-30x50-cm-600-gsm/8721012147959.html",
+    "title": "vidaXL Premium gæstehåndklæder SOLUND 10 stk. antracit 30x50 cm 600 gsm",
+    "master_pid": "M3032091",
+    "sku": "137154",
+    "num_combos": 476,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracitgrå"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          },
+          {
+            "value": "Bordeaux",
+            "display": "Bordeaux"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Navy_blue",
+            "display": "Marineblå"
+          },
+          {
+            "value": "Gold",
+            "display": "Guld"
+          },
+          {
+            "value": "Grey",
+            "display": "Grå"
+          },
+          {
+            "value": "Green",
+            "display": "Grøn"
+          },
+          {
+            "value": "Purple",
+            "display": "Lilla"
+          },
+          {
+            "value": "Orange",
+            "display": "Orange"
+          },
+          {
+            "value": "Red",
+            "display": "Rød"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Turquoise",
+            "display": "Turkis"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Apple_green",
+            "display": "Æblegrøn"
+          },
+          {
+            "value": "Pink",
+            "display": "Lyserød"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "15_x_21_cm",
+            "display": "15 x 21 cm"
+          },
+          {
+            "value": "30_x_30_cm",
+            "display": "30 x 30 cm"
+          },
+          {
+            "value": "50_x_100_cm",
+            "display": "50 x 100 cm"
+          },
+          {
+            "value": "70_x_140_cm",
+            "display": "70 x 140 cm"
+          },
+          {
+            "value": "100_x_150_cm",
+            "display": "100 x 150 cm"
+          },
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Antal i pakke",
+        "values": [
+          {
+            "value": "50",
+            "display": "50"
+          },
+          {
+            "value": "2",
+            "display": "2"
+          },
+          {
+            "value": "4",
+            "display": "4"
+          },
+          {
+            "value": "25",
+            "display": "25"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
