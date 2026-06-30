@@ -1607,10 +1607,19 @@ def main():
 
         # Indsæt warmup state for nye SKUs — brug per-product pricing-config
         # saa sale_price fra warmup matcher Katalog Engine-regler.
+        #
+        # MODE-BEVIDST: warmup/rotation-state gælder KUN real_discount (Omnibus
+        # A/B/C). Fictive_discount-produkter er altid på tilbud (fast markup +
+        # fiktiv førpris sat ved oprettelse) og hører IKKE til i rotations-
+        # maskinen — så vi skriver ikke vidaxl_pricing_state for dem.
         state_records = []
+        skipped_fictive = 0
         warmup_until = (datetime.now(timezone.utc) + timedelta(days=WARMUP_DAYS)).isoformat()
         for spec in product_specs:
             _spec_cfg = resolve_pricing(spec.vendor, spec.product_type)
+            if (_spec_cfg or {}).get('mode') == 'fictive_discount':
+                skipped_fictive += len(spec.variants)
+                continue
             for v in spec.variants:
                 state_records.append({
                     'sku': v.sku,
@@ -1621,7 +1630,13 @@ def main():
                     'sale_price': pricing.calculate_sale_price(v.cost, _spec_cfg),
                     'warmup_complete_at': warmup_until,
                 })
+        # Merges er vidaXL-produkter (dette repo scraper vidaXL) — spring warmup
+        # over hvis vidaXL er fictive.
+        _merge_fictive = (resolve_pricing('vidaXL', None) or {}).get('mode') == 'fictive_discount'
         for merge in merge_specs:
+            if _merge_fictive:
+                skipped_fictive += len(merge.new_variants)
+                continue
             # For merge: vi har ikke product_type direkte paa MergeSpec, brug default
             # config. sale_price genberegnes alligevel ved naeste sync_prices_v2 run
             # med korrekt per-product config.
@@ -1635,6 +1650,8 @@ def main():
                     'sale_price': pricing.calculate_sale_price(v.cost, _default_cfg),
                     'warmup_complete_at': warmup_until,
                 })
+        if skipped_fictive:
+            print(f"ℹ️  Sprang warmup/rotation-state over for {skipped_fictive} fictive variant(er) (altid på tilbud, ingen rotation)")
         upsert_warmup_state(state_records)
 
         # Variant count
