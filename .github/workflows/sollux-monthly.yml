@@ -1,0 +1,64 @@
+name: Sollux Månedlig Opret + Slet
+
+# Kører ÉN gang om måneden (sidste dag i måneden). Sollux opdaterer sjældent
+# feedet, så månedlig kadence er rigeligt. Henter feed-filer LIVE (--fetch).
+# NB: Sollux-domænerne blokerer tidvis GitHub-runner-IP'er (jf. inventory-sync);
+# fetch_live_feeds har retry/backoff. Manuel kørsel: workflow_dispatch (når som helst).
+
+on:
+  schedule:
+    - cron: '0 2 28-31 * *'   # 04:00 København; gate nedenfor sikrer KUN sidste dag
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.g.outputs.run }}
+    steps:
+      - id: g
+        run: |
+          ENABLED="${{ vars.AUTOMATION_ENABLED || 'true' }}"
+          if [ "$ENABLED" != "true" ]; then echo "run=false" >> $GITHUB_OUTPUT; echo "toggle off"; exit 0; fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "run=true" >> $GITHUB_OUTPUT; exit 0; fi
+          # ellers kun sidste dag i måneden (i morgen = den 1.)
+          if [ "$(date -d tomorrow +%d)" = "01" ]; then echo "run=true" >> $GITHUB_OUTPUT; else echo "run=false" >> $GITHUB_OUTPUT; echo "ikke sidste dag — skip"; fi
+
+  sollux:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas requests openpyxl supabase
+
+      - name: Opret nye Sollux-produkter (ACTIVE + publiceret)
+        env:
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FEED_DIR: ${{ github.workspace }}/output/feed
+        run: python scripts/create_sollux_products.py --live --fetch --status ACTIVE --limit 999
+
+      - name: Slet udgåede Sollux-produkter
+        env:
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+          FEED_DIR: ${{ github.workspace }}/output/feed
+        run: python scripts/delete_sollux_discontinued.py --apply
+
+      - name: Commit audit-output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add output/sollux_created.json output/sollux_delete_list.json 2>/dev/null || true
+          git commit -m "Sollux månedlig kørsel $(date +%Y-%m-%d)" || echo "intet at committe"
+          git push || true

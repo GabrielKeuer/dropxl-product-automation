@@ -70,11 +70,21 @@ def _round_nearest_100_minus_1(price):
     return int(((price + 50) // 100) * 100 - 1)
 
 
+def _round_9(price):
+    """Rund altid OP til naermeste tal der slutter paa 9 (10-trin minus 1).
+    Bruges af Sollux (priser som 39, 439, 889, 1429 — ikke x49/x99)."""
+    if price <= 0:
+        return 0
+    p = int(price)
+    return p if p % 10 == 9 else ((p // 10) + 1) * 10 - 1
+
+
 _ROUNDING_FUNCS = {
     "ceil_100_minus_1": _round_ceil_100_minus_1,
     "ceil_50_minus_1": _round_ceil_50_minus_1,
     "nearest_100_minus_1": _round_nearest_100_minus_1,
     "round_50_minus_1": _round_nearest_50_minus_1,
+    "round_9": _round_9,
 }
 
 
@@ -193,8 +203,11 @@ def calculate_fictive_prices(cost, config, seed):
     markup = float(cfg.get("fixed_markup", DEFAULT_FALLBACK_MARKUP))
     rounding = cfg.get("rounding", DEFAULT_ROUNDING)
     discounts = cfg.get("fictive_discounts") or []
+    surcharge = float(cfg.get("flat_surcharge", 0) or 0)    # fast tillæg efter markup (Sollux-pærer +10)
 
-    sale = _round_price(cost * markup, rounding)            # det kunden betaler (x49/x99)
+    sale = _round_price(cost * markup, rounding)            # det kunden betaler
+    if surcharge:
+        sale = int(sale + surcharge)
     disc = _pick_fictive_discount(seed, discounts)
     if disc <= 0:
         return {"normal_price": sale, "sale_price": sale, "discount_pct": 0}
