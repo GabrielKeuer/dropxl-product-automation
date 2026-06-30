@@ -36,7 +36,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install pandas requests openpyxl supabase
+      - run: pip install pandas requests openpyxl supabase beautifulsoup4
 
       - name: Opret nye Sollux-produkter (ACTIVE + publiceret)
         env:
@@ -47,6 +47,16 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FEED_DIR: ${{ github.workspace }}/output/feed
         run: python scripts/create_sollux_products.py --live --fetch --status ACTIVE --limit 999
+
+      - name: Merge nye farver på eksisterende Sollux-produkter
+        env:
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          FEED_DIR: ${{ github.workspace }}/output/feed
+          FEED_URL: "unused"
+        run: python scripts/merge_sollux_variants.py --apply
 
       - name: Slet udgåede Sollux-produkter
         env:

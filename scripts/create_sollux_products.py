@@ -204,30 +204,41 @@ def images_for(row, is_bulb=False):
     # Lamper: rotation 3,1,2,… (billede 0 efter de første tre).
     return sorted(imgs, key=_img_num) if is_bulb else order_images(imgs)
 
+def _bulb_specs_html(row):
+    """Specs-blok til pærer (deres Long/Short er ofte N/D)."""
+    li = []
+    for label, col in [('Fatning', 'Trådtype'), ('Effekt', 'Maksimal effekt (W)'),
+                       ('Lysstrøm', 'Lumen'), ('Lysfarve', 'Kelvins'), ('Energiklasse', 'Energiklasse')]:
+        v = row.get(col)
+        if not is_nd(v):
+            unit = {'Effekt': ' W', 'Lysstrøm': ' lm', 'Lysfarve': ' K'}.get(label, '')
+            li.append(f"<li><strong>{label}:</strong> {str(v).strip()}{unit}</li>")
+    return '<ul>' + ''.join(li) + '</ul>' if li else ''
+
 def build_body_html(long_html, short_html, is_bulb=False, row=None):
+    """Produkt-body (descriptionHtml): <h4>Beskrivelse>{long} + <h4>ProduktInfo>{short}.
+    NB: 'ProduktInfo' med stort I — matcher temaets customtabs-parsing (eksisterende katalog)."""
     parts = []
     if not is_nd(long_html):
         parts.append('<h4>Beskrivelse</h4>'); parts.append(str(long_html).strip())
     if not is_nd(short_html):
-        parts.append('<h4>Produktinfo</h4>'); parts.append(str(short_html).strip())
+        parts.append('<h4>ProduktInfo</h4>'); parts.append(str(short_html).strip())
     elif is_bulb and row is not None:
-        # pærer har ofte N/D — byg Produktinfo fra specs
-        li = []
-        for label, col in [('Fatning', 'Trådtype'), ('Effekt', 'Maksimal effekt (W)'),
-                           ('Lysstrøm', 'Lumen'), ('Lysfarve', 'Kelvins'), ('Energiklasse', 'Energiklasse')]:
-            v = row.get(col)
-            if not is_nd(v):
-                unit = {'Effekt': ' W', 'Lysstrøm': ' lm', 'Lysfarve': ' K'}.get(label, '')
-                li.append(f"<li><strong>{label}:</strong> {str(v).strip()}{unit}</li>")
-        if li:
-            parts.append('<h4>Produktinfo</h4>'); parts.append('<ul>' + ''.join(li) + '</ul>')
+        specs = _bulb_specs_html(row)
+        if specs:
+            parts.append('<h4>ProduktInfo</h4>'); parts.append(specs)
     return '\n'.join(parts)
 
-def produktinfo_html(short_html, is_bulb=False, row=None):
-    if not is_nd(short_html): return str(short_html).strip()
+def produktinfo_html(long_html, short_html, is_bulb=False, row=None):
+    """Variant-metafelt custom.produktinfo = BÅDE beskrivelse (long benefits) OG specs (short),
+    konkateneret UDEN h4 — matcher eksisterende Sollux (verificeret: live == long+short).
+    Varianter kan have unikke beskrivelser, så hele indholdet skal med pr. variant."""
+    parts = []
+    if not is_nd(long_html): parts.append(str(long_html).strip())
+    if not is_nd(short_html): parts.append(str(short_html).strip())
+    if parts: return '\n'.join(parts)
     if is_bulb and row is not None:
-        body = build_body_html(None, None, is_bulb=True, row=row)
-        return body.replace('<h4>Produktinfo</h4>\n', '') if body else ''
+        return _bulb_specs_html(row)
     return ''
 
 def seo_desc_fallback(short_html, title):
@@ -450,7 +461,7 @@ def build_specs(limit, status):
             ov = [("Farve", color)] if (is_variant_group and color) else []
             mf = [{"namespace": "custom", "key": "sku", "type": "single_line_text_field", "value": sku}]
             if pos > 0:
-                pi = produktinfo_html(row.get('Short description HTML'), is_bulb, row)
+                pi = produktinfo_html(row.get('Long description HTML - benefits'), row.get('Short description HTML'), is_bulb, row)
                 if pi: mf.append({"namespace": "custom", "key": "produktinfo", "type": "multi_line_text_field", "value": pi})
                 if imgs: mf.append({"namespace": "custom", "key": "variantbilleder", "type": "list.single_line_text_field", "value": json.dumps(imgs)})
             variants.append({"sku": sku, "price": price, "compare_at": compare_at, "cost": cost, "weight_grams": w,
