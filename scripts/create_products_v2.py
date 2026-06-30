@@ -1038,10 +1038,16 @@ def _call_merge_via_productset(merge: MergeSpec, product_id: str,
     return {"productVariants": new_variants_created, "userErrors": []}
 
 
+def _norm_ov(s) -> str:
+    """Normalisér option-navn/-værdi til combo-sammenligning: collapse whitespace +
+    lowercase. Robust mod case/mellemrum-forskelle mellem scrape og Shopify."""
+    return ' '.join(str(s).split()).lower()
+
+
 def _existing_variant_combo_keys(product_id: str) -> set:
-    """Sæt af frozenset((optionName, value)) for produktets NUVÆRENDE varianter.
-    Bruges til at frafiltrere allerede-eksisterende option-kombos (undgår
-    VARIANT_ALREADY_EXISTS ved gentagen/delvis merge)."""
+    """Sæt af frozenset((optionName, value)) for produktets NUVÆRENDE varianter
+    (NORMALISERET). Bruges til at frafiltrere allerede-eksisterende option-kombos
+    (undgår VARIANT_ALREADY_EXISTS ved gentagen/delvis merge)."""
     q = """
     query($id: ID!) { product(id: $id) {
       variants(first: 250) { edges { node { selectedOptions { name value } } } } } }
@@ -1050,7 +1056,7 @@ def _existing_variant_combo_keys(product_id: str) -> set:
         d = gql(q, {"id": product_id})
         keys = set()
         for e in d['data']['product']['variants']['edges']:
-            keys.add(frozenset((o['name'], o['value']) for o in e['node']['selectedOptions']))
+            keys.add(frozenset((_norm_ov(o['name']), _norm_ov(o['value'])) for o in e['node']['selectedOptions']))
         return keys
     except Exception as ex:
         print(f"    ⚠ kunne ikke hente eksisterende variant-kombos: {str(ex)[:120]}")
@@ -1124,7 +1130,7 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
         _before = len(merge.new_variants)
         merge.new_variants = [
             v for v in merge.new_variants
-            if frozenset((n, val) for n, val in v.option_values) not in _existing_keys
+            if frozenset((_norm_ov(n), _norm_ov(val)) for n, val in v.option_values) not in _existing_keys
         ]
         _dropped = _before - len(merge.new_variants)
         if _dropped:
@@ -1316,7 +1322,7 @@ def apply_specs(product_specs: list, merge_specs: list, location_id: str, limit:
         merge_specs = merge_specs[:limit]
 
     stats = {"created_products": 0, "merged_products": 0, "merged_variants": 0,
-             "errors": 0, "products": [], "merges": []}
+             "errors": 0, "already_exists_skipped": 0, "products": [], "merges": []}
 
     # 1. Create new products + publish til alle sales channels
     print(f"\n🚀 Opretter {len(product_specs)} nye produkter via productSet...")
@@ -1354,9 +1360,15 @@ def apply_specs(product_specs: list, merge_specs: list, location_id: str, limit:
                 stats["skipped_merges"] += 1
                 continue  # printet allerede i call_variants_merge
             errs = res.get('userErrors') or []
-            if errs:
+            # "already exists" = benign (variant-kombo findes allerede, fx ved option-
+            # tilføjelse hvor eksisterende variant får default-værdi) → IKKE en run-fejl.
+            benign = bool(errs) and all('already exist' in str(e.get('message', '')).lower() for e in errs)
+            if errs and not benign:
                 stats["errors"] += 1
                 print(f"  [{i}] ❌ {merge.existing_handle}: {errs[:2]}")
+            elif benign:
+                stats["already_exists_skipped"] += 1
+                print(f"  [{i}] ⏭ {merge.existing_handle}: variant-kombo findes allerede (benign — ikke en fejl)")
             else:
                 created = res.get('productVariants') or []
                 stats["merged_products"] += 1
@@ -1588,9 +1600,10 @@ def main():
         stats = apply_specs(product_specs, merge_specs, location_id, limit=args.limit)
         skipped_merges = stats.get('skipped_merges', 0)
         skip_str = f", {skipped_merges} merge skipped (options_to_add)" if skipped_merges else ""
+        ae_str = f", {stats.get('already_exists_skipped', 0)} already-exists skipped" if stats.get('already_exists_skipped') else ""
         print(f"\n📊 STATS: {stats['created_products']} created, "
               f"{stats['merged_products']} merged ({stats['merged_variants']} new variants), "
-              f"{stats['errors']} errors{skip_str}")
+              f"{stats['errors']} errors{ae_str}{skip_str}")
 
         # Indsæt warmup state for nye SKUs — brug per-product pricing-config
         # saa sale_price fra warmup matcher Katalog Engine-regler.
