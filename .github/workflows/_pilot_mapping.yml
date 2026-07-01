@@ -1,0 +1,40 @@
+name: Pilot – variant-mapping scraping (test)
+
+# Read-only pilot: tester om vi kan bygge variant-mapping via scraping.
+# Afgør om søster-SKUs ligger i side-HTML (~30k scrapes) eller ej (~150k).
+# Rører INTET i Shopify/Supabase. Manuel trigger.
+
+on:
+  workflow_dispatch:
+    inputs:
+      pilot_n:
+        description: "Antal produkter til master_pid/tempo/blok-test"
+        type: string
+        default: "120"
+      pilot_gt:
+        description: "Antal fler-variant til ground-truth SKU-test"
+        type: string
+        default: "12"
+
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas requests beautifulsoup4
+      - name: Run pilot mapping
+        env:
+          FEED_URL: ${{ vars.FEED_URL }}
+          PILOT_N: ${{ inputs.pilot_n }}
+          PILOT_GT: ${{ inputs.pilot_gt }}
+        run: python scripts/_pilot_mapping.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pilot-mapping-report
+          path: output/pilot_mapping.json
+          retention-days: 30
