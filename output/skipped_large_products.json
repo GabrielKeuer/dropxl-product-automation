@@ -1,1 +1,616 @@
-{}
+{
+  "M30484921": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaXLUdendørssofagruppemedpude6pcsNaturligogAntracit/8721288477866.html",
+    "title": "vidaXL Udendørs sofagruppe med pude 6 pcs Naturlig og Antracit",
+    "master_pid": "M30484921",
+    "sku": "3367480",
+    "num_combos": 100,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Natural",
+            "display": "Naturfarvet"
+          },
+          {
+            "value": "Natural_and_cream",
+            "display": "Natur og cremefarvet"
+          },
+          {
+            "value": "Natural_and_light_grey",
+            "display": "Naturfarvet og lysegrå"
+          },
+          {
+            "value": "Natural_and_anthracite",
+            "display": "Naturlig og antracit"
+          },
+          {
+            "value": "Natural_and_beige",
+            "display": "Naturlig og beige"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "White_and_cream",
+            "display": "Hvid og creme"
+          },
+          {
+            "value": "White_and_light_grey",
+            "display": "Hvid og lys grå"
+          },
+          {
+            "value": "White_and_anthracite",
+            "display": "hvid og antracitgrå"
+          },
+          {
+            "value": "White_and_beige",
+            "display": "Hvid og beige"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Armlæn stil",
+        "values": [
+          {
+            "value": "Horizontal_slats",
+            "display": "horisontale lameller"
+          },
+          {
+            "value": "Open_frame",
+            "display": "Åben ramme"
+          },
+          {
+            "value": "Vertical_slats",
+            "display": "Lodrette lameller"
+          },
+          {
+            "value": "Curved",
+            "display": "Kurvet"
+          },
+          {
+            "value": "Grid",
+            "display": "Rude"
+          },
+          {
+            "value": "Sloped",
+            "display": "Skrå"
+          },
+          {
+            "value": "Black_rattan",
+            "display": "Sort rattan"
+          },
+          {
+            "value": "Grey_rattan",
+            "display": "Grå rattan"
+          },
+          {
+            "value": "Black_rope",
+            "display": "Sort reb"
+          },
+          {
+            "value": "Coffee_rope",
+            "display": "Kaffereb"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3017288": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kontinentalseng-med-madras-120x190-cm-stof-bla/8721102436864.html",
+    "title": "vidaXL kontinentalseng med madras 120x190 cm stof blå",
+    "master_pid": "M3017288",
+    "sku": "3269799",
+    "num_combos": 420,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Blue",
+            "display": "Blå"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "80_x_200_cm",
+            "display": "80 x 200 cm"
+          },
+          {
+            "value": "90_x_190_cm",
+            "display": "90 x 190 cm"
+          },
+          {
+            "value": "90_x_200_cm",
+            "display": "90 x 200 cm"
+          },
+          {
+            "value": "100_x_200_cm",
+            "display": "100 x 200 cm"
+          },
+          {
+            "value": "120_x_200_cm",
+            "display": "120 x 200 cm"
+          },
+          {
+            "value": "140_x_190_cm",
+            "display": "140 x 190 cm"
+          },
+          {
+            "value": "140_x_200_cm",
+            "display": "140 x 200 cm"
+          },
+          {
+            "value": "160_x_200_cm",
+            "display": "160 x 200 cm"
+          },
+          {
+            "value": "180_x_200_cm",
+            "display": "180 x 200 cm"
+          },
+          {
+            "value": "200_x_200_cm",
+            "display": "200 x 200 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "Plain_design",
+            "display": "Med ensartet mønster"
+          },
+          {
+            "value": "Plain_with_nails",
+            "display": "Ensfarvet med søm"
+          },
+          {
+            "value": "Block_with_squares",
+            "display": "Blok med firkanter"
+          },
+          {
+            "value": "Horizontal_stripes",
+            "display": "vandrette striber"
+          },
+          {
+            "value": "Vertical_stripes",
+            "display": "Lodrette striber"
+          },
+          {
+            "value": "Buttons",
+            "display": "knapper"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M30065401": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-markise-m-led-lys-450x300-cm-manuel-betjening-cremefarvet/8720286392461.html",
+    "title": "vidaXL markise m. LED-lys 450x300 cm manuel betjening cremefarvet",
+    "master_pid": "M30065401",
+    "sku": "3068922",
+    "num_combos": 161,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Blue_and_white",
+            "display": "Blå og hvid"
+          },
+          {
+            "value": "Cream",
+            "display": "Creme"
+          },
+          {
+            "value": "Yellow_and_white",
+            "display": "Gul og hvid"
+          },
+          {
+            "value": "Anthracite",
+            "display": "Antracitgrå"
+          },
+          {
+            "value": "Orange_and_brown",
+            "display": "orange og brun"
+          },
+          {
+            "value": "Burgundy",
+            "display": "Bordeaux"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Anthracite_and_white",
+            "display": "Antracitgrå og hvid"
+          },
+          {
+            "value": "Orangeblackyellow",
+            "display": "Orange/sort/gul"
+          },
+          {
+            "value": "Yelloworangewhite",
+            "display": "Gul/orange/hvid"
+          },
+          {
+            "value": "Red_and_white",
+            "display": "Rød og hvid"
+          },
+          {
+            "value": "Orangegreybluewhite",
+            "display": "Orange/grå/blå/hvid"
+          },
+          {
+            "value": "Yellowgreywhite",
+            "display": "Gul/grå/hvid"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Beige",
+            "display": "Beige"
+          },
+          {
+            "value": "White",
+            "display": "Hvid"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Red",
+            "display": "Rød"
+          },
+          {
+            "value": "Green_and_yellow",
+            "display": "Grøn og gul"
+          },
+          {
+            "value": "Green_and_white",
+            "display": "Grøn og hvid"
+          },
+          {
+            "value": "Light_grey_and_white",
+            "display": "Lysegrå og hvid"
+          },
+          {
+            "value": "Sand",
+            "display": "Sandfarvet"
+          },
+          {
+            "value": "Taupe",
+            "display": "Gråbrun"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "300_x_250_cm",
+            "display": "300 x 250 cm"
+          },
+          {
+            "value": "350_x_250_cm",
+            "display": "350 x 250 cm"
+          },
+          {
+            "value": "400_x_300_cm",
+            "display": "400 × 300 cm"
+          },
+          {
+            "value": "600_x_300_cm",
+            "display": "600 × 300 cm"
+          },
+          {
+            "value": "400_x_350_cm",
+            "display": "400 × 350 cm"
+          },
+          {
+            "value": "500_x_350_cm",
+            "display": "500 × 350 cm"
+          },
+          {
+            "value": "600_x_350_cm",
+            "display": "600 × 350 cm"
+          }
+        ]
+      },
+      "variationAttribute3": {
+        "display_name": "Model",
+        "values": [
+          {
+            "value": "with_anthracite_frame",
+            "display": "med antracitramme"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  },
+  "M3005403": {
+    "status": "pending",
+    "handle": null,
+    "url": "https://www.vidaxl.dk/e/vidaxl-kokkentaeppe-60x300-cm-coffee-black-design-vaskbart-velour/8720845917784.html",
+    "title": "vidaXL køkkentæppe 60x300 cm Coffee Black-design vaskbart velour",
+    "master_pid": "M3005403",
+    "sku": "136557",
+    "num_combos": 102,
+    "options": {
+      "color": {
+        "display_name": "Farve",
+        "values": [
+          {
+            "value": "Grey_and_red",
+            "display": "Grå og rød"
+          },
+          {
+            "value": "Dark_grey_spices",
+            "display": "dark grey spices"
+          },
+          {
+            "value": "Black_and_red",
+            "display": "Sort og rød"
+          },
+          {
+            "value": "Wood",
+            "display": "træ"
+          },
+          {
+            "value": "Black",
+            "display": "Sort"
+          },
+          {
+            "value": "Multicolour",
+            "display": "Flerfarvet"
+          },
+          {
+            "value": "Coffee",
+            "display": "Brun"
+          },
+          {
+            "value": "Black_and_white",
+            "display": "Sort og hvid"
+          },
+          {
+            "value": "Grey",
+            "display": "Grå"
+          },
+          {
+            "value": "Light_grey",
+            "display": "Lysegrå"
+          },
+          {
+            "value": "Square",
+            "display": "Firkantet"
+          },
+          {
+            "value": "Grey_and_black",
+            "display": "Grå og sort"
+          },
+          {
+            "value": "Grey_with_paw_prints",
+            "display": "Grå med poteaftryk"
+          },
+          {
+            "value": "Black_and_brown",
+            "display": "Sort og brun"
+          },
+          {
+            "value": "Cooking",
+            "display": "Madlavning"
+          },
+          {
+            "value": "Spice",
+            "display": "Krydderi"
+          },
+          {
+            "value": "Tomato",
+            "display": "Tomat"
+          },
+          {
+            "value": "Mosaic",
+            "display": "Mosaik"
+          },
+          {
+            "value": "Hot_and_spicy",
+            "display": "hot and spicy"
+          },
+          {
+            "value": "Spoon",
+            "display": "Ske"
+          },
+          {
+            "value": "Love",
+            "display": "Love"
+          },
+          {
+            "value": "Cuisine",
+            "display": "Cuisine"
+          },
+          {
+            "value": "Stars",
+            "display": "stjerner"
+          },
+          {
+            "value": "Pepper",
+            "display": "peberfrugt"
+          },
+          {
+            "value": "Coffee_blue",
+            "display": "kaffe blå"
+          },
+          {
+            "value": "Coffee_brown",
+            "display": "kaffe brun"
+          },
+          {
+            "value": "Home",
+            "display": "hjem"
+          },
+          {
+            "value": "Tomato_1",
+            "display": "tomat 1"
+          },
+          {
+            "value": "Spoon_1",
+            "display": "ske 1"
+          },
+          {
+            "value": "Mosaic_colour",
+            "display": "mosaikfarvet"
+          },
+          {
+            "value": "Light_brown",
+            "display": "Lysebrun"
+          },
+          {
+            "value": "Coffee_grey",
+            "display": "kaffe grå"
+          },
+          {
+            "value": "Morning",
+            "display": "morgen"
+          },
+          {
+            "value": "Dark_brown",
+            "display": "Mørkebrun"
+          },
+          {
+            "value": "Coffee_text",
+            "display": "kaffetekst"
+          },
+          {
+            "value": "Cup",
+            "display": "kop"
+          },
+          {
+            "value": "Text",
+            "display": "tekst"
+          },
+          {
+            "value": "Wine",
+            "display": "vin"
+          },
+          {
+            "value": "Bottle",
+            "display": "flaske"
+          },
+          {
+            "value": "Brown",
+            "display": "Brun"
+          },
+          {
+            "value": "Dark_grey",
+            "display": "Mørkegrå"
+          },
+          {
+            "value": "Black_and_green",
+            "display": "Sort og grøn"
+          },
+          {
+            "value": "Spices",
+            "display": "krydderier"
+          },
+          {
+            "value": "Cook",
+            "display": "cook"
+          },
+          {
+            "value": "Tomatoes",
+            "display": "tomater"
+          },
+          {
+            "value": "Peper",
+            "display": "peber"
+          },
+          {
+            "value": "Autumn",
+            "display": "efterår"
+          },
+          {
+            "value": "Hexagon",
+            "display": "Sekskantet"
+          },
+          {
+            "value": "Leaves",
+            "display": "Blade"
+          },
+          {
+            "value": "Capital_home",
+            "display": "hovedstæder hjem"
+          },
+          {
+            "value": "Fence",
+            "display": "hegn"
+          }
+        ]
+      },
+      "variationAttribute2": {
+        "display_name": "Størrelse",
+        "values": [
+          {
+            "value": "45_x_150_cm",
+            "display": "45 x 150 cm"
+          },
+          {
+            "value": "60_x_180_cm",
+            "display": "60 x 180 cm"
+          }
+        ]
+      }
+    },
+    "variant_map": null,
+    "created_skus": [],
+    "remaining_skus": null
+  }
+}
