@@ -40,6 +40,12 @@ SHOPIFY_STORE = os.environ.get('SHOPIFY_STORE', '')
 SHOPIFY_ACCESS_TOKEN = os.environ.get('SHOPIFY_ACCESS_TOKEN', '')
 MAX_LARGE_PRODUCTS = int(os.environ.get('MAX_LARGE_PRODUCTS', '5'))
 MAX_VARIANTS_HARD = 999
+# Shopify productSet har haard graense paa 250 entries pr. input-array (files,
+# variants). Et produkt med fx 380 varianter giver ~386 files i ét kald → GraphQL-
+# fejl (set 2026-07-02, PID M3017288). Cap pr. produkt pr. koersel saa master-
+# billeder (~6-21) + variant-billeder holder sig under 250 — resten tages af den
+# eksisterende partial-merge-maskine over de naeste dage.
+MAX_VARIANTS_PER_RUN = int(os.environ.get('MAX_LARGE_VARIANTS_PER_RUN', '200'))
 MIN_STOCK_VARIANT = 4
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            '..', 'config', 'Kategori_Config.xlsx')
@@ -140,7 +146,8 @@ def main():
             print(f"   Max {effective_limit} produkter nået"); break
         if total_variants >= budget:
             print(f"   Budget opbrugt"); break
-        remaining_budget = budget - total_variants
+        # Cap pr. produkt pr. koersel (Shopify 250-array-graense, se MAX_VARIANTS_PER_RUN)
+        remaining_budget = min(budget - total_variants, MAX_VARIANTS_PER_RUN)
         print(f"\n📦 [{products_processed+1}] PID {pid} ({item['status']})")
 
         if item['status'] == 'pending':

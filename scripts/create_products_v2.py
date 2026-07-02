@@ -642,6 +642,21 @@ def call_product_set(spec: ProductSpec, location_id: str) -> dict:
     # Build variants
     variants = [_variant_to_set_input(v, location_id, spec.options_definition) for v in spec.variants]
 
+    # Shopify haard graense: max 250 entries pr. input-array i productSet.
+    # Belt-and-braces (large-flowet capper normalt foer vi naar hertil): trunker
+    # files og drop variant-file-refs der roeg ud — variant.file.originalSource
+    # SKAL staa i files-arrayet, ellers fejler kaldet.
+    if len(files) > 250:
+        kept_urls = {f["originalSource"] for f in files[:250]}
+        dropped = 0
+        for vi in variants:
+            vf = vi.get("file")
+            if vf and vf["originalSource"] not in kept_urls:
+                del vi["file"]
+                dropped += 1
+        print(f"    ⚠ {len(files)} files > Shopify max 250 — trunkerer ({dropped} variant-billeder droppes, kan repareres via repair_variant_data)")
+        files = files[:250]
+
     input_payload = {
         "title": spec.title,
         "descriptionHtml": spec.body_html,
