@@ -37,6 +37,29 @@ from product_utils import (
     scrape_vidaxl, title_case_danish, fix_pcs_to_dele, validate_url,
     upsert_warmup_state,
 )
+# Kanonisk titel-motor (100%-valideret 2026-07-05) — samme logik som merge-oraklet.
+from title_engine import generate_title, titlecase_feed
+import title_llm  # LLM-repair-lag (graceful; slås fra med TITLE_LLM_REPAIR=0)
+
+
+def _derive_create_title(first, variant_map, feed_rows):
+    """Deterministisk delt titel for et nyt produkt. Returnerer (titel, akser, rå_feed_titel).
+    Kun REELLE variant-akser (>1 værdi) fjernes → fast farve/størrelse/antal bevares som identitet."""
+    raw_title = str(first['Title']) if pd.notna(first['Title']) else ''
+    axis_vals = defaultdict(set)
+    for ov in variant_map.values():
+        for k, v in ov.items():
+            if v: axis_vals[k].add(v)
+    topts = {k: sorted(vs) for k, vs in axis_vals.items() if len(vs) > 1}
+    fc = [str(fr['Color']).strip() for _, fr in feed_rows.iterrows()
+          if pd.notna(fr.get('Color')) and str(fr['Color']).strip()]
+    tfc = fc if len({c.lower() for c in fc}) > 1 else []
+    ptype = first['Category'].split(' > ')[-1].strip() if pd.notna(first.get('Category')) else ''
+    det, _ = generate_title(titlecase_feed(raw_title), topts, shared=True,
+                            product_type=ptype, feed_colors=tfc, n_variants=len(feed_rows))
+    if not det or len(det) < 3:
+        det = title_case_danish(fix_pcs_to_dele(clean_vidaxl(raw_title)))
+    return det, topts, raw_title
 
 
 # === CONFIG ============================================================
@@ -107,6 +130,9 @@ class MergeSpec:
     # Bruges til at tildele KORREKTE option-vaerdier til eksisterende varianter
     # naar nye options tilfoejes til produktet.
     existing_variant_options: dict = field(default_factory=dict)
+    # Regenereret titel (sat KUN når en ny akse tilføjes → den delte titel kan
+    # være blevet forkert, fx enkelt-farve → farve-variant). Tom = behold titel.
+    regen_title: str = ''
 
 
 # === GRAPHQL HJÆLPERE ==================================================
@@ -222,7 +248,26 @@ def build_product_specs(product_groups, config, underkat, rum_dict,
         _default_cfg = pricing.load_pricing_config()
         pricing_cfg_resolver = lambda v, t: _default_cfg
 
-    for group in product_groups:
+    # === PRE-PASS: deterministiske titler + batched LLM-repair (med akse-kontekst) ===
+    # LLM'en får de REELLE variant-akser → retter kun ægte fejl, ingen falske positiver.
+    # Graceful: uden ANTHROPIC_API_KEY / ved fejl beholdes den deterministiske titel.
+    _title_recs = []
+    for _gi, _grp in enumerate(product_groups):
+        if _grp.get('is_merge', False):
+            continue
+        _fr = _grp['feed_rows']
+        if isinstance(_fr, list):
+            _fr = feed[feed['SKU'].isin(_fr)]
+        if len(_fr) == 0:
+            continue
+        _det, _axes, _raw = _derive_create_title(_fr.iloc[0], _grp['variant_map'], _fr)
+        _title_recs.append({"i": _gi, "feed": titlecase_feed(_raw), "det": _det, "axes": _axes})
+    _fixed = title_llm.repair_titles(_title_recs)
+    _title_by_gi = {r["i"]: (_fixed.get(r["i"]) or r["det"]) for r in _title_recs}
+    if _fixed:
+        print(f"   🤖 LLM-repair: {len(_fixed)}/{len(_title_recs)} create-titler rettet")
+
+    for _gi, group in enumerate(product_groups):
         if group.get('is_merge', False): continue
 
         feed_rows = group['feed_rows']
@@ -242,19 +287,10 @@ def build_product_specs(product_groups, config, underkat, rum_dict,
             print(f"   ⚠ Ingen pricing-config for ({_vendor}, {_ptype}) — skipper produkt")
             continue
 
-        # === Titel ===
-        all_opt_displays = set()
-        for od in option_struct.values():
-            for v in od.get('values', []): all_opt_displays.add(v['display'])
-        for _, fr in feed_rows.iterrows():
-            if pd.notna(fr.get('Color')): all_opt_displays.add(str(fr['Color']).strip())
-
-        raw_title = str(first['Title']) if pd.notna(first['Title']) else ''
-        sorted_displays = sorted(list(all_opt_displays), key=len, reverse=True)
-        clean_t = clean_title_from_options(raw_title, sorted_displays)
-        final_title = title_case_danish(clean_t)
-        if not final_title or len(final_title) < 5:
-            final_title = title_case_danish(fix_pcs_to_dele(clean_vidaxl(raw_title)))
+        # === Titel: fra pre-pass (deterministisk motor + LLM-repair) ===
+        final_title = _title_by_gi.get(_gi)
+        if not final_title:
+            final_title, _, _ = _derive_create_title(first, variant_map, feed_rows)
 
         handle = generate_handle(final_title, handles_used)
 
@@ -408,6 +444,33 @@ def build_merge_specs(product_groups, config, underkat, store, token, feed, pric
             existing_skus=existing_skus,
             existing_variant_options=existing_variant_options,
         )
+
+        # TITEL-REGEN: kun når en NY akse tilføjes (needs_refresh) kan den delte titel
+        # være blevet forkert (fx enkelt-farvet produkt får 2. farve → farven skal UD).
+        # Regenerér fra hele det merged option-sæt via samme motor som create/orakel.
+        if needs_refresh:
+            try:
+                merged_axis = defaultdict(set)
+                for ov in list(all_variant_map.values()) + list(variant_map.values()):
+                    for k, v in ov.items():
+                        if v: merged_axis[k].add(v)
+                t_opts = {k: sorted(vs) for k, vs in merged_axis.items() if len(vs) > 1}
+                all_skus = list(existing_skus) + list(variant_map.keys())
+                rep = next((feed_by_sku[s] for s in all_skus if s in feed_by_sku), first)
+                rep_title = str(rep['Title']) if pd.notna(rep.get('Title')) else ''
+                fcs = [str(feed_by_sku[s]['Color']).strip() for s in all_skus
+                       if s in feed_by_sku and pd.notna(feed_by_sku[s].get('Color'))
+                       and str(feed_by_sku[s]['Color']).strip()]
+                fcs = fcs if len({c.lower() for c in fcs}) > 1 else []
+                rpt = str(rep['Category']).split(' > ')[-1].strip() if pd.notna(rep.get('Category')) else ''
+                nt, _ = generate_title(titlecase_feed(rep_title), t_opts, shared=True,
+                                       product_type=rpt, feed_colors=fcs, n_variants=max(len(all_skus), 2))
+                if nt and len(nt) >= 3:
+                    nt = title_llm.repair_one(titlecase_feed(rep_title), nt, t_opts)  # LLM sidste lag
+                    spec.regen_title = nt
+                    print(f"   🏷️ Titel-regen (ny akse): {existing_handle} → {nt!r}")
+            except Exception as e:
+                print(f"   ⚠ Titel-regen fejl {existing_handle}: {str(e)[:100]}")
 
         # Add new variants — iterér i SCRAPE-order (variant_map.keys()), ikke feed-order
         feed_by_sku_local = {}
@@ -854,6 +917,8 @@ def _call_merge_via_productset_schema_replace(merge: MergeSpec, product_id: str,
         "productOptions": product_options_input,
         "variants": variants_input,
     }
+    if merge.regen_title:
+        input_payload["title"] = merge.regen_title
     d = gql(PRODUCT_SET_MUTATION, {"input": input_payload, "synchronous": True})
     res = d['data']['productSet']
     user_errs = res.get('userErrors') or []
@@ -1038,6 +1103,8 @@ def _call_merge_via_productset(merge: MergeSpec, product_id: str,
         "productOptions": product_options_input,
         "variants": variants_input,
     }
+    if merge.regen_title:
+        input_payload["title"] = merge.regen_title
     d = gql(PRODUCT_SET_MUTATION, {"input": input_payload, "synchronous": True})
     res = d['data']['productSet']
     # Normalisér output til samme format som productVariantsBulkCreate's response

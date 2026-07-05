@@ -17,6 +17,9 @@ from datetime import datetime, timedelta, timezone
 # Shared pricing module (tier-based markup, sale rounding, group assignment)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pricing
+# Kanonisk titel-motor (100%-valideret 2026-07-05) — samme logik som merge-oraklet,
+# så nyoprettede + merge-tilføjede produkter får titler konsistente med det merge-eksekverede katalog.
+from title_engine import generate_title, titlecase_feed
 
 # Number of days a new product stays in 'warmup' status before it can join a sale rotation.
 # Matches Omnibus 30-day reference + 4.4-rule (sale max half of normalpris-period).
@@ -680,21 +683,28 @@ def build_new_products(product_groups, config, underkat, rum_dict, existing_hand
 
         first = feed_rows.iloc[0]
 
-        # Titel
-        all_opt_displays = set()
-        for od in option_struct.values():
-            for v in od.get('values', []): all_opt_displays.add(v['display'])
-        for _, fr in feed_rows.iterrows():
-            if pd.notna(fr.get('Color')): all_opt_displays.add(str(fr['Color']).strip())
-
+        # === TITEL via kanonisk motor (title_engine) ===
+        # Kun REELLE variant-akser (>1 distinkt værdi) fjernes fra titlen — så en
+        # enkelt-farvet/enkelt-størrelse-vare beholder sin identitet (matcher create-flowets
+        # egen 'irrelevant'-filtrering). Feed-Color kun som strip-hint ved >1 farve.
         raw_title = str(first['Title']) if pd.notna(first['Title']) else ''
-        sorted_displays = sorted(list(all_opt_displays), key=len, reverse=True)
-        print(f"   🏷️ Titel: '{raw_title}' → fjerner {len(sorted_displays)} options")
-        clean_t = clean_title_from_options(raw_title, sorted_displays)
-        final_title = title_case_danish(clean_t)
-        if not final_title or len(final_title) < 5:
+        _axis_vals = defaultdict(set)
+        for _ov in variant_map.values():
+            for _k, _v in _ov.items():
+                if _v: _axis_vals[_k].add(_v)
+        title_opts = {k: sorted(vs) for k, vs in _axis_vals.items() if len(vs) > 1}
+        _fc = [str(fr['Color']).strip() for _, fr in feed_rows.iterrows()
+               if pd.notna(fr.get('Color')) and str(fr['Color']).strip()]
+        title_feed_colors = _fc if len({c.lower() for c in _fc}) > 1 else []
+        _ptype = str(first['Category']).split(' > ')[-1].strip() if pd.notna(first.get('Category')) else ''
+        final_title, _needs_llm = generate_title(
+            titlecase_feed(raw_title), title_opts, shared=True,
+            product_type=_ptype, feed_colors=title_feed_colors, n_variants=len(feed_rows))
+        if _needs_llm:
+            print(f"   ⚠️ needs_llm={_needs_llm} (usædvanlig feed-titel): {raw_title!r}")
+        if not final_title or len(final_title) < 3:
             final_title = title_case_danish(fix_pcs_to_dele(clean_vidaxl(raw_title)))
-        print(f"   🏷️ Resultat: '{final_title}'")
+        print(f"   🏷️ Titel: {raw_title!r} → {final_title!r}")
 
         handle = generate_handle(final_title, handles_used)
 
@@ -960,6 +970,35 @@ def build_merge_variants(product_groups, config, underkat, store, token, feed, p
             except Exception as e:
                 print(f"   ⚠️ Merge fejl SKU {row.get('SKU','?')}: {str(e)[:100]}")
                 continue
+
+        # 3. TITEL-REGEN: når en NY akse tilføjes, kan den delte titel være blevet forkert
+        #    (fx enkelt-farvet produkt får en 2. farve → farven skal UD af titlen). Regenerér
+        #    fra hele det merged option-sæt (eksisterende + nye varianter) via samme motor.
+        #    Emit'es som produkt-niveau række (Handle+Title) i samme output.
+        if needs_option_update:
+            try:
+                merged_axis = defaultdict(set)
+                for ov in list(all_variant_map.values()) + list(variant_map.values()):
+                    for k, v in ov.items():
+                        if v: merged_axis[k].add(v)
+                t_opts = {k: sorted(vs) for k, vs in merged_axis.items() if len(vs) > 1}
+                all_skus = list(existing_skus) + [normalize_sku(r['SKU']) for _, r in feed_rows.iterrows()]
+                rep_row = next((feed_by_sku[s] for s in all_skus if s in feed_by_sku), None)
+                if rep_row is not None:
+                    rep_title = str(rep_row['Title']) if pd.notna(rep_row.get('Title')) else ''
+                    _fcs = [str(feed_by_sku[s]['Color']).strip() for s in all_skus
+                            if s in feed_by_sku and pd.notna(feed_by_sku[s].get('Color'))
+                            and str(feed_by_sku[s]['Color']).strip()]
+                    _fcs = _fcs if len({c.lower() for c in _fcs}) > 1 else []
+                    _pt = str(rep_row['Category']).split(' > ')[-1].strip() if pd.notna(rep_row.get('Category')) else ''
+                    new_title, _ = generate_title(titlecase_feed(rep_title), t_opts, shared=True,
+                                                  product_type=_pt, feed_colors=_fcs,
+                                                  n_variants=max(len(all_skus), 2))
+                    if new_title and len(new_title) >= 3:
+                        rows.append({'Handle': existing_handle, 'Command': 'MERGE', 'Title': new_title})
+                        print(f"   🏷️ Titel-regen (ny akse på {existing_handle}) → {new_title!r}")
+            except Exception as e:
+                print(f"   ⚠️ Titel-regen fejl {existing_handle}: {str(e)[:100]}")
 
     return (pd.DataFrame(rows) if rows else pd.DataFrame(), state_records)
 

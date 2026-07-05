@@ -50,6 +50,7 @@ jobs:
           PRODUCT_ORDER: ${{ vars.PRODUCT_ORDER || 'newest' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python scripts/create_products_v2.py --live
 
       - name: Commit
