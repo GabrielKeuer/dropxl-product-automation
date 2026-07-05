@@ -24,7 +24,7 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pricing
 from product_utils import (
-    WARMUP_DAYS, fetch_feed, fetch_shopify_data, fetch_variant_skus,
+    WARMUP_DAYS, fetch_feed, fetch_shopify_data, fetch_variant_skus, fetch_variant_options_v2,
     load_config, normalize_sku, scrape_vidaxl, upsert_warmup_state,
 )
 # Genbrug create_products_v2 funktionalitet
@@ -138,6 +138,12 @@ def main():
     product_groups = []
     total_variants = 0
     products_processed = 0
+    # SKU→Link fra feedet til item_variant-metoden
+    links_by_sku = {}
+    for _s, _lnk in zip(feed['SKU'].astype(str), feed['Link']):
+        _n = normalize_sku(_s)
+        if _n and _n not in links_by_sku and pd.notna(_lnk):
+            links_by_sku[_n] = _lnk
     sorted_items = sorted(to_process.items(),
                           key=lambda x: 0 if x[1]['status'] == 'partial' else 1)
 
@@ -161,7 +167,9 @@ def main():
                         skipped[pid]['status'] = 'done'; continue
                     options = scrape['options']
                     skipped[pid]['options'] = options
-                variant_map = fetch_variant_skus(pid, options)
+                variant_map = fetch_variant_options_v2(pid, options, links_by_sku)
+                if not variant_map or len(variant_map) < 2:
+                    variant_map = fetch_variant_skus(pid, options)
                 if not variant_map:
                     skipped[pid]['status'] = 'done'; continue
                 skipped[pid]['variant_map'] = variant_map

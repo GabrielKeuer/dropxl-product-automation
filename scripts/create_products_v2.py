@@ -32,7 +32,7 @@ import pricing
 from product_utils import (
     WARMUP_DAYS, build_tags, clean_title_from_options, clean_vidaxl,
     count_combinations, fetch_feed, fetch_product_options, fetch_shopify_data,
-    fetch_variant_skus, format_body_html, generate_handle,
+    fetch_variant_skus, fetch_variant_options_v2, format_body_html, generate_handle,
     generate_seo_description, get_all_images, load_config, normalize_sku,
     scrape_vidaxl, title_case_danish, fix_pcs_to_dele, validate_url,
     upsert_warmup_state,
@@ -1553,6 +1553,12 @@ def main():
 
     # Scrape og grupper
     print(f"\n🔍 Scraper og grupperer (max {MAX_COMBOS} kombinationer)...")
+    # SKU→Link fra feedet (item_variant-metoden slår op pr. søster-SKU)
+    links_by_sku = {}
+    for _s, _lnk in zip(feed['SKU'].astype(str), feed['Link']):
+        _n = normalize_sku(_s)
+        if _n and _n not in links_by_sku and pd.notna(_lnk):
+            links_by_sku[_n] = _lnk
     product_groups = []
     processed_skus = set()
     total_variants = 0
@@ -1605,7 +1611,11 @@ def main():
             processed_skus.add(sku)
             continue
 
-        variant_map = fetch_variant_skus(scrape['master_pid'], scrape['options'])
+        # Pålidelig metode: søster-SKUs fra mapping + item_variant pr. SKU.
+        # Fallback til combo-scrape hvis mappingen ikke dækker masteren endnu.
+        variant_map = fetch_variant_options_v2(scrape['master_pid'], scrape['options'], links_by_sku)
+        if not variant_map or len(variant_map) < 2:
+            variant_map = fetch_variant_skus(scrape['master_pid'], scrape['options'])
         if not variant_map:
             processed_skus.add(sku)
             product_groups.append({

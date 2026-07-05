@@ -573,6 +573,63 @@ def fetch_variant_skus(master_pid, options):
     print(f"   ✅ {len(variant_map)} varianter med SKU")
     return variant_map
 
+
+# ============================================================
+# VARIANT-OPTIONS via item_variant (pålidelig — erstatter combo-scrape)
+# ============================================================
+# Baggrund (2026-07-05): fetch_variant_skus (combo-enumering mod Product-Variation-
+# endpoint) fejler for omstrukturerede masters (returnerer master uden SKU → 0 varianter).
+# Item_variant-metoden er robust: søster-SKUs fra master_pid-mappingen (Supabase) +
+# hver SKUs egne options fra 'item_variant'-JSON på dens produktside.
+import html as _htmlmod
+
+def _item_variant_of(sku, url):
+    try:
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=25)
+        if r.status_code != 200:
+            return None
+        txt = _htmlmod.unescape(r.text)
+        m = (re.search(r'"sku":"' + re.escape(str(sku)) + r'","item_variant":(\{.*?\})', txt)
+             or re.search(r'"item_variant":(\{.*?\})', txt))
+        return json.loads(m.group(1)) if m else None
+    except Exception:
+        return None
+
+def _siblings_of_master(master_pid):
+    """Alle SKUs på en master fra vidaxl_sku_master (Supabase)."""
+    import urllib.request
+    base = os.environ.get('SUPABASE_URL') or os.environ.get('NEXT_PUBLIC_SUPABASE_URL')
+    key = os.environ.get('SUPABASE_SERVICE_KEY')
+    if not base or not key:
+        return []
+    try:
+        req = urllib.request.Request(
+            f"{base.rstrip('/')}/rest/v1/vidaxl_sku_master?select=sku&master_pid=eq.{master_pid}",
+            headers={'apikey': key, 'Authorization': f'Bearer {key}'})
+        return [str(r['sku']).strip() for r in json.loads(urllib.request.urlopen(req, timeout=30).read())]
+    except Exception:
+        return []
+
+def fetch_variant_options_v2(master_pid, scrape_options, links_by_sku):
+    """Pålidelig variant-map via item_variant. Returnerer {sku: {dansk_option_navn: værdi}}
+    — samme shape som fetch_variant_skus. Søster-SKUs fra master_pid-mappingen, options
+    fra hver SKUs item_variant. Danske akse-navne fra scrape_options' display_name."""
+    name_map = {k: v.get('display_name', k) for k, v in (scrape_options or {}).items()}
+    out = {}
+    for s in _siblings_of_master(master_pid):
+        url = links_by_sku.get(s)
+        if not url:
+            continue
+        iv = _item_variant_of(s, url)
+        if not iv:
+            continue
+        ov = {name_map.get(k, k): val for k, val in iv.items() if val}
+        if ov:
+            out[s] = ov
+        time.sleep(0.15)
+    return out
+
+
 # ============================================================
 # CONFIG LOADING
 # ============================================================
