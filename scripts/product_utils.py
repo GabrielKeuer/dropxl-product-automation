@@ -610,24 +610,124 @@ def _siblings_of_master(master_pid):
     except Exception:
         return []
 
-def fetch_variant_options_v2(master_pid, scrape_options, links_by_sku):
-    """Pålidelig variant-map via item_variant. Returnerer {sku: {dansk_option_navn: værdi}}
-    — samme shape som fetch_variant_skus. Søster-SKUs fra master_pid-mappingen, options
-    fra hver SKUs item_variant. Danske akse-navne fra scrape_options' display_name."""
-    name_map = {k: v.get('display_name', k) for k, v in (scrape_options or {}).items()}
+# --- Kanonisk akse-navngivning (1:1 med vidaxl-pris-lager/merge_executor, så create + merge stemmer) ---
+_MATW = ("træ", "stål", "læder", "stof", "rattan", "metal", "glas", "aluminium", "bambus", "jern",
+         "fløjl", "velour", "mango", "fyrre", "akacie", "teak", "massiv", "poly", "bomuld", "gummi")
+
+def _extract_axis_labels(html_text):
+    """Eksakte akse-navne DIREKTE fra siden: data-attr="KEY" … >Label< (fanger dropdowns som scrape_vidaxl
+    misser, fx variationAttribute3='Model'). + _binary-alias (item_variant normaliserer _binary→base)."""
+    t = _htmlmod.unescape(html_text)
     out = {}
-    for s in _siblings_of_master(master_pid):
+    for m in re.finditer(r'data-attr="([^"]+)"', t):
+        k = m.group(1)
+        lm = re.search(r">\s*([A-ZÆØÅa-zæøå][A-Za-zÆØÅæøå ]{1,28}?)\s*<", t[m.start():m.start() + 700])
+        if lm:
+            lab = lm.group(1).strip()
+            if lab and lab.lower() not in ("option", "options"):
+                out[k] = lab
+    for k in list(out):
+        if k.endswith("_binary"):
+            out.setdefault(k[:-len("_binary")], out[k])
+    return out
+
+def _axis_name_multi(values):
+    vals = [str(v).strip() for v in values if v]
+    if not vals:
+        return "Model"
+    n = len(vals)
+    if sum(1 for v in vals if re.search(r"\d+\s*[x×]\s*\d+|\bcm\b|\bmm\b|ø\d", v.lower())) >= n * 0.5:
+        return "Størrelse"
+    is_mat = lambda v: any(m in v.lower() for m in _MATW) and "træk" not in v.lower()
+    if sum(1 for v in vals if is_mat(v)) >= n * 0.5:
+        return "Materiale"
+    if all(re.fullmatch(r"\d+", v) for v in vals):
+        return "Antal i pakke"
+    return "Model"
+
+def _norm_axis_val(v):
+    v = re.sub(r"\s+", " ", str(v).replace("×", "x")).strip()
+    if v and not re.search(r"\d", v):
+        v = " ".join(w[:1].upper() + w[1:] if w else w for w in v.split(" "))
+    return v
+
+def fetch_variant_options_v2(master_pid, scrape_options, links_by_sku):
+    """Pålidelig variant-map via item_variant med KANONISK akse-navngivning (samme som merge_executor):
+    labels hentes fra data-attr på siden (fanger dropdowns), _binary-normaliseres, navngives KONSISTENT
+    pr. nøgle, og værdier normaliseres. Returnerer {sku: {dansk_akse: værdi}}."""
+    import collections
+    sibs = _siblings_of_master(master_pid)
+    raw, labels = {}, {}
+    for s in sibs:
         url = links_by_sku.get(s)
         if not url:
             continue
-        iv = _item_variant_of(s, url)
-        if not iv:
+        try:
+            r = requests.get(url, headers=BROWSER_HEADERS, timeout=25)
+            if r.status_code != 200:
+                continue
+            txt = _htmlmod.unescape(r.text)
+        except Exception:
             continue
-        ov = {name_map.get(k, k): val for k, val in iv.items() if val}
-        if ov:
-            out[s] = ov
+        m = (re.search(r'"sku":"' + re.escape(str(s)) + r'","item_variant":(\{.*?\})', txt)
+             or re.search(r'"item_variant":(\{.*?\})', txt))
+        if not m:
+            continue
+        try:
+            iv = json.loads(m.group(1))
+        except Exception:
+            continue
+        o = {k: v for k, v in iv.items() if not k.endswith("_binary") and v}
+        for k, v in iv.items():
+            if k.endswith("_binary") and v:
+                o.setdefault(k[:-len("_binary")], v)
+        raw[str(s).strip()] = o
+        if not labels:
+            labels = _extract_axis_labels(txt)
         time.sleep(0.15)
-    return out
+    if not raw:
+        return {}
+    # scrape_options' display_name som ekstra fallback-labels
+    for k, v in (scrape_options or {}).items():
+        labels.setdefault(k, v.get("display_name", k))
+    vals_by_key = collections.defaultdict(list)
+    keys = set()
+    for o in raw.values():
+        keys |= set(o)
+        for k, v in o.items():
+            vals_by_key[k].append(v)
+    km = {}
+    for k in sorted(keys):
+        nm = labels.get(k) or ("Farve" if k == "color" else _axis_name_multi(vals_by_key[k]))
+        base, c = nm, 2
+        while nm in km.values():
+            nm = f"{base} {c}"; c += 1
+        km[k] = nm
+    return {s: {km[k]: _norm_axis_val(v) for k, v in o.items() if v} for s, o in raw.items()}
+
+def reorder_keeper_first(gql_fn, product_id, keeper_skus):
+    """Efter merge: keeperens EGNE varianter FØRST (Shopify sorterer ellers efter option-værdi) +
+    1. variant sku-only (bruger produkt-niveau beskrivelse/billeder). Samme konvention som merge_executor.
+    gql_fn: create-flowets gql(query, variables)."""
+    try:
+        d = gql_fn("query($id:ID!){product(id:$id){variants(first:250){edges{node{id sku}}}}}", {"id": product_id})
+        vs = [(e["node"]["id"], (e["node"]["sku"] or "").strip())
+              for e in (((d.get("data") or {}).get("product") or {}).get("variants", {}).get("edges") or [])]
+        if not vs:
+            return
+        ks = {str(s).strip() for s in (keeper_skus or [])}
+        ordered = [v for v in vs if v[1] in ks] + [v for v in vs if v[1] not in ks]
+        if [v[0] for v in ordered] != [v[0] for v in vs]:
+            pos = [{"id": vid, "position": i + 1} for i, (vid, _) in enumerate(ordered)]
+            for i in range(0, len(pos), 250):
+                gql_fn("""mutation($pid:ID!,$pos:[ProductVariantPositionInput!]!){
+                  productVariantsBulkReorder(productId:$pid,positions:$pos){userErrors{message}}}""",
+                       {"pid": product_id, "pos": pos[i:i + 250]})
+        gql_fn("""mutation($m:[MetafieldIdentifierInput!]!){metafieldsDelete(metafields:$m){userErrors{message}}}""",
+               {"m": [{"ownerId": ordered[0][0], "namespace": "custom", "key": k}
+                      for k in ("produktinfo", "variantbilleder")]})
+    except Exception as e:
+        print(f"    ⚠ reorder_keeper_first fejl (ikke-kritisk): {e}")
 
 
 # ============================================================
