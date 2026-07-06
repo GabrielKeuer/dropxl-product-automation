@@ -32,7 +32,7 @@ import pricing
 from product_utils import (
     WARMUP_DAYS, build_tags, clean_title_from_options, clean_vidaxl,
     count_combinations, fetch_feed, fetch_product_options, fetch_shopify_data,
-    fetch_variant_skus, fetch_variant_options_v2, reorder_keeper_first, format_body_html, generate_handle,
+    fetch_variant_skus, fetch_variant_options_v2, reorder_keeper_first, reorder_options_priority, format_body_html, generate_handle,
     generate_seo_description, get_all_images, load_config, normalize_sku,
     scrape_vidaxl, title_case_danish, fix_pcs_to_dele, validate_url,
     upsert_warmup_state,
@@ -1430,6 +1430,7 @@ def apply_specs(product_specs: list, merge_specs: list, location_id: str, limit:
             else:
                 p = res['product']
                 stats["created_products"] += 1
+                reorder_options_priority(gql, p['id'])   # Farve = option 1 (variant-thumbnail-swatch)
                 stats["products"].append({
                     "handle": p['handle'],
                     "id": p['id'],
@@ -1472,10 +1473,11 @@ def apply_specs(product_specs: list, merge_specs: list, location_id: str, limit:
                     "new_variant_count": len(created),
                 })
                 print(f"  [{i}] ✅ {merge.existing_handle}: +{len(created)} variants")
-                # keeper-variant først + 1. variant sku-only (konsistent med merge_executor)
+                # keeper-variant først + 1. variant sku-only + Farve = option 1 (konsistent med merge_executor)
                 _kpid = find_product_by_handle(merge.existing_handle)
                 if _kpid:
                     reorder_keeper_first(gql, _kpid, merge.existing_skus)
+                    reorder_options_priority(gql, _kpid)
         except Exception as e:
             stats["errors"] += 1
             print(f"  [{i}] ❌ {merge.existing_handle}: {str(e)[:200]}")

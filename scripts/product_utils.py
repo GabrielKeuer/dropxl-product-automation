@@ -729,6 +729,26 @@ def reorder_keeper_first(gql_fn, product_id, keeper_skus):
     except Exception as e:
         print(f"    ⚠ reorder_keeper_first fejl (ikke-kritisk): {e}")
 
+_OPT_PRI = {"farve": 0, "form": 1, "materiale": 2}
+
+def reorder_options_priority(gql_fn, product_id):
+    """Farve altid option 1 (Shopify bruger option 1 til variant-thumbnail-swatch), derefter Form (2),
+    Materiale (3), resten uændret. Ren mutation — rører kun option-rækkefølge. Samme som merge_executor."""
+    try:
+        d = gql_fn("query($id:ID!){product(id:$id){options{id name position}}}", {"id": product_id})
+        opts = [o for o in (((d.get("data") or {}).get("product") or {}).get("options") or []) if o["name"] != "Title"]
+        if len(opts) < 2:
+            return
+        cur = sorted(opts, key=lambda o: o["position"])
+        want = sorted(opts, key=lambda o: (_OPT_PRI.get(o["name"].lower(), 9), o["position"]))
+        if [o["id"] for o in want] == [o["id"] for o in cur]:
+            return
+        gql_fn("""mutation($pid:ID!,$o:[OptionReorderInput!]!){
+          productOptionsReorder(productId:$pid,options:$o){userErrors{message}}}""",
+               {"pid": product_id, "o": [{"id": o["id"]} for o in want]})
+    except Exception as e:
+        print(f"    ⚠ reorder_options_priority fejl (ikke-kritisk): {e}")
+
 
 # ============================================================
 # CONFIG LOADING
