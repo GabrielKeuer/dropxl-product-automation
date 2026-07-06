@@ -1476,8 +1476,9 @@ def apply_specs(product_specs: list, merge_specs: list, location_id: str, limit:
                 # keeper-variant først + 1. variant sku-only + Farve = option 1 (konsistent med merge_executor)
                 _kpid = find_product_by_handle(merge.existing_handle)
                 if _kpid:
-                    reorder_keeper_first(gql, _kpid, merge.existing_skus)
+                    # option-reorder FØRST (re-sorterer varianter), keeper-først DEREFTER
                     reorder_options_priority(gql, _kpid)
+                    reorder_keeper_first(gql, _kpid, merge.existing_skus)
         except Exception as e:
             stats["errors"] += 1
             print(f"  [{i}] ❌ {merge.existing_handle}: {str(e)[:200]}")
