@@ -417,7 +417,19 @@ def build_merge_specs(product_groups, config, underkat, store, token, feed, pric
         for opts in variant_map.values():
             new_option_names.update(opts.keys())
         options_to_add = list(new_option_names - set(existing_option_names)) if existing_option_names else []
-        needs_refresh = bool(options_to_add)
+        # Titel-regen udløses når VARIANT-SÆTTET ændrer hvilke akser der VARIERER — ikke kun når en
+        # akse-NAVN er nyt. Edge case: en akse der allerede findes med 1 værdi (fx Farve=[Hvid]) får
+        # en 2. værdi → aksen er ikke i options_to_add, men titlen skal stadig strippe den nu-variant.
+        def _axis_becomes_multi():
+            ex_vals, new_vals = defaultdict(set), defaultdict(set)
+            for s in existing_skus:
+                for k, v in (all_variant_map.get(s) or {}).items():
+                    if v: ex_vals[k].add(v)
+            for ov in variant_map.values():
+                for k, v in ov.items():
+                    if v: new_vals[k].add(v)
+            return any(len(ex_vals[k]) == 1 and (ex_vals[k] | new_vals.get(k, set())) != ex_vals[k] for k in ex_vals)
+        needs_refresh = bool(options_to_add) or _axis_becomes_multi()
 
         def order_opts(opts):
             ordered = []
