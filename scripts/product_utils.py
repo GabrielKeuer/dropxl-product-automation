@@ -697,11 +697,21 @@ def fetch_variant_options_v2(master_pid, scrape_options, links_by_sku):
         for k, v in o.items():
             vals_by_key[k].append(v)
     km = {}
-    for k in sorted(keys):
+    used = {}   # akse-navn → nøgle der ejer det
+    ndist = lambda k: len({x for x in vals_by_key[k] if x and x != "—"})
+    # flest distinkte værdier først → primær nøgle vinder navnet; redundant vidaXL-dublet-nøgle droppes
+    # (undgår bogus 'X 2'-akse når to nøgler får samme navn — samme princip som merge_executor.build_keyname)
+    for k in sorted(keys, key=lambda k: (-ndist(k), k)):
         nm = labels.get(k) or ("Farve" if k == "color" else _axis_name_multi(vals_by_key[k]))
-        base, c = nm, 2
-        while nm in km.values():
-            nm = f"{base} {c}"; c += 1
+        if nm in used:
+            ov = {x for x in vals_by_key[k] if x and x != "—"}
+            pv = {x for x in vals_by_key[used[nm]] if x and x != "—"}
+            if not ov or (ov & pv and len(ov & pv) >= 0.5 * len(ov)):
+                continue   # redundant dublet → drop nøglen
+            base, c = nm, 2
+            while nm in used:
+                nm = f"{base} {c}"; c += 1
+        used[nm] = k
         km[k] = nm
     return {s: {km[k]: _norm_axis_val(v) for k, v in o.items() if v} for s, o in raw.items()}
 

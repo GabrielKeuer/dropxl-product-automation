@@ -1215,6 +1215,17 @@ def call_variants_merge(merge: MergeSpec, location_id: str) -> dict:
     if not product_id:
         raise Exception(f"Product handle '{merge.existing_handle}' findes ikke i Shopify")
 
+    # BOGUS DUBLET-AKSE-GUARD: hvis to item_variant-nøgler fik samme navn opstår 'X 2' — det må ALDRIG
+    # blive en rigtig akse. Skip merge til manuel gennemgang (samme sikring som merge_executor).
+    _axis_names = set(merge.options_to_add or [])
+    for _sk, _ovs in (merge.existing_variant_options or {}).items():
+        _axis_names |= {n for n, _ in _ovs}
+    for _v in merge.new_variants:
+        _axis_names |= {n for n, _ in _v.option_values}
+    if any(re.search(r" \d+$", n) for n in _axis_names):
+        print(f"    ⏸  SKIP: bogus dublet-akse i {sorted(_axis_names)} — manuel gennemgang ({merge.existing_handle})")
+        return {"productVariants": [], "userErrors": [], "_skipped": True}
+
     # Frafiltrér nye varianter hvis option-kombinationen ALLEREDE findes på produktet.
     # Sker når en tidligere (delvis) merge allerede har tilføjet dem — ellers fejler
     # productVariantsBulkCreate med VARIANT_ALREADY_EXISTS_CHANGE_OPTION_VALUE og vælter
