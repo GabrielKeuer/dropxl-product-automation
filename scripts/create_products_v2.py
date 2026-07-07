@@ -686,8 +686,12 @@ def call_product_set(spec: ProductSpec, location_id: str) -> dict:
                 if opt_val not in option_values_seen[opt_name]:
                     option_values_seen[opt_name].add(opt_val)
                     option_values_ordered[opt_name].append(opt_val)
+        # natural-sort værdierne (tal stigende, ord alfabetisk) — håndterer dimensioner korrekt
+        def _natv(v):
+            nums = re.findall(r"\d+\.?\d*", v or "")
+            return (0, [float(n) for n in nums], (v or "").lower()) if nums else (1, [], (v or "").lower())
         product_options = [
-            {"name": opt, "values": [{"name": val} for val in option_values_ordered[opt]]}
+            {"name": opt, "values": [{"name": val} for val in sorted(option_values_ordered[opt], key=_natv)]}
             for opt in spec.options_definition
         ]
     else:
