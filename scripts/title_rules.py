@@ -59,7 +59,8 @@ def fix_feed_spelling(text):
         text = pat.sub(fn, text)
     return text
 
-UPPER_TOKENS = ["LED","TV","USB","UV","PVC","RGB","HDMI","HD","3D","WC","CD","DVD","MDF","HDPE","WPC","ABS","XXL","XL","SPA","WiFi"]
+UPPER_TOKENS = ["LED","TV","USB","UV","PVC","PE","PP","PET","RGB","HDMI","HD","3D","WC","CD","DVD","MDF","HDPE","WPC","ABS","XXL","XL","WiFi",
+                "GGL","GGU","GPL","GPU","GHL","GHU","GVK","VKU"]   # + PE/PP/PET-plast, Velux-koder. SPA fjernet (skal være "Spa")
 def fix_casing(text):
     hits = []
     for tok in UPPER_TOKENS:
