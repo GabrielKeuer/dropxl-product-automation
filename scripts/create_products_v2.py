@@ -17,6 +17,7 @@ Sikkerhed under test:
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from collections import defaultdict
