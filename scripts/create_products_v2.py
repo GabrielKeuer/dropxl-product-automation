@@ -671,9 +671,10 @@ def _variant_to_set_input(v: VariantSpec, location_id: str, options_def: list) -
     return variant_input
 
 
-def call_product_set(spec: ProductSpec, location_id: str, product_id: str = None) -> dict:
+def call_product_set(spec: ProductSpec, location_id: str, product_id: str = None, handle: str = None) -> dict:
     """Opret produkt via productSet (synkront). Hvis product_id er sat: OPDATÉR det eksisterende
-    produkt in-place (behold handle/URL/SEO) — bruges til anker-baseret combine-merge."""
+    produkt in-place — behold handle (default) ELLER sæt et nyt rent handle hvis `handle` gives
+    (combine: variant-specifikke anker-handles erstattes af titel-handle + 301 håndteres af kalder)."""
     # Build productOptions
     if spec.options_definition:
         # Collect unique values per option i FIRST-SEEN order (= scrape-order =
@@ -754,10 +755,13 @@ def call_product_set(spec: ProductSpec, location_id: str, product_id: str = None
     # Remove None values
     input_payload = {k: v for k, v in input_payload.items() if v is not None}
 
-    # Anker-opdatering: sæt id + behold eksisterende handle (fjern handle fra payload → uændret URL/SEO)
+    # Anker-opdatering: sæt id. Behold eksisterende handle (default) ELLER sæt nyt rent handle hvis givet.
     if product_id:
         input_payload["id"] = product_id
-        input_payload.pop("handle", None)
+        if handle:
+            input_payload["handle"] = handle
+        else:
+            input_payload.pop("handle", None)
 
     d = gql(PRODUCT_SET_MUTATION, {"input": input_payload, "synchronous": True})
     return d['data']['productSet']
