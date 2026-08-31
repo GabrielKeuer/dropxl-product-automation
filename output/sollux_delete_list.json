@@ -1,4 +1,266 @@
 {
-  "full": [],
-  "variants": []
+  "full": [
+    {
+      "id": "gid://shopify/Product/15712088916317",
+      "title": "Loftlampe EMILIO"
+    },
+    {
+      "id": "gid://shopify/Product/15712089735517",
+      "title": "Loftlampe NERO 22,5"
+    },
+    {
+      "id": "gid://shopify/Product/15712089866589",
+      "title": "Loftlampe NERO 4"
+    },
+    {
+      "id": "gid://shopify/Product/15712091406685",
+      "title": "Loftlampe TAVO 2"
+    },
+    {
+      "id": "gid://shopify/Product/15712091832669",
+      "title": "Lysekrone ARTEMIS 3S"
+    },
+    {
+      "id": "gid://shopify/Product/15712091865437",
+      "title": "Lysekrone ARTEMIS 5S"
+    },
+    {
+      "id": "gid://shopify/Product/15712092389725",
+      "title": "Lysekrone LANGO 6"
+    },
+    {
+      "id": "gid://shopify/Product/15712092422493",
+      "title": "Lysekrone LEVAR 4"
+    },
+    {
+      "id": "gid://shopify/Product/15712093045085",
+      "title": "Lysekrone SKALA 70"
+    },
+    {
+      "id": "gid://shopify/Product/15712093143389",
+      "title": "Lysekrone VEGA 60"
+    },
+    {
+      "id": "gid://shopify/Product/15712093274461",
+      "title": "Pendel FOOTBALL B 30"
+    },
+    {
+      "id": "gid://shopify/Product/15712094814557",
+      "title": "Pendellampe FODBOLD A 40"
+    },
+    {
+      "id": "gid://shopify/Product/15712096125277",
+      "title": "Pendellampe POMPELMO naturtræ"
+    },
+    {
+      "id": "gid://shopify/Product/15712096190813",
+      "title": "Pendellampe PRINCESS 40"
+    },
+    {
+      "id": "gid://shopify/Product/15712097796445",
+      "title": "Væglampe EMILIO"
+    },
+    {
+      "id": "gid://shopify/Product/15712098779485",
+      "title": "Væglampe keramisk SEIDA"
+    },
+    {
+      "id": "gid://shopify/Product/15712099795293",
+      "title": "Væglampe PIEGARE"
+    },
+    {
+      "id": "gid://shopify/Product/15712103956829",
+      "title": "Pendellampe TALEJA 1 [E27]"
+    },
+    {
+      "id": "gid://shopify/Product/15712104415581",
+      "title": "Væglampe ARTEMIS 1"
+    },
+    {
+      "id": "gid://shopify/Product/15712104677725",
+      "title": "Væglampe CELIA"
+    },
+    {
+      "id": "gid://shopify/Product/15712104841565",
+      "title": "Væglampe EYETECH 1"
+    },
+    {
+      "id": "gid://shopify/Product/15712105791837",
+      "title": "Væglampe NERO"
+    },
+    {
+      "id": "gid://shopify/Product/15712106053981",
+      "title": "Loftlampe CELIA"
+    },
+    {
+      "id": "gid://shopify/Product/15712106414429",
+      "title": "Væglampe SKALA"
+    },
+    {
+      "id": "gid://shopify/Product/15712106512733",
+      "title": "Loftlampe DIREZIONE 1"
+    },
+    {
+      "id": "gid://shopify/Product/15712549470557",
+      "title": "Loftlampe TULOS"
+    },
+    {
+      "id": "gid://shopify/Product/16285595107677",
+      "title": "Loftslampe BOOMO 12"
+    },
+    {
+      "id": "gid://shopify/Product/16285596746077",
+      "title": "Pendel REA 1"
+    },
+    {
+      "id": "gid://shopify/Product/16285597401437",
+      "title": "Pendellampe LAMI 3L"
+    },
+    {
+      "id": "gid://shopify/Product/16285597663581",
+      "title": "Pendellampe MAB"
+    }
+  ],
+  "variants": [
+    {
+      "id": "gid://shopify/Product/15712091308381",
+      "title": "Loftlampe SKALA 60",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892134383965"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712101171549",
+      "title": "Lysekrone SATURNO SLIM 70",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892146180445"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712101695837",
+      "title": "Pendel PASTELO 1",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/65114253689181"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712101794141",
+      "title": "Pendel PRYSM 1",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892147392861"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712101957981",
+      "title": "Pendel SPARK",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892147753309"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712103170397",
+      "title": "Pendellampe LAGOS 1",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/65114255950173"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712103498077",
+      "title": "Pendellampe MARION",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892151751005"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712103825757",
+      "title": "Pendellampe QUBIC",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892152570205"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712104120669",
+      "title": "Loftlampe ARTEMIS 3",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892153094493"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712104186205",
+      "title": "Pendellampe TULOS 3L",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892153225565"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712105300317",
+      "title": "Væglampe LOBO MAXI",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892155486557"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712105464157",
+      "title": "Væglampe LUCA LED IP54",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892155847005"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712105595229",
+      "title": "Væglampe MASSIMO",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892156109149"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712106152285",
+      "title": "Væglampe PIXAR",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892158402909"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712106873181",
+      "title": "Væglampe keramisk ATENA",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892159975773"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712106938717",
+      "title": "Væglampe keramisk LEO",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58892160139613"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712548684125",
+      "title": "Loftlampe NERO 12,5",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58893661831517"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712549306717",
+      "title": "Loftlampe SKALA 50",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58893663273309"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/15712549503325",
+      "title": "Loftlampe MASSIMO",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/58893663895901"
+      ]
+    },
+    {
+      "id": "gid://shopify/Product/16285596287325",
+      "title": "Lysekrone URANO 60",
+      "variant_ids": [
+        "gid://shopify/ProductVariant/65114029949277"
+      ]
+    }
+  ]
 }
