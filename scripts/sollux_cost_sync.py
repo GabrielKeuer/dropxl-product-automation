@@ -39,13 +39,14 @@ for _, r in pl.iterrows():
 print(f"prisliste: {len(ny)} SKU'er")
 
 Q = """query($c:String){products(first:60,query:"vendor:Sollux",after:$c){pageInfo{hasNextPage endCursor}
-edges{node{id variants(first:40){edges{node{sku inventoryItem{id unitCost{amount}}}}}}}}}"""
-M = """mutation($id:ID!,$input:InventoryItemInput!){inventoryItemUpdate(id:$id,input:$input){userErrors{message}}}"""
+edges{node{id variants(first:40){edges{node{id sku inventoryItem{unitCost{amount}}}}}}}}}"""
+M = """mutation($pid:ID!,$v:[ProductVariantsBulkInput!]!){productVariantsBulkUpdate(productId:$pid,variants:$v){userErrors{message}}}"""
 
-cur = None; tjekket = 0; diffs = []
+cur = None; tjekket = 0; diffs = []; pr_grupper = {}
 while True:
     r = gql(Q, {"c": cur}); pr = r["data"]["products"]
     for e in pr["edges"]:
+        pid = e["node"]["id"]
         for ve in e["node"]["variants"]["edges"]:
             v = ve["node"]; sku = (v["sku"] or "").strip()
             if sku not in ny: continue
@@ -53,7 +54,8 @@ while True:
             ny_cost = round(ny[sku] * FX, 2)
             gl = float(v["inventoryItem"]["unitCost"]["amount"]) if v["inventoryItem"]["unitCost"] else 0
             if abs(ny_cost - gl) >= 1:
-                diffs.append((sku, gl, ny_cost, v["inventoryItem"]["id"]))
+                diffs.append((sku, gl, ny_cost, pid))
+                pr_grupper.setdefault(pid, []).append({"id": v["id"], "inventoryItem": {"cost": str(ny_cost)}})
     if not pr["pageInfo"]["hasNextPage"]: break
     cur = pr["pageInfo"]["endCursor"]; time.sleep(0.2)
 
@@ -64,12 +66,12 @@ for d in sorted(diffs, key=lambda x: abs(x[2] - x[1]), reverse=True)[:10]:
 
 if args.apply:
     ok = fejl = 0
-    for sku, gl, nyc, iid in diffs:
-        res = gql(M, {"id": iid, "input": {"cost": str(nyc)}})
-        err = res["data"]["inventoryItemUpdate"]["userErrors"]
-        if err: fejl += 1; print("  FEJL", sku, err)
-        else: ok += 1
-        time.sleep(0.25)
-    print(f"APPLIED: {ok} opdateret, {fejl} fejl")
+    for pid, vs in pr_grupper.items():
+        res = gql(M, {"pid": pid, "v": vs})
+        err = res["data"]["productVariantsBulkUpdate"]["userErrors"]
+        if err: fejl += len(vs); print("  FEJL", pid, err)
+        else: ok += len(vs)
+        time.sleep(0.3)
+    print(f"APPLIED: {ok} varianter opdateret, {fejl} fejl")
 else:
     print("DRY-RUN (koer med --apply for at skrive)")
