@@ -1,0 +1,28 @@
+name: Sollux Cost Sync (manuel)
+
+# Opdaterer variant-cost (unitCost) mod Sollux' aktuelle prisliste (NPP x 7,45).
+# Roerer ALDRIG salgspriser — kun bogfoering/True Profit. Koeres manuelt naar
+# Sollux varsler ny prisliste (de varsler altid pr. mail). Dry-run er default.
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Skriv aendringer (ellers dry-run)'
+        type: boolean
+        default: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pandas requests xlrd
+      - name: Cost-sync mod aktuel prisliste
+        env:
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        run: python scripts/sollux_cost_sync.py ${{ inputs.apply && '--apply' || '' }}
