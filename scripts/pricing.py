@@ -200,7 +200,14 @@ def calculate_fictive_prices(cost, config, seed):
     if cost <= 0:
         return {"normal_price": 0, "sale_price": 0, "discount_pct": 0}
     cfg = config or {}
-    markup = float(cfg.get("fixed_markup", DEFAULT_FALLBACK_MARKUP))
+    # Trappe-markup i fiktiv-mode (Omnibus OFF): fictive_tiers er et EGET felt
+    # ([{max_b2b, markup}]) — bevidst IKKE cfg["tiers"], hvor markup betyder
+    # normalpris-markup og hvor gamle trin kan ligge bevaret fra Omnibus-ON.
+    ftiers = cfg.get("fictive_tiers") or []
+    if ftiers:
+        markup = float(_select_tier(cost, ftiers)["markup"])
+    else:
+        markup = float(cfg.get("fixed_markup", DEFAULT_FALLBACK_MARKUP))
     rounding = cfg.get("rounding", DEFAULT_ROUNDING)
     discounts = cfg.get("fictive_discounts") or []
     surcharge = float(cfg.get("flat_surcharge", 0) or 0)    # fast tillæg efter markup (Sollux-pærer +10)
@@ -370,11 +377,11 @@ def _get_supabase_client():
 
 def _is_valid_config(cfg):
     """En config er gyldig hvis den er tier-baseret (real_discount) ELLER
-    fictive_discount med fixed_markup."""
+    fictive_discount med fixed_markup eller fictive_tiers (trappe-markup)."""
     if not isinstance(cfg, dict):
         return False
     if cfg.get("mode") == "fictive_discount":
-        return cfg.get("fixed_markup") is not None
+        return cfg.get("fixed_markup") is not None or bool(cfg.get("fictive_tiers"))
     return bool(cfg.get("tiers"))
 
 
@@ -510,6 +517,35 @@ if __name__ == "__main__":
     print("real(100) off ->", resolve_variant_pricing(100, _TEST_CONFIG, on_sale=False))
     print("real(100) on  ->", resolve_variant_pricing(100, _TEST_CONFIG, on_sale=True))
     print("fictive(275)  ->", resolve_variant_pricing(275, _TEST_FICTIVE, seed="Earthquake 225"))
+
+    print("\n=== fictive_discount m. TRAPPE (fictive_tiers) ===")
+    _TEST_FICTIVE_TRAPPE = {
+        "mode": "fictive_discount",
+        "fictive_tiers": [
+            {"max_b2b": 300, "markup": 2.2},
+            {"max_b2b": 1000, "markup": 1.9},
+            {"max_b2b": None, "markup": 1.7},
+        ],
+        "fictive_discounts": [20],
+        "rounding": "ceil_50_minus_1",
+    }
+    # cost 100 -> trin 1 (2.2x): 220 -> 249; cost 500 -> trin 2 (1.9x): 950 -> 949; cost 2000 -> trin 3 (1.7x): 3400 -> 3399
+    r1 = calculate_fictive_prices(100, _TEST_FICTIVE_TRAPPE, "seedA")
+    r2 = calculate_fictive_prices(500, _TEST_FICTIVE_TRAPPE, "seedA")
+    r3 = calculate_fictive_prices(2000, _TEST_FICTIVE_TRAPPE, "seedA")
+    assert r1["sale_price"] == 249, r1
+    assert r2["sale_price"] == 949, r2
+    assert r3["sale_price"] == 3399, r3
+    print(f"  cost=100 -> {r1['sale_price']} | cost=500 -> {r2['sale_price']} | cost=2000 -> {r3['sale_price']} (trappe-markup OK)")
+    # BAGUDKOMPAT-VAGT: config m. fixed_markup + GAMLE tiers (som live vidaXL) må IKKE bruge trappen
+    _TEST_FICTIVE_LEGACY = dict(_TEST_FICTIVE, tiers=_TEST_CONFIG["tiers"])
+    rl = calculate_fictive_prices(275, _TEST_FICTIVE_LEGACY, "Earthquake 225")
+    assert rl["sale_price"] == 549, ("legacy tiers må ikke ændre fictive-pris", rl)
+    print("  legacy-config (fixed_markup + gamle tiers) -> uændret 549 OK")
+    # validity: fictive m. kun fictive_tiers (uden fixed_markup) er gyldig
+    assert _is_valid_config({"mode": "fictive_discount", "fictive_tiers": [{"max_b2b": None, "markup": 2.0}]})
+    assert not _is_valid_config({"mode": "fictive_discount"})
+    print("  _is_valid_config m. fictive_tiers OK")
 
     print("\n=== fragt-opslag (margin) ===")
     benuta_ship = {"currency": "EUR", "model": "tiered", "tiers": [
