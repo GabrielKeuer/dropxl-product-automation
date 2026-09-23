@@ -1578,6 +1578,17 @@ def main():
     ].copy()
     candidates['Hovedkategori'] = candidates['Category'].str.split(' > ').str[0]
     candidates = candidates[candidates['Hovedkategori'].isin(aktive)].copy()
+    # 23/9-2026 (Omar: "vi skal ikke have deres tæpper ind mere"): UDELAD-overrides fra hubben
+    # (hub_settings.product_automation_subcategory_overrides m. handling 'UDELAD') = kategoristier der ALDRIG oprettes.
+    try:
+        _udelad = [str(_p).strip() for _p, _h in zip(underkat.get('Underkategori_Config', []), underkat.get('Handling', []))
+                   if str(_h).strip().upper() == 'UDELAD' and str(_p).strip()]
+    except Exception:
+        _udelad = []
+    if _udelad:
+        _mask = candidates['Category'].astype(str).str.strip().apply(lambda c: any(c.startswith(u) for u in _udelad))
+        print(f"   ⛔ UDELAD-stier ({len(_udelad)}): {int(_mask.sum())} kandidat-rækker udeladt ({', '.join(_udelad)})")
+        candidates = candidates[~_mask].copy()
 
     if PRODUCT_ORDER == 'random':
         candidates = candidates.sample(frac=1, random_state=int(time.time()) % 10000).reset_index(drop=True)
