@@ -114,6 +114,16 @@ def main():
         if s and s not in feed_by_sku: feed_by_sku[s] = r
 
     config, underkat, rum_dict, _ = load_config(CONFIG_PATH)
+    # 23/9-2026: UDELAD-overrides (se create_products_v2) — SKU i udeladte kategoristier tages aldrig med
+    try:
+        _udelad = [str(_p).strip() for _p, _h in zip(underkat.get('Underkategori_Config', []), underkat.get('Handling', []))
+                   if str(_h).strip().upper() == 'UDELAD' and str(_p).strip()]
+    except Exception:
+        _udelad = []
+    if _udelad: print(f"   ⛔ UDELAD-stier: {', '.join(_udelad)}")
+    def _udeladt(fr):
+        try: return any(str(fr.get('Category', '')).strip().startswith(u) for u in _udelad)
+        except Exception: return False
 
     # Katalog Engine: per-product pricing config-resolver (samme moenster
     # som create_products_v2.py)
@@ -179,6 +189,7 @@ def main():
                 if v_sku in shopify_skus: continue
                 if v_sku not in feed_by_sku: continue
                 fr = feed_by_sku[v_sku]
+                if _udeladt(fr): continue
                 if float(fr.get('Stock', 0) or 0) >= MIN_STOCK_VARIANT and float(fr.get('B2B price', 0) or 0) > 0:
                     valid_skus.append(v_sku)
             if not valid_skus:
