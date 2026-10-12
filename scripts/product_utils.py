@@ -836,6 +836,8 @@ def build_tags(row, rum_dict):
         cs = str(row['Category']).strip()
         if cs in rum_dict and pd.notna(rum_dict[cs]):
             tags_list.append(str(rum_dict[cs]))
+    # Judge.me: vidaXL-produkter skal aldrig have anmodning om anmeldelse (kun Sollux/Kayoom/Ayyildiz)
+    tags_list.append('judgeme_excluded')
     seen = set()
     return ','.join(t for t in tags_list if not (t in seen or seen.add(t)))
 
