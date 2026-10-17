@@ -85,12 +85,17 @@ _EXIST_EXACT = {c.lower(): c for c in EXISTING_COLORS}
 _EXIST_SEP = {re.sub(r'[ /\-]+', '/', c.lower()): c for c in EXISTING_COLORS}
 
 # anbefalet_paere: fatning -> fast pære-produkt-GID (udledt 100% fra eksisterende)
+# OBS 2026-10-17: GU10 -> SL.0972 (7W, 5 cm standard-GU10). SL.0976/SL.0977 er ES111-reflektorer
+# (11 cm, 12 W) og passer KUN i armaturer med Trådtype GU10/ES111 eller ES111 (QUATRO, BASIC, KALU,
+# TALEJA, BLAKE, TIUBE). Fejlen gav 187 lamper med en pære der ikke passede (ordre #364195).
 FATNING_TO_BULB = {
-    'E27': 'gid://shopify/Product/15712549110109',
-    'E14': 'gid://shopify/Product/15713519436125',
-    'G9':  'gid://shopify/Product/15712549765469',
-    'GU10': 'gid://shopify/Product/15713519698269',
-    'GU10/ES111': 'gid://shopify/Product/15713519698269',
+    'E27': 'gid://shopify/Product/15712549110109',   # SL.0968 E27 3000K 7,5W
+    'E14': 'gid://shopify/Product/15713519436125',   # SL.0970 E14 3000K 7,5W
+    'G9':  'gid://shopify/Product/15712549765469',   # SL.0974 G9 3000K 4,5W
+    'GU10': 'gid://shopify/Product/15712549142877',  # SL.0972 GU10 3000K 7W 510lm (5 cm)
+    'GU10/ES111': 'gid://shopify/Product/15713519468893',  # SL.0976 ES111 GU10 3000K 12W (11 cm)
+    'ES111': 'gid://shopify/Product/15713519468893',       # SL.0976
+    'Gx53': 'gid://shopify/Product/16498921374045',        # SL.1969 GX53 3000K 7W
 }
 ND = {'', 'n/d', 'nan', 'none', 'null', '-'}
 
