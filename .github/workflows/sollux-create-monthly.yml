@@ -56,7 +56,15 @@ jobs:
           FEED_URL: "unused"
         run: python scripts/merge_sollux_variants.py --apply
 
+      - name: Fjern farve fra titel/SEO/beskrivelse (produkter med flere farver)
+        if: always()
+        env:
+          SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        run: python scripts/sollux_farve_tekst.py --apply
+
       - name: Commit audit-output
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

@@ -274,7 +274,7 @@ def _generate_seo_chunk(items):
         return {}
     sys_p = ("Du skriver dansk SEO for webshoppen BoligRetning (boligindretning/belysning). "
              "For hvert produkt: en SEO-title (45-65 tegn, format '{type} {MODEL} {evt. variant} - {gevinst/materiale/stil} {evt. fatning}', "
-             "tilføj ALTID ' | BoligRetning' til sidst; ALDRIG priser) og en meta-description "
+             "tilføj ALTID ' | BoligRetning' til sidst; ALDRIG priser; nævn ALDRIG farver, da farven vælges i variantvælgeren) og en meta-description "
              "(140-160 tegn, nævn 2-3 rum + fatning + en design/kvalitets-closer; ALDRIG priser). "
              "Svar KUN med et JSON-array: [{\"handle\":...,\"title\":...,\"description\":...}].")
     lines = [{"handle": it['handle'], "produkt": it['title'], "type": it['ptype'],
