@@ -17,6 +17,24 @@ WORKFLOW-STRUKTUR (3 jobs, samme som v1):
 Threshold-gaten er bevaret: hvis delete_count > DELETE_THRESHOLD,
 sættes needs_approval=true → workflow blokerer indtil manuelt
 approve.
+
+VEDVARENHEDSREGEL (tilføjet 2026-11-20)
+  Feedet fra vidaXL er ustabilt: et par hundrede SKUs falder ud og
+  kommer tilbage igen fra dag til dag. Målt 13.-20. nov 2026 svingede
+  "mangler i feed" mellem 2.214 og 2.600, hvor kun 1.218 manglede ALLE
+  8 dage. Slettes der på dagsbilledet, mister vi varer der stadig
+  findes hos vidaXL — permanent.
+
+  Derfor: en SKU slettes først når den har manglet i feedet
+  PERSIST_DAYS dage I TRAEK. Streaks gemmes i output/missing_history.json,
+  som analyze-jobbet committer hver dag. Kommer en SKU tilbage i feedet,
+  nulstilles dens streak helt.
+
+  Desuden en vagt mod katastrofalt afkortet feed: falder feedet mere end
+  FEED_SHRINK_ABORT (default 25 %) ift. sidste kørsel, afbrydes der helt
+  uden at skrive en sletteplan. En delvist hentet eller ødelagt CSV ser
+  ellers ud som om titusindvis af varer er udgået — og pandas springer
+  defekte linjer stille over (on_bad_lines='skip').
 """
 import argparse
 import io
@@ -26,7 +44,7 @@ import sys
 import time
 import zipfile
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 import requests
@@ -36,9 +54,12 @@ FEED_URL = os.environ.get('FEED_URL', '')
 SHOPIFY_STORE = os.environ.get('SHOPIFY_STORE', '')
 SHOPIFY_ACCESS_TOKEN = os.environ.get('SHOPIFY_ACCESS_TOKEN', '')
 DELETE_THRESHOLD = int(os.environ.get('DELETE_THRESHOLD', '1000'))
+PERSIST_DAYS = int(os.environ.get('PERSIST_DAYS', '3'))
+FEED_SHRINK_ABORT = float(os.environ.get('FEED_SHRINK_ABORT', '0.25'))
 
 OUTPUT_JSON = "output/delete_list.json"
 OUTPUT_CSV_LEGACY = "output/matrixify_delete.csv"
+HISTORY_JSON = "output/missing_history.json"
 
 VENDOR_FILTER = "vidaxl"
 
@@ -61,6 +82,51 @@ def fetch_feed_data(url):
         with zf.open(csv_files[0]) as f:
             df = pd.read_csv(f, encoding='utf-8', on_bad_lines='skip')
     return df
+
+
+def load_history():
+    """Laes streak-historik. Fejler aldrig haardt — tom historik betyder
+    blot at ingen SKU er moden til sletning i dag."""
+    if not os.path.exists(HISTORY_JSON):
+        print(f"ℹ  {HISTORY_JSON} findes ikke endnu — foerste koersel, intet slettes")
+        return {}, None
+    try:
+        with open(HISTORY_JSON, encoding='utf-8') as f:
+            d = json.load(f)
+        return d.get('skus', {}), d.get('feed_count')
+    except Exception as e:
+        print(f"⚠ Kunne ikke laese {HISTORY_JSON} ({e}) — starter historikken forfra")
+        return {}, None
+
+
+def update_history(hist, missing_today, today):
+    """Opdater streak pr. SKU.
+
+    - manglede i gaar (eller allerede registreret i dag) → streak +1
+    - ellers → ny streak paa 1
+    - SKUs der IKKE mangler i dag fjernes helt (de er tilbage i feedet)
+    """
+    yday = (datetime.strptime(today, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+    new = {}
+    for sku in missing_today:
+        prev = hist.get(sku)
+        if prev and prev.get('last') == today:
+            new[sku] = dict(prev)
+        elif prev and prev.get('last') == yday:
+            new[sku] = {'first': prev.get('first', today), 'last': today,
+                        'days': int(prev.get('days', 1)) + 1}
+        else:
+            new[sku] = {'first': today, 'last': today, 'days': 1}
+    returned = set(hist.keys()) - set(missing_today)
+    return new, returned
+
+
+def save_history(hist, today, feed_count):
+    os.makedirs("output", exist_ok=True)
+    with open(HISTORY_JSON, 'w', encoding='utf-8') as f:
+        json.dump({'updated_at': today, 'persist_days': PERSIST_DAYS,
+                   'feed_count': feed_count, 'skus': hist},
+                  f, separators=(',', ':'), sort_keys=True)
 
 
 def gql(query, variables=None):
@@ -191,25 +257,52 @@ def run_analyze():
     if not FEED_URL or not SHOPIFY_STORE or not SHOPIFY_ACCESS_TOKEN:
         sys.exit("❌ FEED_URL / SHOPIFY_STORE / SHOPIFY_ACCESS_TOKEN mangler")
 
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    hist, prev_feed_count = load_history()
+
     feed_df = fetch_feed_data(FEED_URL)
     feed_df['SKU'] = feed_df['SKU'].apply(normalize_sku)
     feed_skus = set(feed_df['SKU'].unique())
+    feed_skus.discard('')
     print(f"✅ {len(feed_df):,} produkter i feed, {len(feed_skus):,} unikke SKUs")
 
+    # --- vagt: katastrofalt afkortet feed ---
+    if prev_feed_count:
+        drop = 1.0 - (len(feed_skus) / float(prev_feed_count))
+        print(f"   Feed-aendring siden sidst: {prev_feed_count:,} → {len(feed_skus):,} "
+              f"({drop * -100:+.1f} %)")
+        if drop > FEED_SHRINK_ABORT:
+            sys.exit(f"❌ AFBRUDT: feedet er faldet {drop * 100:.1f} % "
+                     f"(graense {FEED_SHRINK_ABORT * 100:.0f} %). "
+                     f"Sandsynligvis afkortet eller defekt download — "
+                     f"ingen sletteplan skrevet, historikken er uaendret.")
+
     shop_skus, product_variants, sku_to_product, sku_to_variant = fetch_shopify_data()
-    to_delete = shop_skus - feed_skus
+    missing = shop_skus - feed_skus
+
+    # --- vedvarenhed ---
+    hist, returned = update_history(hist, missing, today)
+    save_history(hist, today, len(feed_skus))
+
+    eligible = set(s for s, v in hist.items() if int(v.get('days', 0)) >= PERSIST_DAYS)
+    waiting = missing - eligible
+
     print(f"\n📊 Resultat:")
     print(f"   - vidaXL produkter i Shopify: {len(shop_skus):,}")
     print(f"   - SKUs i feed:               {len(feed_skus):,}")
-    print(f"   - SKUs der skal slettes:     {len(to_delete):,}")
+    print(f"   - mangler i feed i dag:      {len(missing):,}")
+    print(f"\n🕒 Vedvarenhed (kraever {PERSIST_DAYS} dage i traek):")
+    print(f"   - kom tilbage i feedet:      {len(returned):,}  (streak nulstillet)")
+    print(f"   - MODNE til sletning:        {len(eligible):,}")
+    print(f"   - afventer flere dage:       {len(waiting):,}")
 
-    plan = compute_deletes(to_delete, product_variants, sku_to_product, sku_to_variant)
+    plan = compute_deletes(eligible, product_variants, sku_to_product, sku_to_variant)
     print(f"\n📋 Plan:")
     print(f"   - Full product deletes:  {plan['stats']['full_product_count']}")
     print(f"   - Variant-only deletes:  {plan['stats']['variant_count']}")
     print(f"   - Unmapped (skipped):    {plan['stats']['unmapped_count']}")
 
-    delete_count = len(to_delete)
+    delete_count = len(eligible)
     needs_approval = "true" if delete_count > DELETE_THRESHOLD else "false"
     print(f"\n{'⚠️ THRESHOLD OVERSKREDET' if delete_count > DELETE_THRESHOLD else '✅ Under threshold'}: "
           f"{delete_count:,} {'>' if delete_count > DELETE_THRESHOLD else '≤'} {DELETE_THRESHOLD:,}")
@@ -218,6 +311,10 @@ def run_analyze():
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "delete_count": delete_count,
+        "missing_count": len(missing),
+        "waiting_count": len(waiting),
+        "returned_count": len(returned),
+        "persist_days": PERSIST_DAYS,
         "feed_count": len(feed_skus),
         "shopify_count": len(shop_skus),
         "needs_approval": needs_approval == "true",
@@ -225,7 +322,7 @@ def run_analyze():
     }
     with open(OUTPUT_JSON, 'w', encoding='utf-8') as f:
         json.dump(payload, f, separators=(',', ':'))
-    print(f"💾 delete_list.json skrevet ({len(to_delete):,} SKUs)")
+    print(f"💾 delete_list.json skrevet ({delete_count:,} modne SKUs)")
 
     pd.DataFrame({'Command': [], 'Variant SKU': [], 'Variant Command': []}) \
         .to_csv(OUTPUT_CSV_LEGACY, index=False, encoding='utf-8-sig', sep=',')
@@ -234,6 +331,10 @@ def run_analyze():
     if gh_out:
         with open(gh_out, 'a') as f:
             f.write(f"delete_count={delete_count}\n")
+            f.write(f"missing_count={len(missing)}\n")
+            f.write(f"waiting_count={len(waiting)}\n")
+            f.write(f"returned_count={len(returned)}\n")
+            f.write(f"persist_days={PERSIST_DAYS}\n")
             f.write(f"needs_approval={needs_approval}\n")
             f.write(f"feed_count={len(feed_skus)}\n")
             f.write(f"shopify_count={len(shop_skus)}\n")
