@@ -4,6 +4,14 @@ name: Daglig Produkt Sletning
 # productVariantsBulkDelete via direct Shopify GraphQL Admin API.
 # Workflow-strukturen er uændret: analyze → approval (hvis >threshold)
 # → deploy. Threshold-gaten og manual-approval-issue er BEVARET 100%.
+#
+# 2026-11-20: vedvarenhedsregel. En SKU slettes først når den har manglet
+# i feedet PERSIST_DAYS dage i træk; streaks gemmes i
+# output/missing_history.json, som analyze-jobbet committer hver dag.
+# Baggrund: 13.-20. nov svingede "mangler i feed" mellem 2.214 og 2.600,
+# men kun 1.218 manglede alle 8 dage — resten kom tilbage i feedet.
+# Desuden FEED_SHRINK_ABORT, der afbryder hvis feedet skrumper
+# katastrofalt (afkortet/defekt download).
 
 on:
   schedule:
@@ -35,6 +43,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       delete_count: ${{ steps.run.outputs.delete_count }}
+      missing_count: ${{ steps.run.outputs.missing_count }}
+      waiting_count: ${{ steps.run.outputs.waiting_count }}
+      returned_count: ${{ steps.run.outputs.returned_count }}
+      persist_days: ${{ steps.run.outputs.persist_days }}
       needs_approval: ${{ steps.run.outputs.needs_approval }}
       feed_count: ${{ steps.run.outputs.feed_count }}
       shopify_count: ${{ steps.run.outputs.shopify_count }}
@@ -51,12 +63,34 @@ jobs:
           SHOPIFY_STORE: ${{ vars.SHOPIFY_STORE }}
           SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
           DELETE_THRESHOLD: ${{ vars.DELETE_THRESHOLD || '1000' }}
+          PERSIST_DAYS: ${{ vars.PERSIST_DAYS || '3' }}
+          FEED_SHRINK_ABORT: ${{ vars.FEED_SHRINK_ABORT || '0.25' }}
         run: python scripts/delete_products_v2.py
       - uses: actions/upload-artifact@v4
         with:
           name: delete-list
           path: output/delete_list.json
           retention-days: 30
+      # Streak-historikken SKAL committes hver dag, også når sletningen
+      # afventer godkendelse — ellers kan en SKU aldrig modne.
+      - name: Commit streak-historik
+        if: always()
+        run: |
+          if [ ! -f output/missing_history.json ]; then
+            echo "Ingen historik skrevet (analysen afbrød) — intet at committe"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add output/missing_history.json
+          git diff --staged --quiet && echo "Ingen ændringer" && exit 0
+          git commit -m "📆 Slette-historik: $(date +%Y-%m-%d)"
+          for i in 1 2 3; do
+            git pull --rebase --autostash && git push && exit 0
+            echo "push forsøg $i fejlede, prøver igen"
+            sleep 5
+          done
+          echo "⚠️ kunne ikke pushe historikken" && exit 1
 
   approval:
     needs: analyze
@@ -77,7 +111,14 @@ jobs:
             |--------|-------|
             | Feed | ${{ needs.analyze.outputs.feed_count }} |
             | Shopify | ${{ needs.analyze.outputs.shopify_count }} |
-            | **Slettes** | **${{ needs.analyze.outputs.delete_count }}** |
+            | Mangler i feed i dag | ${{ needs.analyze.outputs.missing_count }} |
+            | Kom tilbage i feedet | ${{ needs.analyze.outputs.returned_count }} |
+            | Afventer flere dage | ${{ needs.analyze.outputs.waiting_count }} |
+            | **Slettes** (manglet ${{ needs.analyze.outputs.persist_days }} dage i træk) | **${{ needs.analyze.outputs.delete_count }}** |
+
+            De SKUs der slettes har manglet i vidaXL-feedet
+            ${{ needs.analyze.outputs.persist_days }} dage i træk. Varer der er
+            kommet tilbage i feedet er allerede sorteret ud.
 
             Kommenter `approved` eller `denied`.
 
@@ -112,7 +153,7 @@ jobs:
           git add output/delete_list.json output/matrixify_delete.csv
           git diff --staged --quiet && echo "Ingen ændringer" && exit 0
           git commit -m "🗑️ Sletning: ${{ needs.analyze.outputs.delete_count }} produkter ($(date +%Y-%m-%d))"
-          git pull --rebase
+          git pull --rebase --autostash
           git push
 
   notify:
@@ -130,5 +171,8 @@ jobs:
             echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
             echo "| Feed | ${{ needs.analyze.outputs.feed_count }} |" >> $GITHUB_STEP_SUMMARY
             echo "| Shopify | ${{ needs.analyze.outputs.shopify_count }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Mangler i feed i dag | ${{ needs.analyze.outputs.missing_count }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Kom tilbage i feedet | ${{ needs.analyze.outputs.returned_count }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Afventer flere dage | ${{ needs.analyze.outputs.waiting_count }} |" >> $GITHUB_STEP_SUMMARY
             echo "| **Slettet via API** | **${{ needs.analyze.outputs.delete_count }}** |" >> $GITHUB_STEP_SUMMARY
           fi
